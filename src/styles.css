@@ -351,3 +351,14 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); o
 .key-tag { font-weight: 700; font-size: 0.85rem; }
 /* The board is wider than other pages on tablets and desktops */
 .content:has(.board) { max-width: 1400px; }
+
+.workshop-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-decoration: none; margin-bottom: 8px; }
+.workshop-tiles span {
+  display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px 6px; text-align: center; font-size: 0.75rem; color: var(--muted);
+}
+.workshop-tiles strong { font-size: 1.4rem; color: var(--text); }
+.workshop-tiles .hold { border-color: #a16207; }
+.workshop-tiles .ready { border-color: #16a34a; background: color-mix(in srgb, #16a34a 10%, var(--surface)); }
+.workshop-tiles .ready strong { color: #16a34a; }
+h3.sub { margin: 12px 0 6px; color: var(--muted); }

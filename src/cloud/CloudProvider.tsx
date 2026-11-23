@@ -185,6 +185,22 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Adjusts the sample price list for a new business: labour lines use their own rate, and
+ * workshop-only businesses don't get a mobile call-out fee. Only touches the untouched samples.
+ */
+async function tailorStarterPriceList(type: BusinessType, rate: number) {
+  const items = await db.catalog.toArray();
+  for (const item of items) {
+    if (type === 'workshop' && item.name === 'Call-out fee') {
+      await db.catalog.delete(item.id); // never synced yet, so no tombstone needed
+      continue;
+    }
+    const lines = item.lines.map((l) => (l.type === 'labour' && l.unitPrice === 120 ? { ...l, unitPrice: rate } : l));
+    await db.catalog.put({ ...item, lines });
+  }
+}
+
 // ---------- Screens ----------
 
 function Brand() {
@@ -300,6 +316,9 @@ function NewPassword({ onDone }: { onDone: () => void }) {
 function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error: string; onCreated: () => void; onRetry: () => void }) {
   const [name, setName] = useState('');
   const [type, setType] = useState<BusinessType>('mobile');
+  const [rate, setRate] = useState(120);
+  const [gst, setGst] = useState(true);
+  const [abn, setAbn] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(error);
 
@@ -313,15 +332,19 @@ function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error
       setBusy(false);
       return;
     }
-    // Put the name on invoices straight away.
+    // Set the account up for how they work, so quotes and invoices are right from the first job.
     const s = await getSettings();
     await db.settings.put({
       ...s,
       businessName: name.trim() || s.businessName,
       email: s.email || email,
+      abn: abn.trim() || s.abn,
       businessType: type,
+      labourRate: rate || s.labourRate,
+      gstRegistered: gst,
       reminderMessage: type === 'mobile' ? s.reminderMessage : WORKSHOP_REMINDER,
     });
+    await tailorStarterPriceList(type, rate || s.labourRate);
     onCreated();
   }
 
@@ -350,6 +373,22 @@ function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error
             ))}
           </div>
         </div>
+        <div className="grid">
+          <label className="field">
+            <span>Hourly labour rate (ex GST)</span>
+            <input type="number" inputMode="decimal" min={0} step="any" required value={rate || ''}
+              onChange={(e) => setRate(e.target.valueAsNumber || 0)} />
+          </label>
+          <label className="field">
+            <span>ABN (optional)</span>
+            <input inputMode="numeric" value={abn} onChange={(e) => setAbn(e.target.value)} />
+          </label>
+        </div>
+        <label className="field checkbox">
+          <input type="checkbox" checked={gst} onChange={(e) => setGst(e.target.checked)} />
+          <span>Registered for GST (adds 10% to quotes &amp; invoices)</span>
+        </label>
+        <p className="muted small" style={{ margin: 0 }}>You can change all of this later in Settings.</p>
         {err && <p className="error">{err}</p>}
         <button className="btn primary block" disabled={busy}>{busy ? 'Creating…' : 'Create business'}</button>
       </form>

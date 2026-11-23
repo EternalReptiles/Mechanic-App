@@ -40,6 +40,20 @@ export default function Dashboard() {
 
   const count = (s: keyof typeof STATUS) => jobs.filter((j) => j.status === s).length;
 
+  // Workshop: cars physically on site right now.
+  const hasWorkshop = settings.businessType !== 'mobile';
+  const workshopOnly = settings.businessType === 'workshop';
+  const onSite = jobs.filter((j) => j.location === 'workshop' && j.droppedOffAt && !j.collectedAt && j.status !== 'cancelled');
+  const readyForPickup = onSite.filter((j) => ['completed', 'invoiced', 'paid'].includes(j.status));
+  const dueToday = onSite
+    .filter((j) => j.promisedAt && dayKey(new Date(j.promisedAt)) === today && !readyForPickup.includes(j))
+    .sort((a, b) => a.promisedAt!.localeCompare(b.promisedAt!));
+  const workingOn = onSite.filter((j) => j.status === 'in_progress').length;
+  const onHold = onSite.filter((j) => j.status === 'waiting').length;
+  const card = (j: (typeof jobs)[number]) => (
+    <JobCard key={j.id} job={j} customer={customerMap.get(j.customerId)} vehicle={vehicleMap.get(j.vehicleId)} gst={settings.gstRegistered} />
+  );
+
   async function newJob() {
     const job = await createJob();
     navigate(`/jobs/${job.id}`);
@@ -79,6 +93,30 @@ export default function Dashboard() {
         <span>›</span>
       </Link>
 
+      {hasWorkshop && (
+        <>
+          <h2>In the workshop</h2>
+          <Link to="/schedule" className="workshop-tiles">
+            <span><strong>{onSite.length}</strong>Cars on site</span>
+            <span><strong>{workingOn}</strong>Being worked on</span>
+            <span className={onHold ? 'hold' : ''}><strong>{onHold}</strong>On hold</span>
+            <span className={readyForPickup.length ? 'ready' : ''}><strong>{readyForPickup.length}</strong>Ready for pickup</span>
+          </Link>
+          {readyForPickup.length > 0 && (
+            <>
+              <h3 className="sub">Ready for pickup</h3>
+              {readyForPickup.map(card)}
+            </>
+          )}
+          {dueToday.length > 0 && (
+            <>
+              <h3 className="sub">Promised today</h3>
+              {dueToday.map(card)}
+            </>
+          )}
+        </>
+      )}
+
       <div className="pipeline">
         {(['quote', 'scheduled', 'in_progress', 'waiting', 'completed'] as const).map((s) => (
           <Link key={s} to={`/jobs?status=${s}`} className="pipe" style={{ borderColor: STATUS[s].color }}>
@@ -88,23 +126,11 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <h2>Today</h2>
-      {todays.length ? (
-        todays.map((j) => (
-          <JobCard key={j.id} job={j} customer={customerMap.get(j.customerId)} vehicle={vehicleMap.get(j.vehicleId)} gst={settings.gstRegistered} />
-        ))
-      ) : (
-        <Empty>Nothing booked today.</Empty>
-      )}
+      <h2>{workshopOnly ? 'Booked in today' : 'Today'}</h2>
+      {todays.length ? todays.map(card) : <Empty>Nothing booked today.</Empty>}
 
-      <h2>Tomorrow</h2>
-      {tomorrows.length ? (
-        tomorrows.map((j) => (
-          <JobCard key={j.id} job={j} customer={customerMap.get(j.customerId)} vehicle={vehicleMap.get(j.vehicleId)} gst={settings.gstRegistered} />
-        ))
-      ) : (
-        <Empty>Nothing booked tomorrow.</Empty>
-      )}
+      <h2>{workshopOnly ? 'Booked in tomorrow' : 'Tomorrow'}</h2>
+      {tomorrows.length ? tomorrows.map(card) : <Empty>Nothing booked tomorrow.</Empty>}
     </>
   );
 }

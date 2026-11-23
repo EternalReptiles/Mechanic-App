@@ -1,4 +1,5 @@
 import { NavLink, Route, Routes } from 'react-router-dom';
+import { useSettings } from './hooks';
 import Dashboard from './pages/Dashboard';
 import Jobs from './pages/Jobs';
 import JobPage from './pages/JobPage';
@@ -12,13 +13,28 @@ import Team from './pages/Team';
 import CloudProvider from './cloud/CloudProvider';
 import Reminders from './pages/Reminders';
 
-const NAV = [
-  { to: '/', label: 'Home', icon: '⌂', end: true },
-  { to: '/jobs', label: 'Jobs', icon: '🔧' },
-  { to: '/schedule', label: 'Schedule', icon: '📅' },
-  { to: '/customers', label: 'Customers', icon: '👤' },
-  { to: '/settings', label: 'Settings', icon: '⚙' },
-];
+function BottomNav() {
+  const { businessType } = useSettings();
+  const nav = [
+    { to: '/', label: 'Home', icon: '⌂', end: true },
+    { to: '/jobs', label: 'Jobs', icon: '🔧' },
+    businessType === 'workshop'
+      ? { to: '/schedule', label: 'Workshop', icon: '🚗' }
+      : { to: '/schedule', label: 'Schedule', icon: '📅' },
+    { to: '/customers', label: 'Customers', icon: '👤' },
+    { to: '/settings', label: 'Settings', icon: '⚙' },
+  ];
+  return (
+    <nav className="bottom-nav">
+      {nav.map((n) => (
+        <NavLink key={n.to} to={n.to} end={n.end}>
+          <span className="nav-icon">{n.icon}</span>
+          <span>{n.label}</span>
+        </NavLink>
+      ))}
+    </nav>
+  );
+}
 
 export default function App() {
   return (
@@ -43,14 +59,7 @@ export default function App() {
                 <Route path="/settings/team" element={<Team />} />
               </Routes>
             </main>
-            <nav className="bottom-nav">
-              {NAV.map((n) => (
-                <NavLink key={n.to} to={n.to} end={n.end}>
-                  <span className="nav-icon">{n.icon}</span>
-                  <span>{n.label}</span>
-                </NavLink>
-              ))}
-            </nav>
+            <BottomNav />
           </div>
         }
       />
