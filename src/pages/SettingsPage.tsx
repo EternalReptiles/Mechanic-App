@@ -88,6 +88,13 @@ export default function SettingsPage() {
         <Field label="Email"><input type="email" value={s.email} onChange={text('email')} /></Field>
         <Field label="Website"><input value={s.website} onChange={text('website')} /></Field>
         <Field label="Address" wide><input value={s.address} onChange={text('address')} /></Field>
+        <Field label="How you work" wide>
+          <select value={s.businessType} onChange={(e) => setS({ ...s, businessType: e.target.value as Settings['businessType'] })}>
+            <option value="mobile">🚐 Mobile – I go to the customer</option>
+            <option value="workshop">🔧 Workshop – customers bring the car in</option>
+            <option value="both">🚐🔧 Both</option>
+          </select>
+        </Field>
         <div className="field wide">
           <span>Logo (shown on quotes &amp; invoices)</span>
           <div className="row">
@@ -127,6 +134,11 @@ export default function SettingsPage() {
           <textarea rows={3} value={s.reminderMessage} onChange={text('reminderMessage')} />
         </Field>
         <p className="wide muted small" style={{ margin: 0 }}>Placeholders: {'{name} {business} {vehicle} {rego} {date}'}</p>
+        {s.businessType !== 'mobile' && (
+          <Field label={"\"Car's ready\" text message"} wide>
+            <textarea rows={2} value={s.readyMessage} onChange={text('readyMessage')} />
+          </Field>
+        )}
         <Field label="Inspection checklist (one item per line)" wide>
           <textarea rows={8} value={s.checklistTemplate.join('\n')}
             onChange={(e) => setS({ ...s, checklistTemplate: e.target.value.split('\n').map((x) => x.trimStart()).filter((x, i, a) => x || i === a.length - 1) })} />

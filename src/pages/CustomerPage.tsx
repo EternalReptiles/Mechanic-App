@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import JobCard from '../components/JobCard';
 import { Empty, Field, PageHeader } from '../components/ui';
@@ -40,6 +40,7 @@ export default function CustomerPage() {
   const settings = useSettings();
   const [c, setC] = useState<Customer | null | undefined>(undefined);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const deletedRef = useRef(false);
 
   const vehicles = useLiveQuery(() => db.vehicles.where('customerId').equals(id).toArray(), [id]) ?? [];
   const jobs = useLiveQuery(() => db.jobs.where('customerId').equals(id).reverse().sortBy('number'), [id]) ?? [];
@@ -49,7 +50,7 @@ export default function CustomerPage() {
     db.customers.get(id).then((x) => setC(x ?? null));
   }, [id]);
 
-  useAutosave(c, (x) => db.customers.put(x));
+  useAutosave(c, (x) => !deletedRef.current && db.customers.put(x), id);
 
   if (c === undefined) return null;
   if (c === null) return <PageHeader title="Customer not found" back />;
@@ -64,6 +65,7 @@ export default function CustomerPage() {
 
   async function remove() {
     if (!confirm(`Delete ${c!.name} and all their vehicles, jobs and photos?`)) return;
+    deletedRef.current = true;
     await deleteCustomer(c!.id);
     navigate('/customers', { replace: true });
   }

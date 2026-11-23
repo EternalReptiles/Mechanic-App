@@ -1,6 +1,8 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { clearLocalData, db, getMeta, getSettings, markAllDirty, setMeta } from '../db';
+import { clearLocalData, db, getMeta, getSettings, markAllDirty, setMeta, WORKSHOP_REMINDER } from '../db';
+import type { BusinessType } from '../types';
+import { personName } from '../utils';
 import { supabase, withTimeout } from './supabase';
 import { pendingCount, startSync, stopSync, syncNow } from './sync';
 
@@ -14,8 +16,17 @@ export interface Membership {
   role: Role;
 }
 
+export interface TeamMember {
+  userId: string;
+  email: string;
+  name: string;
+  role: Role;
+}
+
 interface CloudCtx extends Membership {
   isAdmin: boolean;
+  team: TeamMember[];
+  memberName: (userId?: string) => string;
   signOut: () => Promise<void>;
 }
 
@@ -119,11 +130,29 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
   }, [enter]);
 
   const ready = phase.kind === 'ready' ? phase.m : null;
+  const [team, setTeam] = useState<TeamMember[]>([]);
   useEffect(() => {
     if (!ready) return;
     startSync(ready.businessId);
+    // Team list for assigning jobs; cached so it works offline.
+    getMeta<TeamMember[]>('team').then((t) => t && setTeam(t));
+    supabase
+      .from('members')
+      .select('user_id, email, name, role')
+      .eq('business_id', ready.businessId)
+      .order('created_at')
+      .then(({ data }) => {
+        if (!data) return;
+        const t = data.map((r) => ({ userId: r.user_id, email: r.email, name: personName(r.email, r.name), role: r.role as Role }));
+        setTeam(t);
+        void setMeta('team', t);
+      });
     return () => stopSync();
   }, [ready?.businessId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const memberName = useCallback(
+    (userId?: string) => (userId ? team.find((t) => t.userId === userId)?.name ?? 'Former staff' : ''),
+    [team],
+  );
 
   const signOut = useCallback(async () => {
     await syncNow();
@@ -150,7 +179,7 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
 
   const m = phase.m;
   return (
-    <Ctx.Provider value={{ ...m, isAdmin: m.role === 'owner' || m.role === 'admin', signOut }}>
+    <Ctx.Provider value={{ ...m, isAdmin: m.role === 'owner' || m.role === 'admin', signOut, team, memberName }}>
       {children}
     </Ctx.Provider>
   );
@@ -270,6 +299,7 @@ function NewPassword({ onDone }: { onDone: () => void }) {
 
 function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error: string; onCreated: () => void; onRetry: () => void }) {
   const [name, setName] = useState('');
+  const [type, setType] = useState<BusinessType>('mobile');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(error);
 
@@ -285,7 +315,13 @@ function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error
     }
     // Put the name on invoices straight away.
     const s = await getSettings();
-    await db.settings.put({ ...s, businessName: name.trim() || s.businessName, email: s.email || email });
+    await db.settings.put({
+      ...s,
+      businessName: name.trim() || s.businessName,
+      email: s.email || email,
+      businessType: type,
+      reminderMessage: type === 'mobile' ? s.reminderMessage : WORKSHOP_REMINDER,
+    });
     onCreated();
   }
 
@@ -299,6 +335,21 @@ function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error
           <span>Business name</span>
           <input required autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Smith's Mobile Mechanics" />
         </label>
+        <div className="field">
+          <span>How do you work?</span>
+          <div className="choice">
+            {([
+              ['mobile', '🚐 Mobile', 'I go to the customer'],
+              ['workshop', '🔧 Workshop', 'Customers bring the car to me'],
+              ['both', '🚐🔧 Both', 'Workshop and mobile jobs'],
+            ] as const).map(([v, label, help]) => (
+              <button type="button" key={v} className={type === v ? 'on' : ''} onClick={() => setType(v)}>
+                <strong>{label}</strong>
+                <span className="small muted">{help}</span>
+              </button>
+            ))}
+          </div>
+        </div>
         {err && <p className="error">{err}</p>}
         <button className="btn primary block" disabled={busy}>{busy ? 'Creating…' : 'Create business'}</button>
       </form>

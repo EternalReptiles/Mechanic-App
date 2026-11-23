@@ -80,7 +80,7 @@ export default function Dashboard() {
       </Link>
 
       <div className="pipeline">
-        {(['quote', 'scheduled', 'in_progress', 'completed'] as const).map((s) => (
+        {(['quote', 'scheduled', 'in_progress', 'waiting', 'completed'] as const).map((s) => (
           <Link key={s} to={`/jobs?status=${s}`} className="pipe" style={{ borderColor: STATUS[s].color }}>
             <strong>{count(s)}</strong>
             <span>{STATUS[s].label}</span>

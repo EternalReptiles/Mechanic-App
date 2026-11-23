@@ -2,6 +2,7 @@ export type JobStatus =
   | 'quote'
   | 'scheduled'
   | 'in_progress'
+  | 'waiting'
   | 'completed'
   | 'invoiced'
   | 'paid'
@@ -80,7 +81,18 @@ export interface Job {
   signature?: string;
   signedName?: string;
   signedAt?: string;
+  /** Where the work happens. Missing = 'onsite' (mobile). */
+  location?: JobLocation;
+  /** User id of the assigned technician */
+  assignedTo?: string;
+  keyTag?: string;
+  droppedOffAt?: string;
+  promisedAt?: string;
+  collectedAt?: string;
 }
+
+export type JobLocation = 'onsite' | 'workshop';
+export type BusinessType = 'mobile' | 'workshop' | 'both';
 
 /** A saved price-list entry: a single item, or a package of several lines (e.g. "Logbook service – 4cyl"). */
 export interface CatalogItem {
@@ -123,4 +135,6 @@ export interface Settings {
   serviceIntervalMonths: number;
   serviceIntervalKm: number;
   reminderMessage: string;
+  businessType: BusinessType;
+  readyMessage: string;
 }

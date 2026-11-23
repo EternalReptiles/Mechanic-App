@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { db, defaultSettings } from './db';
 import type { Customer, Vehicle } from './types';
 
@@ -18,18 +18,52 @@ export function useLookups() {
 }
 
 /**
- * Saves `value` shortly after it changes. Skips the initial load, so merely opening a
- * screen never overwrites newer changes made on another device.
+ * Saves `value` shortly after it changes, and immediately when leaving the screen or when the
+ * phone locks / the app goes to the background, so a quick tap-and-go never loses a change.
+ * Skips the initial load (and the first value after `key` changes), so merely opening a screen
+ * never overwrites newer changes made on another device. Returns whether everything is saved.
  */
-export function useAutosave<T>(value: T | null | undefined, save: (v: T) => unknown, delay = 400) {
-  const first = useRef<T | null | undefined>(undefined);
+export function useAutosave<T>(value: T | null | undefined, save: (v: T) => unknown, key?: unknown, delay = 400) {
+  const st = useRef<{ key: unknown; seen: boolean; pending: T | null }>({ key, seen: false, pending: null });
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  const [saved, setSaved] = useState(true);
+
+  const flush = useCallback(() => {
+    const p = st.current.pending;
+    if (p == null) return;
+    st.current.pending = null;
+    void Promise.resolve(saveRef.current(p)).then(() => {
+      if (st.current.pending == null) setSaved(true);
+    });
+  }, []);
+
   useEffect(() => {
     if (value == null) return;
-    if (first.current === undefined) {
-      first.current = value;
+    if (st.current.key !== key) {
+      flush();
+      st.current = { key, seen: false, pending: null };
+    }
+    if (!st.current.seen) {
+      st.current.seen = true;
       return;
     }
-    const t = setTimeout(() => save(value), delay);
+    st.current.pending = value;
+    setSaved(false);
+    const t = setTimeout(flush, delay);
     return () => clearTimeout(t);
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const onHide = () => document.visibilityState === 'hidden' && flush();
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flush);
+      flush(); // leaving the screen
+    };
+  }, [flush]);
+
+  return saved;
 }

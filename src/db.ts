@@ -192,7 +192,12 @@ export const defaultSettings: Settings = {
   serviceIntervalKm: 10000,
   reminderMessage:
     "Hi {name}, it's {business}. Your {vehicle} is due for a service on {date}. Reply to this message to book a time and we'll come to you.",
+  businessType: 'mobile',
+  readyMessage: "Hi {name}, it's {business}. Your {vehicle} is ready to collect. Total {total}. See you soon!",
 };
+
+export const WORKSHOP_REMINDER =
+  "Hi {name}, it's {business}. Your {vehicle} is due for a service on {date}. Reply to this message to book it in.";
 
 export async function getSettings(): Promise<Settings> {
   const s = await db.settings.get('settings');
@@ -240,9 +245,11 @@ async function nextJobNumber(): Promise<number> {
 
 /** Creates and saves a new job, allocating the next job number. */
 export async function createJob(partial: Partial<Job> = {}): Promise<Job> {
+  const settings = await getSettings();
   const job: Job = {
     id: uid(),
     number: await nextJobNumber(),
+    location: settings.businessType === 'workshop' ? 'workshop' : 'onsite',
     customerId: '',
     vehicleId: '',
     status: 'quote',

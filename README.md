@@ -1,8 +1,12 @@
 # Mechanic App
 
-Job management for a mobile mechanics business: customers, vehicles, bookings, quotes, tax invoices and job photos. It runs as an installable web app (PWA) on a phone, tablet or computer, and keeps working offline.
+Job management for mobile mechanics and workshops: customers, vehicles, bookings, quotes, tax invoices and job photos. It runs as an installable web app (PWA) on a phone, tablet or computer, and keeps working offline.
 
 ## Features
+
+- **For mobile mechanics, workshops, or both.** Each job is marked "at customer" or "in workshop". Workshop jobs have a check-in (key tag, drop-off, promised-by time, collected), a one-tap "Car's ready" text, and a **workshop board** showing every car by stage: Booked in, In progress, On hold, Ready for pickup.
+- **Teams.** Owners invite staff by email as Admin or Technician. Jobs can be assigned to a technician, who can filter to "My jobs". Technicians don't see takings or business settings.
+- **Cloud sync that works without signal.** Data is saved on the device first and synced when there's reception, with a status badge. Photos sync through private cloud storage.
 
 - **Dashboard**: money owing, overdue invoices, paid this month, a count of jobs at each stage, and today's and tomorrow's bookings.
 - **Jobs**: each job moves through Quote → Scheduled → In progress → Completed → Invoiced → Paid, with one tap per step. You can search by name, rego, job number or address.
@@ -29,11 +33,17 @@ npm run build     # production build in dist/
 
 You can host `dist/` on any static web host (Netlify, Vercel, Cloudflare Pages). Open the site on your phone and choose **Add to Home Screen** to install it.
 
-## Where data is stored
+## Architecture
 
-For now, all data is stored on the device in the browser's IndexedDB. Use **Settings → Download backup** regularly, and use the backup to move to a new device. ## Roadmap
+- **Front end:** React, TypeScript and Vite, installable as a PWA. Data lives in IndexedDB (Dexie) so the app works offline.
+- **Back end:** Supabase (Postgres, Auth and Storage), Sydney region. The schema is in `supabase/migrations/`.
+- **Sync** (`src/cloud/sync.ts`): every local write is stamped and marked dirty by Dexie middleware (`src/db.ts`). Pushes are upserts; the server keeps the newest `updated_at` (last write wins). Pulls fetch rows changed since the last cursor by server timestamp, with an overlap window. Deletions sync as tombstones.
+- **Security:** row-level security on every table limits users to their own business. Signed-in users get the minimum table permissions; anonymous visitors get none. Job numbers are allocated by the server (`allocate_job_number`) so they stay unique across devices.
+- **Config:** `.env` holds the public Supabase URL and publishable key. These are safe to commit because access is enforced by the database. Never commit the secret or service-role key. ## Roadmap
 
 1. ✅ Mechanic workflow: price list, inspections, signatures, reminders, finding customers by rego.
-2. Cloud accounts and sync: sign-up, separate data for each business, staff logins, sync between devices (Supabase).
-3. Customer messages and payments: automatic email and SMS, online quote approval, card payment links (Stripe), Xero export.
-4. Selling it: monthly subscriptions (Stripe Billing), a marketing and sign-up site, and onboarding for new shops.
+2. ✅ Cloud accounts and sync: sign-up, separate data for each business, staff logins, sync between devices (Supabase).
+3. ✅ Workshop mode: check-in, workshop board, technician assignment, "Car's ready" texts, On hold status.
+4. Video walk-around: record a video, send it with a quote, and the customer approves or declines each item and signs online.
+5. Customer messages and payments: automatic email and SMS, online quote approval, card payment links (Stripe), Xero export.
+6. Selling it: monthly subscriptions (Stripe Billing), a marketing and sign-up site, and onboarding for new shops.

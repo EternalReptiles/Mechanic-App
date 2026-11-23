@@ -73,6 +73,7 @@ export const STATUS: Record<JobStatus, { label: string; color: string }> = {
   quote: { label: 'Quote', color: '#8b5cf6' },
   scheduled: { label: 'Scheduled', color: '#0ea5e9' },
   in_progress: { label: 'In progress', color: '#f59e0b' },
+  waiting: { label: 'On hold', color: '#a16207' },
   completed: { label: 'Completed', color: '#10b981' },
   invoiced: { label: 'Invoiced', color: '#ef4444' },
   paid: { label: 'Paid', color: '#64748b' },
@@ -83,6 +84,7 @@ export const STATUS_ORDER: JobStatus[] = [
   'quote',
   'scheduled',
   'in_progress',
+  'waiting',
   'completed',
   'invoiced',
   'paid',
@@ -155,3 +157,13 @@ export const CHECK_LABEL: Record<string, { label: string; color: string }> = {
   urgent: { label: 'Urgent', color: '#dc2626' },
   na: { label: 'N/A', color: '#94a3b8' },
 };
+
+/** Short display name for a team member: "dave.smith@x.com" -> "Dave Smith" */
+export function personName(email: string, name?: string): string {
+  if (name) return name;
+  return (email.split('@')[0] ?? '')
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(' ');
+}

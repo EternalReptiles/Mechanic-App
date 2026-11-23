@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
+import Board from './Board';
 import { Link } from 'react-router-dom';
 import JobCard from '../components/JobCard';
 import { Empty, PageHeader } from '../components/ui';
@@ -10,6 +11,9 @@ import { addDays, dayKey, fmtTime, startOfWeek, STATUS } from '../utils';
 export default function Schedule() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const settings = useSettings();
+  const hasWorkshop = settings.businessType !== 'mobile';
+  const [chosen, setView] = useState<'board' | 'week' | null>(null);
+  const view = chosen ?? (settings.businessType === 'workshop' ? 'board' : 'week');
   const { customerMap, vehicleMap } = useLookups();
   const jobs = useLiveQuery(() => db.jobs.toArray(), []) ?? [];
 
@@ -22,9 +26,26 @@ export default function Schedule() {
 
   const label = `${weekStart.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })} – ${addDays(weekStart, 6).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}`;
 
+  const toggle = hasWorkshop && (
+    <div className="seg two">
+      <button className={view === 'board' ? 'on solid' : ''} onClick={() => setView('board')}>🔧 Workshop board</button>
+      <button className={view === 'week' ? 'on solid' : ''} onClick={() => setView('week')}>📅 Week</button>
+    </div>
+  );
+
+  if (hasWorkshop && view === 'board')
+    return (
+      <>
+        <PageHeader title="Workshop" />
+        {toggle}
+        <Board />
+      </>
+    );
+
   return (
     <>
       <PageHeader title="Schedule" />
+      {toggle}
       <div className="row between week-nav">
         <button className="btn" onClick={() => setWeekStart(addDays(weekStart, -7))}>‹ Prev</button>
         <button className="btn ghost" onClick={() => setWeekStart(startOfWeek(new Date()))}>{label}</button>
@@ -47,7 +68,7 @@ export default function Schedule() {
                     <span className="slot-time">{fmtTime(j.scheduledStart)}</span>
                     <span className="slot-body">
                       <strong>{c?.name || 'No customer'}</strong> {j.title && `– ${j.title}`}
-                      <span className="muted small">{j.siteAddress || c?.address}</span>
+                      <span className="muted small">{j.location === 'workshop' ? '🔧 In workshop' : j.siteAddress || c?.address}</span>
                     </span>
                   </Link>
                 );

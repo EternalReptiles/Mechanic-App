@@ -7,10 +7,12 @@ import LineItems from '../components/LineItems';
 import Photos from '../components/Photos';
 import SignaturePad from '../components/SignaturePad';
 import { Field, PageHeader, StatusBadge } from '../components/ui';
+import { useCloud } from '../cloud/CloudProvider';
 import { db, deleteJob } from '../db';
-import { useSettings } from '../hooks';
+import { useAutosave, useSettings } from '../hooks';
 import type { Job, JobStatus, PaymentMethod, Vehicle } from '../types';
 import {
+  fillTemplate,
   addMonthsISO,
   daysUntil,
   firstName,
@@ -32,6 +34,7 @@ const NEXT_STEP: Partial<Record<JobStatus, { label: string; to: JobStatus }>> = 
   quote: { label: 'Quote accepted → Book it in', to: 'scheduled' },
   scheduled: { label: '▶ Start job', to: 'in_progress' },
   in_progress: { label: '✓ Job complete', to: 'completed' },
+  waiting: { label: '▶ Resume job', to: 'in_progress' },
   completed: { label: '🧾 Create invoice', to: 'invoiced' },
 };
 
@@ -49,31 +52,23 @@ export default function JobPage() {
   const [params, setParams] = useSearchParams();
   const tab = (params.get('tab') as Tab) || 'details';
   const settings = useSettings();
+  const { team } = useCloud();
   const [job, setJob] = useState<Job | null | undefined>(undefined);
-  const [saved, setSaved] = useState(true);
   const [signing, setSigning] = useState(false);
-  const loaded = useRef(false);
+  const deleted = useRef(false);
 
   const customer = useLiveQuery(() => (job?.customerId ? db.customers.get(job.customerId) : undefined), [job?.customerId]);
   const vehicle = useLiveQuery(() => (job?.vehicleId ? db.vehicles.get(job.vehicleId) : undefined), [job?.vehicleId]);
   const photoCount = useLiveQuery(() => db.photos.where('jobId').equals(id).count(), [id]) ?? 0;
 
   useEffect(() => {
-    loaded.current = false;
+    setJob(undefined);
+    deleted.current = false;
     db.jobs.get(id).then((j) => setJob(j ?? null));
   }, [id]);
 
-  // Auto-save shortly after every change, so nothing is lost if the phone locks.
-  useEffect(() => {
-    if (!job) return;
-    if (!loaded.current) {
-      loaded.current = true;
-      return;
-    }
-    setSaved(false);
-    const t = setTimeout(() => db.jobs.put(job).then(() => setSaved(true)), 400);
-    return () => clearTimeout(t);
-  }, [job]);
+  // Saves every change automatically, including when leaving the screen or locking the phone.
+  const saved = useAutosave(job, (j) => !deleted.current && db.jobs.put(j), id);
 
   if (job === undefined) return null;
   if (job === null)
@@ -110,12 +105,24 @@ export default function JobPage() {
 
   async function remove() {
     if (!confirm(`Delete job #${job!.number}? This cannot be undone.`)) return;
-    loaded.current = false;
+    deleted.current = true;
     await deleteJob(job!.id);
     navigate('/jobs', { replace: true });
   }
 
   const next = NEXT_STEP[job.status];
+  const inWorkshop = job.location === 'workshop';
+  const vehicleName = vehicle ? [vehicle.make, vehicle.model].filter(Boolean).join(' ') || vehicle.rego : 'car';
+  const readyText = customer
+    ? fillTemplate(settings.readyMessage, {
+        name: firstName(customer.name),
+        business: settings.businessName,
+        vehicle: vehicleName,
+        rego: vehicle?.rego ?? '',
+        total: money(totals(job.lineItems, settings.gstRegistered).total),
+      })
+    : '';
+  const nowISO = () => new Date().toISOString();
   const address = job.siteAddress || customer?.address || '';
   const t = totals(job.lineItems, settings.gstRegistered);
   const flagged = (job.checklist ?? []).filter((c) => c.result === 'attention' || c.result === 'urgent').length;
@@ -135,6 +142,9 @@ export default function JobPage() {
         <button className="btn primary block big" onClick={() => setStatus(next.to)}>
           {next.label}
         </button>
+      )}
+      {job.status === 'in_progress' && (
+        <button className="btn block" onClick={() => setStatus('waiting')}>⏸ On hold – waiting on parts / approval</button>
       )}
       {job.status === 'invoiced' && (
         <div className="pay-row">
@@ -166,12 +176,15 @@ export default function JobPage() {
 
       <div className="row wrap quick-actions">
         {customer?.phone && <a className="btn" href={telUrl(customer.phone)}>📞 Call</a>}
-        {customer?.phone && (
+        {customer?.phone && !inWorkshop && (
           <a className="btn" href={smsUrl(customer.phone, `Hi ${firstName(customer.name)}, it's ${settings.businessName}. I'm on my way and should be with you shortly.`)}>
             💬 On my way
           </a>
         )}
-        {address && <a className="btn" href={mapsUrl(address)} target="_blank" rel="noreferrer">🧭 Navigate</a>}
+        {address && !inWorkshop && <a className="btn" href={mapsUrl(address)} target="_blank" rel="noreferrer">🧭 Navigate</a>}
+        {customer?.phone && inWorkshop && (
+          <a className="btn" href={smsUrl(customer.phone, readyText)}>💬 Car's ready</a>
+        )}
       </div>
 
       <div className="tabs" role="tablist">
@@ -215,8 +228,46 @@ export default function JobPage() {
             )}
           </section>
 
+          {inWorkshop && (
+            <section className="card grid">
+              <h2 className="wide">Workshop check-in</h2>
+              <Field label="Key tag #">
+                <input inputMode="numeric" value={job.keyTag ?? ''} onChange={(e) => update({ keyTag: e.target.value })} />
+              </Field>
+              <Field label="Promised ready by">
+                <input type="datetime-local" value={toLocalInput(job.promisedAt ?? '')} onChange={(e) => update({ promisedAt: fromLocalInput(e.target.value) })} />
+              </Field>
+              <div className="wide row wrap">
+                {job.droppedOffAt ? (
+                  <span className="pill-ok">✓ Dropped off {fmtDateTime(job.droppedOffAt)}</span>
+                ) : (
+                  <button className="btn" onClick={() => update({ droppedOffAt: nowISO() })}>🚗 Car dropped off</button>
+                )}
+                {job.collectedAt ? (
+                  <span className="pill-ok">✓ Collected {fmtDateTime(job.collectedAt)}</span>
+                ) : (
+                  job.droppedOffAt && <button className="btn" onClick={() => update({ collectedAt: nowISO() })}>👋 Car collected</button>
+                )}
+              </div>
+            </section>
+          )}
+
           <section className="card grid">
             <h2 className="wide">Job</h2>
+            {(settings.businessType === 'both' || (settings.businessType === 'mobile') === inWorkshop) && (
+              <div className="seg wide two">
+                <button className={!inWorkshop ? 'on solid' : ''} onClick={() => update({ location: 'onsite' })}>🚐 At customer</button>
+                <button className={inWorkshop ? 'on solid' : ''} onClick={() => update({ location: 'workshop' })}>🔧 In workshop</button>
+              </div>
+            )}
+            {team.length > 1 && (
+              <Field label="Technician" wide>
+                <select value={job.assignedTo ?? ''} onChange={(e) => update({ assignedTo: e.target.value })}>
+                  <option value="">— Unassigned —</option>
+                  {team.map((t) => <option key={t.userId} value={t.userId}>{t.name}</option>)}
+                </select>
+              </Field>
+            )}
             <Field label="What's the job?" wide>
               <input value={job.title} placeholder="e.g. Logbook service, brake pads" onChange={(e) => update({ title: e.target.value })} />
             </Field>
@@ -232,9 +283,11 @@ export default function JobPage() {
                 {[30, 60, 90, 120, 180, 240, 360, 480].map((m) => <option key={m} value={m}>{m < 60 ? `${m} min` : `${m / 60} hr`}</option>)}
               </select>
             </Field>
-            <Field label="Where's the car?" wide>
-              <input value={job.siteAddress} placeholder={customer?.address || 'Address'} onChange={(e) => update({ siteAddress: e.target.value })} />
-            </Field>
+            {!inWorkshop && (
+              <Field label="Where's the car?" wide>
+                <input value={job.siteAddress} placeholder={customer?.address || 'Address'} onChange={(e) => update({ siteAddress: e.target.value })} />
+              </Field>
+            )}
             <Field label="Customer says…" wide>
               <textarea rows={3} value={job.description} placeholder="Noise from front left when braking…" onChange={(e) => update({ description: e.target.value })} />
             </Field>

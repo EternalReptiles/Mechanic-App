@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Customer, Job, Vehicle } from '../types';
+import { useCloud } from '../cloud/CloudProvider';
 import { fmtDateTime, money, totals, vehicleLabel } from '../utils';
 import { StatusBadge } from './ui';
 
@@ -17,6 +18,8 @@ export default function JobCard({
   showTime?: boolean;
 }) {
   const t = totals(job.lineItems, gst);
+  const { memberName } = useCloud();
+  const tech = memberName(job.assignedTo);
   return (
     <Link to={`/jobs/${job.id}`} className="card job-card">
       <div className="row between">
@@ -27,8 +30,19 @@ export default function JobCard({
       </div>
       {job.title && <div>{job.title}</div>}
       {vehicle && <div className="muted">{vehicleLabel(vehicle)}</div>}
+      {(job.location === 'workshop' || tech) && (
+        <div className="small muted">
+          {[job.location === 'workshop' && `🔧 Workshop${job.keyTag ? ` · 🔑 ${job.keyTag}` : ''}`, tech && `👤 ${tech}`].filter(Boolean).join(' · ')}
+        </div>
+      )}
       <div className="row between muted small">
-        <span>{showTime ? fmtDateTime(job.scheduledStart) : job.siteAddress}</span>
+        <span>
+          {showTime
+            ? job.location === 'workshop' && job.promisedAt && !job.collectedAt
+              ? `Ready by ${fmtDateTime(job.promisedAt)}`
+              : fmtDateTime(job.scheduledStart)
+            : job.siteAddress}
+        </span>
         {t.total > 0 && <span>{money(t.total)}</span>}
       </div>
     </Link>
