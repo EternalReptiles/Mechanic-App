@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 
-export default function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void; onCancel: () => void }) {
+export default function SignaturePad({
+  onSave,
+  onCancel,
+  autoScroll = true,
+}: {
+  onSave: (dataUrl: string) => void;
+  onCancel: () => void;
+  autoScroll?: boolean;
+}) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const [empty, setEmpty] = useState(true);
@@ -16,8 +24,8 @@ export default function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: s
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.strokeStyle = '#0f172a';
-    c.scrollIntoView({ block: 'center' });
-  }, []);
+    if (autoScroll) c.scrollIntoView({ block: 'center' });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pos = (e: React.PointerEvent) => {
     const r = canvas.current!.getBoundingClientRect();

@@ -2,7 +2,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate } from 'react-router-dom';
 import JobCard from '../components/JobCard';
 import { Empty, PageHeader } from '../components/ui';
+import { useEffect, useState } from 'react';
 import { useCloud } from '../cloud/CloudProvider';
+import { supabase } from '../cloud/supabase';
 import SyncBadge from '../cloud/SyncBadge';
 import { createJob, db } from '../db';
 import { useLookups, useSettings } from '../hooks';
@@ -11,7 +13,19 @@ import { addDays, dayKey, daysUntil, money, STATUS, totals } from '../utils';
 export default function Dashboard() {
   const navigate = useNavigate();
   const settings = useSettings();
-  const { isAdmin } = useCloud();
+  const { isAdmin, businessId } = useCloud();
+  // Customers who've answered a video walk-around since we last looked.
+  const [responses, setResponses] = useState<{ job_id: string; signed_name: string }[]>([]);
+  useEffect(() => {
+    if (!navigator.onLine) return;
+    supabase
+      .from('walkarounds')
+      .select('job_id, signed_name')
+      .eq('business_id', businessId)
+      .not('responded_at', 'is', null)
+      .is('seen_by_business_at', null)
+      .then(({ data }) => setResponses(data ?? []));
+  }, [businessId]);
   const { customerMap, vehicleMap } = useLookups();
   const jobs = useLiveQuery(() => db.jobs.toArray(), []) ?? [];
   const vehicles = useLiveQuery(() => db.vehicles.toArray(), []) ?? [];
@@ -65,6 +79,16 @@ export default function Dashboard() {
         title={settings.businessName || 'Dashboard'}
         actions={<><SyncBadge /><button className="btn primary" onClick={newJob}>+ New job</button></>}
       />
+
+      {responses.length > 0 && (
+        <Link to={`/jobs/${responses[0].job_id}?tab=inspection`} className="banner attention">
+          <span>
+            ✍ <strong>{responses.length === 1 ? `${responses[0].signed_name} responded` : `${responses.length} customers responded`}</strong> to
+            your video walk-around{responses.length === 1 ? '' : 's'}
+          </span>
+          <span>›</span>
+        </Link>
+      )}
 
       {needsSetup && (
         <Link to="/settings" className="banner">

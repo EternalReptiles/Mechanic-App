@@ -89,6 +89,8 @@ export interface Job {
   droppedOffAt?: string;
   promisedAt?: string;
   collectedAt?: string;
+  /** Walk-around ids whose approved work has already been added to this job */
+  appliedWalkarounds?: string[];
 }
 
 export type JobLocation = 'onsite' | 'workshop';

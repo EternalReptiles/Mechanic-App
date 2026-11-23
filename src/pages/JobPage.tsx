@@ -8,6 +8,7 @@ import Photos from '../components/Photos';
 import SignaturePad from '../components/SignaturePad';
 import { Field, PageHeader, StatusBadge } from '../components/ui';
 import { useCloud } from '../cloud/CloudProvider';
+import WalkaroundList from '../walkaround/WalkaroundList';
 import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
 import type { Job, JobStatus, PaymentMethod, Vehicle } from '../types';
@@ -305,6 +306,7 @@ export default function JobPage() {
       )}
 
       {tab === 'inspection' && (
+        <>
         <section className="card">
           <h2>Vehicle inspection</h2>
           <Checklist items={job.checklist ?? []} template={settings.checklistTemplate} onChange={(checklist) => update({ checklist })} />
@@ -312,6 +314,13 @@ export default function JobPage() {
             <Link className="btn block" to={`/jobs/${job.id}/report`}>📋 View inspection report</Link>
           )}
         </section>
+        <WalkaroundList
+          job={job}
+          onAddLines={(lines, walkId) =>
+            update({ lineItems: [...job.lineItems, ...lines], appliedWalkarounds: [...(job.appliedWalkarounds ?? []), walkId] })
+          }
+        />
+        </>
       )}
 
       {tab === 'billing' && (

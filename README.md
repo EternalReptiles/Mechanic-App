@@ -5,6 +5,7 @@ Job management for mobile mechanics and workshops: customers, vehicles, bookings
 ## Features
 
 - **For mobile mechanics, workshops, or both.** Each job is marked "at customer" or "in workshop". Workshop jobs have a check-in (key tag, drop-off, promised-by time, collected), a one-tap "Car's ready" text, and a **workshop board** showing every car by stage: Booked in, In progress, On hold, Ready for pickup.
+- **Video walk-around.** Record the car in the app (or choose a video), list the recommended work with priorities and prices (flagged inspection items are filled in automatically), and text or email a link. The customer watches, taps Yes or No for each item, and signs, with no app or login. You get a dashboard alert, a one-tap "add approved work to job", and a printable approval record (time, IP address, device, signature, and a SHA-256 fingerprint of what was shown). The quote is locked once sent, and the response is locked once signed.
 - **Teams.** Owners invite staff by email as Admin or Technician. Jobs can be assigned to a technician, who can filter to "My jobs". Technicians don't see takings or business settings.
 - **Cloud sync that works without signal.** Data is saved on the device first and synced when there's reception, with a status badge. Photos sync through private cloud storage.
 
@@ -31,7 +32,7 @@ npm run dev       # development server
 npm run build     # production build in dist/
 ```
 
-You can host `dist/` on any static web host (Netlify, Vercel, Cloudflare Pages). Open the site on your phone and choose **Add to Home Screen** to install it.
+**Live site:** https://mechanic-app-au.netlify.app. To publish a new version, run `NETLIFY_AUTH_TOKEN=… ./scripts/deploy-netlify.sh`. Open the site on your phone and choose **Add to Home Screen** to install it.
 
 ## Architecture
 
@@ -44,6 +45,6 @@ You can host `dist/` on any static web host (Netlify, Vercel, Cloudflare Pages).
 1. ✅ Mechanic workflow: price list, inspections, signatures, reminders, finding customers by rego.
 2. ✅ Cloud accounts and sync: sign-up, separate data for each business, staff logins, sync between devices (Supabase).
 3. ✅ Workshop mode: check-in, workshop board, technician assignment, "Car's ready" texts, On hold status.
-4. Video walk-around: record a video, send it with a quote, and the customer approves or declines each item and signs online.
+4. ✅ Video walk-around: record a video, send it with a quote, and the customer approves or declines each item and signs online.
 5. Customer messages and payments: automatic email and SMS, online quote approval, card payment links (Stripe), Xero export.
 6. Selling it: monthly subscriptions (Stripe Billing), a marketing and sign-up site, and onboarding for new shops.

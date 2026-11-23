@@ -11,6 +11,9 @@ import DocumentView from './pages/DocumentView';
 import PriceList from './pages/PriceList';
 import Team from './pages/Team';
 import CloudProvider from './cloud/CloudProvider';
+import Compose from './walkaround/Compose';
+import CustomerApproval from './walkaround/CustomerApproval';
+import WalkRecord from './walkaround/Record';
 import Reminders from './pages/Reminders';
 
 function BottomNav() {
@@ -36,34 +39,46 @@ function BottomNav() {
   );
 }
 
-export default function App() {
+function StaffApp() {
   return (
     <CloudProvider>
-    <Routes>
-      <Route path="/jobs/:id/:docType" element={<DocumentView />} />
-      <Route
-        path="*"
-        element={
-          <div className="shell">
-            <main className="content">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/jobs" element={<Jobs />} />
-                <Route path="/jobs/:id" element={<JobPage />} />
-                <Route path="/schedule" element={<Schedule />} />
-                <Route path="/customers" element={<Customers />} />
-                <Route path="/customers/:id" element={<CustomerPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/settings/price-list" element={<PriceList />} />
-                <Route path="/reminders" element={<Reminders />} />
-                <Route path="/settings/team" element={<Team />} />
-              </Routes>
-            </main>
-            <BottomNav />
-          </div>
-        }
-      />
-    </Routes>
+      <Routes>
+        <Route path="/jobs/:id/video" element={<Compose />} />
+        <Route path="/jobs/:id/:docType" element={<DocumentView />} />
+        <Route path="/walkaround/:id" element={<WalkRecord />} />
+        <Route
+          path="*"
+          element={
+            <div className="shell">
+              <main className="content">
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/jobs" element={<Jobs />} />
+                  <Route path="/jobs/:id" element={<JobPage />} />
+                  <Route path="/schedule" element={<Schedule />} />
+                  <Route path="/customers" element={<Customers />} />
+                  <Route path="/customers/:id" element={<CustomerPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/settings/price-list" element={<PriceList />} />
+                  <Route path="/reminders" element={<Reminders />} />
+                  <Route path="/settings/team" element={<Team />} />
+                </Routes>
+              </main>
+              <BottomNav />
+            </div>
+          }
+        />
+      </Routes>
     </CloudProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      {/* Customer-facing page: no login */}
+      <Route path="/v/:token" element={<CustomerApproval />} />
+      <Route path="*" element={<StaffApp />} />
+    </Routes>
   );
 }
