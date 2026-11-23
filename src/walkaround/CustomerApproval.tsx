@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../cloud/supabase';
 import SignaturePad from '../components/SignaturePad';
-import { money, telUrl } from '../utils';
-import { consentText, PRIORITY, videoUrl, type WalkContent } from './model';
+import { fmtDay, money, telUrl } from '../utils';
+import { PRIORITY, signStatement, termLines, videoUrl, type RequestKind, type WalkContent } from './model';
 
 interface Loaded {
+  kind: RequestKind;
+  terms_agreed: boolean | null;
   content: WalkContent;
   video_path: string | null;
   expired: boolean;
@@ -27,6 +29,7 @@ export default function CustomerApproval() {
   const [signing, setSigning] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [agree, setAgree] = useState(false);
 
   async function load() {
     const { data, error } = await supabase.rpc('get_walkaround', { p_token: token });
@@ -43,22 +46,28 @@ export default function CustomerApproval() {
   if (w === null) return <div className="cust"><h1>Link not found</h1><p>This link isn't valid. Please check the message you were sent.</p></div>;
 
   const c = w.content;
+  const kind = w.kind ?? 'walkaround';
+  const isWalk = kind === 'walkaround';
   const done = !!w.responded_at;
   const shown = done ? w.decisions ?? {} : decisions;
-  const approvedTotal = c.items.filter((i) => shown[i.id] === 'approved').reduce((s, i) => s + i.total, 0);
-  const allDecided = c.items.every((i) => shown[i.id]);
+  const approvedTotal = isWalk ? c.items.filter((i) => shown[i.id] === 'approved').reduce((s, i) => s + i.total, 0) : c.total ?? 0;
+  const allDecided = !isWalk || c.items.every((i) => shown[i.id]);
+  const hasTerms = !!c.terms?.trim();
+  const statement = signStatement(kind, c.business.name, `${money(approvedTotal)}${c.gst ? ' (inc GST)' : ''}`, c.dueDate ? fmtDay(c.dueDate) : undefined);
 
   async function submit() {
     setErr('');
     if (!allDecided) return setErr('Please choose Yes or No for every item.');
     if (!name.trim()) return setErr('Please type your name.');
     if (!signature) return setErr('Please sign in the box.');
+    if (hasTerms && !agree) return setErr('Please tick the box to agree to the terms and conditions.');
     setBusy(true);
     const { error } = await supabase.rpc('respond_walkaround', {
       p_token: token,
       p_decisions: decisions,
       p_name: name.trim(),
       p_signature: signature,
+      p_agree_terms: agree,
     });
     setBusy(false);
     if (error) return setErr(error.message);
@@ -82,7 +91,11 @@ export default function CustomerApproval() {
           <p>
             Your response was sent to {c.business.name} on{' '}
             {new Date(w.responded_at!).toLocaleString('en-AU', { dateStyle: 'medium', timeStyle: 'short' })}.
-            {approvedTotal > 0 ? ` Approved work: ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}.` : ' No work was approved.'}
+            {isWalk
+              ? approvedTotal > 0 ? ` Approved work: ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}.` : ' No work was approved.'
+              : kind === 'quote'
+                ? ` You approved the quote for ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}.`
+                : ` You signed off the work: ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}${c.dueDate ? `, due ${fmtDay(c.dueDate)}` : ''}.`}
           </p>
           <button className="btn" onClick={() => window.print()}>Save a copy (PDF)</button>
         </div>
@@ -99,6 +112,34 @@ export default function CustomerApproval() {
 
       {w.video_path && (
         <video className="wa-video" src={videoUrl(w.video_path)} controls playsInline preload="metadata" />
+      )}
+
+      {!isWalk && (
+        <section>
+          <h2>{kind === 'quote' ? 'Quote' : 'Work completed'}{c.jobNumber ? ` · #${c.jobNumber}` : ''}</h2>
+          {c.title && <p><strong>{c.title}</strong></p>}
+          {c.description && <p className="small pre">{c.description}</p>}
+          <table className="cust-lines">
+            <tbody>
+              {(c.lines ?? []).map((l, n) => (
+                <tr key={n}>
+                  <td>{l.description}{l.qty !== 1 && <span className="muted"> × {l.qty}</span>}</td>
+                  <td>{money(l.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="cust-sums">
+            {c.gst && <div><span>Subtotal (ex GST)</span><span>{money(c.subtotal ?? 0)}</span></div>}
+            {c.gst && <div><span>GST</span><span>{money(c.gstAmount ?? 0)}</span></div>}
+          </div>
+          <div className="cust-total">
+            <span>Total{c.gst ? ' (inc GST)' : ''}</span>
+            <strong>{money(c.total ?? 0)}</strong>
+          </div>
+          {c.dueDate && <p className="due">Payment due by <strong>{fmtDay(c.dueDate)}</strong></p>}
+          {c.workNotes && (<><h3>Work carried out</h3><p className="small pre">{c.workNotes}</p></>)}
+        </section>
       )}
 
       {c.items.length > 0 && (
@@ -151,7 +192,14 @@ export default function CustomerApproval() {
           ) : (
             <button className="btn block" onClick={() => setSigning(true)}>✍ Tap to sign</button>
           )}
-          <p className="consent">{consentText(c.business.name)}</p>
+          <p className="consent"><strong>{statement}</strong></p>
+          {hasTerms && <Terms text={c.terms!} />}
+          {hasTerms && (
+            <label className="agree">
+              <input type="checkbox" checked={agree} onChange={(e) => { setAgree(e.target.checked); setErr(''); }} />
+              <span>I have read and agree to the terms and conditions</span>
+            </label>
+          )}
           {err && <p className="error">{err}</p>}
           <button className="btn primary block big" disabled={busy} onClick={submit}>
             {busy ? 'Sending…' : 'Submit my response'}
@@ -164,10 +212,25 @@ export default function CustomerApproval() {
           <h2>Signed</h2>
           <img className="sig-img" src={w.signature} alt="Signature" />
           <p className="small">{w.signed_name}</p>
-          <p className="consent">{consentText(c.business.name)}</p>
+          <p className="consent"><strong>{statement}</strong></p>
+          {hasTerms && <Terms text={c.terms!} />}
+          {w.terms_agreed && <p className="small">✓ Agreed to the terms and conditions</p>}
         </section>
       )}
       <footer className="cust-foot">{c.business.abn && `ABN ${c.business.abn} · `}{c.business.email}</footer>
     </div>
+  );
+}
+
+function Terms({ text }: { text: string }) {
+  return (
+    <details className="terms" open>
+      <summary>Terms &amp; conditions</summary>
+      <ol>
+        {termLines(text).map((t, i) => (
+          <li key={i}>{t.heading && <strong>{t.heading}: </strong>}{t.text}</li>
+        ))}
+      </ol>
+    </details>
   );
 }

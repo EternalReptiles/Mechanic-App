@@ -1,6 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { clearLocalData, db, getMeta, getSettings, markAllDirty, setMeta, WORKSHOP_REMINDER } from '../db';
+import { clearLocalData, db, getMeta, getSettings, markAllDirty, setMeta, WORKSHOP_REMINDER, WORKSHOP_TERMS_EXTRA } from '../db';
 import type { BusinessType } from '../types';
 import { personName } from '../utils';
 import { supabase, withTimeout } from './supabase';
@@ -343,6 +343,7 @@ function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error
       labourRate: rate || s.labourRate,
       gstRegistered: gst,
       reminderMessage: type === 'mobile' ? s.reminderMessage : WORKSHOP_REMINDER,
+      terms: type === 'mobile' ? s.terms : s.terms + WORKSHOP_TERMS_EXTRA,
     });
     await tailorStarterPriceList(type, rate || s.labourRate);
     onCreated();

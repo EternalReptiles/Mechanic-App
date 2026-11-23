@@ -193,8 +193,20 @@ export const defaultSettings: Settings = {
   reminderMessage:
     "Hi {name}, it's {business}. Your {vehicle} is due for a service on {date}. Reply to this message to book a time and we'll come to you.",
   businessType: 'mobile',
+  terms: '', // filled from DEFAULT_TERMS below
   readyMessage: "Hi {name}, it's {business}. Your {vehicle} is ready to collect. Total {total}. See you soon!",
 };
+
+export const DEFAULT_TERMS = `Payment: The total is due within {days} days of the invoice date unless {business} agrees otherwise in writing. I agree to pay reasonable costs of recovering any overdue amount.
+Approved work only: Only the work I have approved will be done. If more work is needed, {business} will contact me for approval first.
+Customer-supplied parts: Parts I supply are fitted at my risk. {business} is not responsible for the quality, suitability or failure of parts I supply, or for damage or extra labour caused by them. Workmanship by {business} is still guaranteed.
+Existing faults and declined work: {business} is not responsible for existing wear, faults or damage unrelated to the work performed, or for problems arising from recommended work I have declined.
+Parts warranty: New parts supplied by {business} carry the manufacturer's warranty.
+Your rights: Our goods and services come with guarantees that cannot be excluded under the Australian Consumer Law. Nothing in these terms limits those rights.`;
+defaultSettings.terms = DEFAULT_TERMS;
+
+export const WORKSHOP_TERMS_EXTRA = `
+Collecting your vehicle: Please collect your vehicle within 2 business days of being told it's ready. Reasonable storage fees may apply after that.`;
 
 export const WORKSHOP_REMINDER =
   "Hi {name}, it's {business}. Your {vehicle} is due for a service on {date}. Reply to this message to book it in.";

@@ -8,7 +8,8 @@ import Photos from '../components/Photos';
 import SignaturePad from '../components/SignaturePad';
 import { Field, PageHeader, StatusBadge } from '../components/ui';
 import { useCloud } from '../cloud/CloudProvider';
-import WalkaroundList from '../walkaround/WalkaroundList';
+import ApprovalList, { WalkaroundSection } from '../walkaround/WalkaroundList';
+import SendSignoff from '../walkaround/SendSignoff';
 import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
 import type { Job, JobStatus, PaymentMethod, Vehicle } from '../types';
@@ -56,6 +57,7 @@ export default function JobPage() {
   const { team } = useCloud();
   const [job, setJob] = useState<Job | null | undefined>(undefined);
   const [signing, setSigning] = useState(false);
+  const [sentCount, setSentCount] = useState(0);
   const deleted = useRef(false);
 
   const customer = useLiveQuery(() => (job?.customerId ? db.customers.get(job.customerId) : undefined), [job?.customerId]);
@@ -314,7 +316,7 @@ export default function JobPage() {
             <Link className="btn block" to={`/jobs/${job.id}/report`}>📋 View inspection report</Link>
           )}
         </section>
-        <WalkaroundList
+        <WalkaroundSection
           job={job}
           onAddLines={(lines, walkId) =>
             update({ lineItems: [...job.lineItems, ...lines], appliedWalkarounds: [...(job.appliedWalkarounds ?? []), walkId] })
@@ -334,6 +336,8 @@ export default function JobPage() {
             <Link className="btn grow" to={`/jobs/${job.id}/quote`}>📄 Quote</Link>
             <Link className="btn grow" to={`/jobs/${job.id}/invoice`}>🧾 Invoice</Link>
           </div>
+          <SendSignoff job={job} customer={customer} vehicle={vehicle} onSent={() => setSentCount((n) => n + 1)} />
+          <ApprovalList job={job} kinds={['quote', 'completion']} refreshKey={sentCount} />
           {job.status === 'paid' && (
             <Field label="Payment method">
               <select value={job.paymentMethod ?? ''} onChange={(e) => update({ paymentMethod: e.target.value as PaymentMethod })}>

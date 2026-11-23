@@ -418,3 +418,17 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .break, .break a { word-break: break-all; }
 .table-wrap { overflow-x: auto; }
 @media (max-width: 560px) { .table-wrap .doc-table { font-size: 0.8rem; } .table-wrap .doc-table th, .table-wrap .doc-table td { padding: 6px 4px; } }
+
+/* ---------- Remote sign-off ---------- */
+.approval-list { margin-top: 8px; }
+.share-sent { margin-top: 10px; }
+.cust-lines { width: 100%; border-collapse: collapse; }
+.cust-lines td { padding: 8px 0; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+.cust-lines td:last-child { text-align: right; white-space: nowrap; font-weight: 600; padding-left: 10px; }
+.cust-sums > div { display: flex; justify-content: space-between; padding: 4px 0; color: #475569; }
+.due { background: #fff7ed; border: 1px solid #fdba74; border-radius: 8px; padding: 10px; }
+.terms { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 0.85rem; color: #334155; }
+.terms summary { font-weight: 700; cursor: pointer; }
+.terms ol { padding-left: 20px; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.agree { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; padding: 6px 0; }
+.agree input { width: 24px; height: 24px; min-height: 24px; flex: none; margin-top: 1px; }

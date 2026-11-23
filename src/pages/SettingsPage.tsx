@@ -4,7 +4,7 @@ import { useCloud } from '../cloud/CloudProvider';
 import SyncBadge from '../cloud/SyncBadge';
 import { Field, PageHeader } from '../components/ui';
 import { useAutosave } from '../hooks';
-import { db, exportBackup, getSettings, importBackup } from '../db';
+import { db, DEFAULT_TERMS, exportBackup, getSettings, importBackup, WORKSHOP_TERMS_EXTRA } from '../db';
 import type { Settings } from '../types';
 
 export default function SettingsPage() {
@@ -117,6 +117,14 @@ export default function SettingsPage() {
           <input type="checkbox" checked={s.gstRegistered} onChange={(e) => setS({ ...s, gstRegistered: e.target.checked })} />
           <span>Registered for GST (add 10%)</span>
         </label>
+        <Field label="Terms & conditions (customers agree to these when they sign)" wide>
+          <textarea rows={10} value={s.terms} onChange={text('terms')} />
+        </Field>
+        <p className="wide muted small" style={{ margin: 0 }}>
+          One term per line; start a line with a heading and a colon, e.g. "Payment: …". Placeholders: {'{business} {days}'} (payment terms).
+          Have a lawyer check these before relying on them.{' '}
+          <button className="link" onClick={() => setS({ ...s, terms: DEFAULT_TERMS + (s.businessType === 'mobile' ? '' : WORKSHOP_TERMS_EXTRA) })}>Reset to default</button>
+        </p>
         <Field label="Invoice footer" wide><textarea rows={2} value={s.invoiceFooter} onChange={text('invoiceFooter')} /></Field>
         <Field label="Quote footer" wide><textarea rows={2} value={s.quoteFooter} onChange={text('quoteFooter')} /></Field>
       </section>

@@ -9,6 +9,7 @@ import { db } from '../db';
 import { useSettings } from '../hooks';
 import { firstName, money, smsUrl, uid, vehicleLabel } from '../utils';
 import {
+  fillTerms,
   fmtMB,
   itemTotal,
   MAX_VIDEO_BYTES,
@@ -114,6 +115,7 @@ export default function Compose() {
         gst: settings.gstRegistered,
         sentBy: memberName(userId) || email,
         items: items!.map((i) => ({ ...i, title: i.title.trim(), total: itemTotal(i.lines, settings.gstRegistered) })),
+        terms: fillTerms(settings.terms, settings.businessName, settings.paymentTermsDays),
       };
       const { data: row, error } = await supabase
         .from('walkarounds')

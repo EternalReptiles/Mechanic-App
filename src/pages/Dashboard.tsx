@@ -15,12 +15,12 @@ export default function Dashboard() {
   const settings = useSettings();
   const { isAdmin, businessId } = useCloud();
   // Customers who've answered a video walk-around since we last looked.
-  const [responses, setResponses] = useState<{ job_id: string; signed_name: string }[]>([]);
+  const [responses, setResponses] = useState<{ job_id: string; signed_name: string; kind: string }[]>([]);
   useEffect(() => {
     if (!navigator.onLine) return;
     supabase
       .from('walkarounds')
-      .select('job_id, signed_name')
+      .select('job_id, signed_name, kind')
       .eq('business_id', businessId)
       .not('responded_at', 'is', null)
       .is('seen_by_business_at', null)
@@ -81,10 +81,10 @@ export default function Dashboard() {
       />
 
       {responses.length > 0 && (
-        <Link to={`/jobs/${responses[0].job_id}?tab=inspection`} className="banner attention">
+        <Link to={`/jobs/${responses[0].job_id}?tab=${responses[0].kind === 'walkaround' ? 'inspection' : 'billing'}`} className="banner attention">
           <span>
-            ✍ <strong>{responses.length === 1 ? `${responses[0].signed_name} responded` : `${responses.length} customers responded`}</strong> to
-            your video walk-around{responses.length === 1 ? '' : 's'}
+            ✍ <strong>{responses.length === 1 ? `${responses[0].signed_name} signed` : `${responses.length} customers signed`}</strong> – tap to see
+            {responses.length === 1 ? ' their response' : ' the first'}
           </span>
           <span>›</span>
         </Link>

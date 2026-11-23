@@ -139,4 +139,6 @@ export interface Settings {
   reminderMessage: string;
   businessType: BusinessType;
   readyMessage: string;
+  /** Terms & conditions customers agree to when signing. Placeholders: {business} {days} */
+  terms: string;
 }

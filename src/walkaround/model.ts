@@ -20,6 +20,21 @@ export interface WalkItem {
   total: number;
 }
 
+export type RequestKind = 'walkaround' | 'quote' | 'completion';
+
+export const KIND_LABEL: Record<RequestKind, string> = {
+  walkaround: 'Video walk-around',
+  quote: 'Quote approval',
+  completion: 'Job sign-off',
+};
+
+export interface SignLine {
+  description: string;
+  qty: number;
+  unitPrice: number;
+  amount: number;
+}
+
 export interface WalkContent {
   business: { name: string; phone: string; email: string; logo: string; abn: string };
   customerName: string;
@@ -28,10 +43,25 @@ export interface WalkContent {
   gst: boolean;
   sentBy: string;
   items: WalkItem[];
+  /** Terms & conditions the customer must agree to (placeholders already filled) */
+  terms?: string;
+  // Quote approval / job sign-off only:
+  jobNumber?: number;
+  title?: string;
+  description?: string;
+  workNotes?: string;
+  lines?: SignLine[];
+  subtotal?: number;
+  gstAmount?: number;
+  total?: number;
+  /** YYYY-MM-DD, job sign-off only */
+  dueDate?: string;
 }
 
 export interface WalkRecord {
   id: string;
+  kind: RequestKind;
+  terms_agreed: boolean | null;
   job_id: string;
   token: string;
   created_at: string;
@@ -70,3 +100,28 @@ export const fmtMB = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`
 
 export const consentText = (business: string) =>
   `By signing, I confirm I have watched the video and reviewed every item above. I authorise ${business} to carry out the work I have marked "Yes" at the prices shown. I understand the items I marked "No" were recommended to me, and I accept responsibility for not having them done at this time.`;
+
+export function fillTerms(terms: string, business: string, days: number): string {
+  return terms.replace(/\{business\}/g, business || 'the business').replace(/\{days\}/g, String(days)).trim();
+}
+
+/** Splits "Heading: text" lines for display. */
+export function termLines(terms: string): { heading: string; text: string }[] {
+  return terms
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => {
+      const m = l.match(/^([^:]{2,40}):\s*(.*)$/);
+      return m ? { heading: m[1], text: m[2] } : { heading: '', text: l };
+    });
+}
+
+/** What the customer is agreeing to when they sign. */
+export function signStatement(kind: RequestKind, business: string, total: string, due?: string): string {
+  if (kind === 'quote')
+    return `I authorise ${business} to carry out the work above and agree to pay ${total} for it, on the terms and conditions below.`;
+  if (kind === 'completion')
+    return `I confirm the work above has been completed and agree to pay ${total}${due ? ` by ${due}` : ''}, on the terms and conditions below.`;
+  return consentText(business);
+}
