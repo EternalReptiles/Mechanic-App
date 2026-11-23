@@ -1,4 +1,4 @@
-import Dexie, { type Table } from 'dexie';
+import Dexie, { type DBCore, type DBCoreMutateRequest, type Table } from 'dexie';
 import type { CatalogItem, Customer, Job, Photo, Settings, Vehicle } from './types';
 import { uid } from './utils';
 
@@ -9,6 +9,8 @@ class MechanicDB extends Dexie {
   photos!: Table<Photo, string>;
   settings!: Table<Settings, string>;
   catalog!: Table<CatalogItem, string>;
+  tombstones!: Table<Tombstone, string>;
+  meta!: Table<{ key: string; value: unknown }, string>;
 
   constructor() {
     super('mechanic-app');
@@ -22,10 +24,69 @@ class MechanicDB extends Dexie {
     this.version(2)
       .stores({ catalog: 'id, name' })
       .upgrade((tx) => tx.table('catalog').bulkAdd(starterCatalog()));
+    this.version(3).stores({
+      customers: 'id, name, _dirty',
+      vehicles: 'id, customerId, rego, _dirty',
+      jobs: 'id, number, customerId, vehicleId, status, scheduledStart, _dirty',
+      photos: 'id, jobId, _dirty',
+      settings: 'id, _dirty',
+      catalog: 'id, name, _dirty',
+      tombstones: 'key',
+      meta: 'key',
+    });
     this.on('populate', (tx) => {
       tx.table('catalog').bulkAdd(starterCatalog());
     });
   }
+}
+
+// ---------- Change tracking for cloud sync ----------
+
+/** Tables whose records sync to the cloud. */
+export const SYNCED_TABLES = ['customers', 'vehicles', 'jobs', 'catalog', 'settings', 'photos'] as const;
+export type SyncedTable = (typeof SYNCED_TABLES)[number];
+
+export interface Tombstone {
+  key: string;
+  table: SyncedTable;
+  id: string;
+  at: number;
+}
+
+/** Called after every local (user) change, so the sync engine can push it. */
+export const changeListener = { onLocalChange: () => {} };
+
+/**
+ * Stamps every record the app writes with `updatedAt` and marks it `_dirty` so it gets pushed.
+ * Records written by the sync engine carry `_remote: 1` and are stored as-is.
+ */
+function trackingMiddleware(down: DBCore): DBCore {
+  return {
+    ...down,
+    table(name) {
+      const table = down.table(name);
+      if (!(SYNCED_TABLES as readonly string[]).includes(name)) return table;
+      return {
+        ...table,
+        mutate(req: DBCoreMutateRequest) {
+          if (req.type !== 'add' && req.type !== 'put') return table.mutate(req);
+          const now = Date.now();
+          let local = false;
+          const values = req.values.map((v) => {
+            if (v && v._remote) {
+              const { _remote: _r, ...rest } = v;
+              return rest;
+            }
+            local = true;
+            return { ...v, updatedAt: now, _dirty: 1 };
+          });
+          const result = table.mutate({ ...req, values } as DBCoreMutateRequest);
+          if (local) result.then(() => setTimeout(() => changeListener.onLocalChange(), 0));
+          return result;
+        },
+      };
+    },
+  };
 }
 
 function starterCatalog(): CatalogItem[] {
@@ -69,6 +130,43 @@ export const DEFAULT_CHECKLIST = [
 ];
 
 export const db = new MechanicDB();
+db.use({ stack: 'dbcore', name: 'sync-tracking', create: trackingMiddleware });
+
+/** Deletes records and leaves a tombstone so the deletion syncs to other devices. */
+export async function removeRecords(table: SyncedTable, ids: string[]) {
+  if (!ids.length) return;
+  await db.transaction('rw', db.table(table), db.tombstones, async () => {
+    await db.table(table).bulkDelete(ids);
+    await db.tombstones.bulkPut(ids.map((id) => ({ key: `${table}:${id}`, table, id, at: Date.now() })));
+  });
+  changeListener.onLocalChange();
+}
+
+export async function getMeta<T>(key: string): Promise<T | undefined> {
+  return (await db.meta.get(key))?.value as T | undefined;
+}
+export async function setMeta(key: string, value: unknown) {
+  await db.meta.put({ key, value });
+}
+
+/** Wipes everything stored on this device (used when signing out or switching business). */
+export async function clearLocalData() {
+  await db.transaction('rw', [...SYNCED_TABLES.map((t) => db.table(t)), db.tombstones, db.meta], async () => {
+    await Promise.all([...SYNCED_TABLES.map((t) => db.table(t).clear()), db.tombstones.clear(), db.meta.clear()]);
+  });
+}
+
+/** Marks every local record as changed, so it all uploads (used when a new business adopts this device's data). */
+export async function markAllDirty() {
+  for (const t of SYNCED_TABLES) {
+    await db.table(t).toCollection().modify((r: Record<string, unknown>) => {
+      r._dirty = 1;
+    });
+  }
+}
+
+/** Set by the cloud module: hands out a server-allocated job number, or null when offline. */
+export const jobNumbers = { allocateRemote: async (): Promise<number | null> => null };
 
 export const defaultSettings: Settings = {
   id: 'settings',
@@ -129,50 +227,55 @@ export function newVehicle(customerId: string, partial: Partial<Vehicle> = {}): 
   };
 }
 
+async function nextJobNumber(): Promise<number> {
+  try {
+    const n = await jobNumbers.allocateRemote();
+    if (n) return n;
+  } catch {
+    // offline – fall back to a local number
+  }
+  const [settings, last] = await Promise.all([getSettings(), db.jobs.orderBy('number').last()]);
+  return Math.max(settings.nextJobNumber, (last?.number ?? 0) + 1);
+}
+
 /** Creates and saves a new job, allocating the next job number. */
 export async function createJob(partial: Partial<Job> = {}): Promise<Job> {
-  return db.transaction('rw', db.jobs, db.settings, async () => {
-    const settings = await getSettings();
-    const job: Job = {
-      id: uid(),
-      number: settings.nextJobNumber,
-      customerId: '',
-      vehicleId: '',
-      status: 'quote',
-      title: '',
-      description: '',
-      siteAddress: '',
-      scheduledStart: '',
-      durationMins: 60,
-      odometer: '',
-      lineItems: [],
-      workNotes: '',
-      createdAt: new Date().toISOString(),
-      invoicedAt: '',
-      paidAt: '',
-      ...partial,
-    };
-    await db.settings.put({ ...settings, nextJobNumber: settings.nextJobNumber + 1 });
-    await db.jobs.add(job);
-    return job;
-  });
+  const job: Job = {
+    id: uid(),
+    number: await nextJobNumber(),
+    customerId: '',
+    vehicleId: '',
+    status: 'quote',
+    title: '',
+    description: '',
+    siteAddress: '',
+    scheduledStart: '',
+    durationMins: 60,
+    odometer: '',
+    lineItems: [],
+    workNotes: '',
+    createdAt: new Date().toISOString(),
+    invoicedAt: '',
+    paidAt: '',
+    ...partial,
+  };
+  await db.jobs.add(job);
+  return job;
 }
 
 export async function deleteCustomer(id: string) {
-  await db.transaction('rw', [db.customers, db.vehicles, db.jobs, db.photos], async () => {
-    const jobIds = await db.jobs.where('customerId').equals(id).primaryKeys();
-    await db.photos.where('jobId').anyOf(jobIds).delete();
-    await db.jobs.bulkDelete(jobIds);
-    await db.vehicles.where('customerId').equals(id).delete();
-    await db.customers.delete(id);
-  });
+  const jobIds = await db.jobs.where('customerId').equals(id).primaryKeys();
+  const photoIds = await db.photos.where('jobId').anyOf(jobIds).primaryKeys();
+  const vehicleIds = await db.vehicles.where('customerId').equals(id).primaryKeys();
+  await removeRecords('photos', photoIds);
+  await removeRecords('jobs', jobIds);
+  await removeRecords('vehicles', vehicleIds);
+  await removeRecords('customers', [id]);
 }
 
 export async function deleteJob(id: string) {
-  await db.transaction('rw', db.jobs, db.photos, async () => {
-    await db.photos.where('jobId').equals(id).delete();
-    await db.jobs.delete(id);
-  });
+  await removeRecords('photos', await db.photos.where('jobId').equals(id).primaryKeys());
+  await removeRecords('jobs', [id]);
 }
 
 // ---------- Backup ----------
@@ -198,7 +301,7 @@ export async function exportBackup(): Promise<Blob> {
     vehicles: await db.vehicles.toArray(),
     jobs: await db.jobs.toArray(),
     photos: await Promise.all(
-      photos.map(async (p) => ({ ...p, blob: await blobToDataUrl(p.blob) })),
+      photos.filter((p) => p.blob).map(async (p) => ({ ...p, blob: await blobToDataUrl(p.blob!) })),
     ),
   };
   return new Blob([JSON.stringify(data)], { type: 'application/json' });
@@ -213,17 +316,11 @@ export async function importBackup(file: File) {
       blob: await (await fetch(p.blob)).blob(),
     })),
   );
+  // Merge into existing data (records with the same id are replaced). Merging rather than wiping
+  // means a restore can't silently delete records that other devices still have.
   await db.transaction('rw', [db.settings, db.customers, db.vehicles, db.jobs, db.photos, db.catalog], async () => {
-    await Promise.all([
-      db.settings.clear(),
-      db.customers.clear(),
-      db.vehicles.clear(),
-      db.jobs.clear(),
-      db.photos.clear(),
-      db.catalog.clear(),
-    ]);
-    await db.catalog.bulkPut(data.catalog ?? []);
     await db.settings.bulkPut(data.settings ?? []);
+    await db.catalog.bulkPut(data.catalog ?? []);
     await db.customers.bulkPut(data.customers ?? []);
     await db.vehicles.bulkPut(data.vehicles ?? []);
     await db.jobs.bulkPut(data.jobs ?? []);

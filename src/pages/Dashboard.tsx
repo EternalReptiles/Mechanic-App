@@ -2,6 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Link, useNavigate } from 'react-router-dom';
 import JobCard from '../components/JobCard';
 import { Empty, PageHeader } from '../components/ui';
+import { useCloud } from '../cloud/CloudProvider';
+import SyncBadge from '../cloud/SyncBadge';
 import { createJob, db } from '../db';
 import { useLookups, useSettings } from '../hooks';
 import { addDays, dayKey, daysUntil, money, STATUS, totals } from '../utils';
@@ -9,13 +11,14 @@ import { addDays, dayKey, daysUntil, money, STATUS, totals } from '../utils';
 export default function Dashboard() {
   const navigate = useNavigate();
   const settings = useSettings();
+  const { isAdmin } = useCloud();
   const { customerMap, vehicleMap } = useLookups();
   const jobs = useLiveQuery(() => db.jobs.toArray(), []) ?? [];
   const vehicles = useLiveQuery(() => db.vehicles.toArray(), []) ?? [];
   const remindersDue = vehicles.filter(
     (v) => (v.nextServiceDate && daysUntil(v.nextServiceDate) <= 30) || (v.regoExpiry && daysUntil(v.regoExpiry) <= 30),
   ).length;
-  const needsSetup = !settings.abn || settings.businessName === 'My Mobile Mechanics';
+  const needsSetup = isAdmin && !settings.abn || settings.businessName === 'My Mobile Mechanics';
 
   const today = dayKey(new Date());
   const tomorrow = dayKey(addDays(new Date(), 1));
@@ -46,7 +49,7 @@ export default function Dashboard() {
     <>
       <PageHeader
         title={settings.businessName || 'Dashboard'}
-        actions={<button className="btn primary" onClick={newJob}>+ New job</button>}
+        actions={<><SyncBadge /><button className="btn primary" onClick={newJob}>+ New job</button></>}
       />
 
       {needsSetup && (
@@ -56,7 +59,7 @@ export default function Dashboard() {
         </Link>
       )}
 
-      <div className="stats">
+      {isAdmin && <div className="stats">
         <Link to="/jobs?status=invoiced" className="stat">
           <span className="stat-value">{money(owing)}</span>
           <span className="stat-label">Owing ({invoiced.length})</span>
@@ -69,7 +72,7 @@ export default function Dashboard() {
           <span className="stat-value">{money(paidThisMonth)}</span>
           <span className="stat-label">Paid this month</span>
         </div>
-      </div>
+      </div>}
 
       <Link to="/reminders" className={`banner${remindersDue ? ' attention' : ''}`}>
         <span>🔔 <strong>{remindersDue}</strong> service / rego reminder{remindersDue === 1 ? '' : 's'} due in the next 30 days</span>

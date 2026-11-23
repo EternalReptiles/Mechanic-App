@@ -92,7 +92,10 @@ export interface CatalogItem {
 export interface Photo {
   id: string;
   jobId: string;
-  blob: Blob;
+  /** Missing on devices that haven't downloaded the photo yet. */
+  blob?: Blob;
+  /** Path in cloud storage once uploaded. */
+  remotePath?: string;
   caption: string;
   createdAt: string;
 }

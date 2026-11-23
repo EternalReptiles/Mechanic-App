@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useCloud } from '../cloud/CloudProvider';
+import SyncBadge from '../cloud/SyncBadge';
 import { Field, PageHeader } from '../components/ui';
+import { useAutosave } from '../hooks';
 import { db, exportBackup, getSettings, importBackup } from '../db';
 import type { Settings } from '../types';
 
 export default function SettingsPage() {
   const [s, setS] = useState<Settings | null>(null);
   const [msg, setMsg] = useState('');
+  const cloud = useCloud();
 
   useEffect(() => {
     getSettings().then(setS);
   }, []);
 
-  useEffect(() => {
-    if (!s) return;
-    const t = setTimeout(() => db.settings.put(s), 400);
-    return () => clearTimeout(t);
-  }, [s]);
+  useAutosave(s, (x) => db.settings.put(x));
 
   if (!s) return null;
 
@@ -47,8 +47,7 @@ export default function SettingsPage() {
     if (!confirm('Restoring replaces ALL data on this device with the backup. Continue?')) return;
     try {
       await importBackup(file);
-      setS(await getSettings());
-      setMsg('Backup restored.');
+      setMsg('Backup restored. Reopen Settings to see restored settings.');
     } catch (e) {
       setMsg(`Restore failed: ${(e as Error).message}`);
     }
@@ -58,6 +57,29 @@ export default function SettingsPage() {
     <>
       <PageHeader title="Settings" />
 
+      <section className="card">
+        <h2>Account</h2>
+        <p className="small" style={{ marginTop: 0 }}>
+          <strong>{cloud.businessName}</strong><br />
+          {cloud.email} · {cloud.role === 'tech' ? 'Technician' : cloud.role === 'admin' ? 'Admin' : 'Owner'}
+        </p>
+        <SyncBadge detailed />
+        <div className="row wrap" style={{ marginTop: 10 }}>
+          <Link to="/settings/team" className="btn">👥 Team</Link>
+          <button className="btn ghost" onClick={() => void cloud.signOut()}>Sign out</button>
+        </div>
+      </section>
+
+      {!cloud.isAdmin && (
+        <>
+          <Link to="/settings/price-list" className="card row between">
+            <span><strong>📋 Price list</strong></span>
+            <span>›</span>
+          </Link>
+          <p className="muted small">Business settings can be changed by the owner or an admin.</p>
+        </>
+      )}
+      {cloud.isAdmin && (<>
       <section className="card grid">
         <h2 className="wide">Business details</h2>
         <Field label="Business name" wide><input value={s.businessName} onChange={text('businessName')} /></Field>
@@ -83,7 +105,7 @@ export default function SettingsPage() {
         <h2 className="wide">Pricing &amp; invoicing</h2>
         <Field label="Default labour rate per hour (ex GST)"><input type="number" inputMode="decimal" value={s.labourRate} onChange={num('labourRate')} /></Field>
         <Field label="Payment terms (days)"><input type="number" inputMode="numeric" value={s.paymentTermsDays} onChange={num('paymentTermsDays')} /></Field>
-        <Field label="Next job / invoice number"><input type="number" inputMode="numeric" value={s.nextJobNumber} onChange={num('nextJobNumber')} /></Field>
+        <Field label="Job / invoice numbers start from"><input type="number" inputMode="numeric" value={s.nextJobNumber} onChange={num('nextJobNumber')} /></Field>
         <label className="field checkbox">
           <input type="checkbox" checked={s.gstRegistered} onChange={(e) => setS({ ...s, gstRegistered: e.target.checked })} />
           <span>Registered for GST (add 10%)</span>
@@ -118,6 +140,8 @@ export default function SettingsPage() {
         <Field label="BSB"><input inputMode="numeric" value={s.bsb} onChange={text('bsb')} /></Field>
         <Field label="Account number"><input inputMode="numeric" value={s.accountNumber} onChange={text('accountNumber')} /></Field>
       </section>
+
+      </>)}
 
       <section className="card">
         <h2>Backup</h2>

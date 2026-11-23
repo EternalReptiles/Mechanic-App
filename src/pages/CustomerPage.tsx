@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import JobCard from '../components/JobCard';
 import { Empty, Field, PageHeader } from '../components/ui';
-import { createJob, db, deleteCustomer, newVehicle } from '../db';
+import { createJob, db, deleteCustomer, newVehicle, removeRecords } from '../db';
+import { useAutosave } from '../hooks';
 import { useSettings } from '../hooks';
 import type { Customer, Vehicle } from '../types';
 import { fmtDay, mapsUrl, telUrl, vehicleLabel } from '../utils';
@@ -27,7 +28,7 @@ function VehicleEditor({ vehicle, onDone }: { vehicle: Vehicle; onDone: () => vo
       <div className="row wide">
         <button className="btn primary" onClick={async () => { await db.vehicles.put({ ...v, rego: v.rego.toUpperCase() }); onDone(); }}>Save vehicle</button>
         <button className="btn ghost" onClick={onDone}>Cancel</button>
-        <button className="btn danger" onClick={async () => { if (confirm('Delete this vehicle?')) { await db.vehicles.delete(v.id); onDone(); } }}>Delete</button>
+        <button className="btn danger" onClick={async () => { if (confirm('Delete this vehicle?')) { await removeRecords('vehicles', [v.id]); onDone(); } }}>Delete</button>
       </div>
     </div>
   );
@@ -48,11 +49,7 @@ export default function CustomerPage() {
     db.customers.get(id).then((x) => setC(x ?? null));
   }, [id]);
 
-  useEffect(() => {
-    if (!c) return;
-    const t = setTimeout(() => db.customers.put(c), 400);
-    return () => clearTimeout(t);
-  }, [c]);
+  useAutosave(c, (x) => db.customers.put(x));
 
   if (c === undefined) return null;
   if (c === null) return <PageHeader title="Customer not found" back />;

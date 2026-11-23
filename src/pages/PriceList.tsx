@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { catalogTotal } from '../components/CatalogPicker';
 import { Empty, PageHeader } from '../components/ui';
-import { db } from '../db';
+import { db, removeRecords } from '../db';
 import type { CatalogItem, LineItemType } from '../types';
 import { money, uid } from '../utils';
 
@@ -51,7 +51,7 @@ function Editor({ item, onDone }: { item: CatalogItem; onDone: () => void }) {
         }}>Save</button>
         <button className="btn ghost" onClick={onDone}>Cancel</button>
         <button className="btn danger" onClick={async () => {
-          if (confirm(`Delete "${c.name}"?`)) { await db.catalog.delete(c.id); onDone(); }
+          if (confirm(`Delete "${c.name}"?`)) { await removeRecords('catalog', [c.id]); onDone(); }
         }}>Delete</button>
       </div>
     </div>

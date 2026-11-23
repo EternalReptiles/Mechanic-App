@@ -1,16 +1,26 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useState } from 'react';
-import { db } from '../db';
+import { supabase } from '../cloud/supabase';
+import { db, removeRecords } from '../db';
 import type { Photo } from '../types';
 import { resizeImage, uid } from '../utils';
 
 function Thumb({ photo }: { photo: Photo }) {
   const [url, setUrl] = useState('');
   useEffect(() => {
+    if (!photo.blob) {
+      // Taken on another device: download once, then keep it on this phone.
+      if (photo.remotePath)
+        supabase.storage.from('photos').download(photo.remotePath).then(({ data }) => {
+          if (data) void db.photos.update(photo.id, { blob: data, _remote: 1 } as Partial<Photo>);
+        });
+      return;
+    }
     const u = URL.createObjectURL(photo.blob);
     setUrl(u);
     return () => URL.revokeObjectURL(u);
-  }, [photo.blob]);
+  }, [photo.blob, photo.remotePath, photo.id]);
+  if (!url) return <figure className="thumb loading" aria-label="Loading photo" />;
   return (
     <figure className="thumb">
       <a href={url} target="_blank" rel="noreferrer">
@@ -19,7 +29,7 @@ function Thumb({ photo }: { photo: Photo }) {
       <button
         className="icon-btn danger"
         aria-label="Delete photo"
-        onClick={() => confirm('Delete this photo?') && db.photos.delete(photo.id)}
+        onClick={() => confirm('Delete this photo?') && removeRecords('photos', [photo.id])}
       >
         ✕
       </button>

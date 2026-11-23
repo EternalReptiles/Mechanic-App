@@ -8,6 +8,8 @@ import CustomerPage from './pages/CustomerPage';
 import SettingsPage from './pages/SettingsPage';
 import DocumentView from './pages/DocumentView';
 import PriceList from './pages/PriceList';
+import Team from './pages/Team';
+import CloudProvider from './cloud/CloudProvider';
 import Reminders from './pages/Reminders';
 
 const NAV = [
@@ -20,6 +22,7 @@ const NAV = [
 
 export default function App() {
   return (
+    <CloudProvider>
     <Routes>
       <Route path="/jobs/:id/:docType" element={<DocumentView />} />
       <Route
@@ -37,6 +40,7 @@ export default function App() {
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/settings/price-list" element={<PriceList />} />
                 <Route path="/reminders" element={<Reminders />} />
+                <Route path="/settings/team" element={<Team />} />
               </Routes>
             </main>
             <nav className="bottom-nav">
@@ -51,5 +55,6 @@ export default function App() {
         }
       />
     </Routes>
+    </CloudProvider>
   );
 }
