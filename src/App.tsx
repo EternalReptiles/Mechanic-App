@@ -7,6 +7,8 @@ import Customers from './pages/Customers';
 import CustomerPage from './pages/CustomerPage';
 import SettingsPage from './pages/SettingsPage';
 import DocumentView from './pages/DocumentView';
+import PriceList from './pages/PriceList';
+import Reminders from './pages/Reminders';
 
 const NAV = [
   { to: '/', label: 'Home', icon: '⌂', end: true },
@@ -33,6 +35,8 @@ export default function App() {
                 <Route path="/customers" element={<Customers />} />
                 <Route path="/customers/:id" element={<CustomerPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/settings/price-list" element={<PriceList />} />
+                <Route path="/reminders" element={<Reminders />} />
               </Routes>
             </main>
             <nav className="bottom-nav">

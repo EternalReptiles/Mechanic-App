@@ -111,3 +111,47 @@ export async function resizeImage(file: File, maxSize = 1600): Promise<Blob> {
   canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b ?? file), 'image/jpeg', 0.82));
 }
+
+/** Today as YYYY-MM-DD in local time. */
+export const todayISO = () => dayKey(new Date());
+
+export function addMonthsISO(months: number, from = new Date()): string {
+  const d = new Date(from.getFullYear(), from.getMonth() + months, from.getDate());
+  return dayKey(d);
+}
+
+/** Whole days from today until a YYYY-MM-DD date (negative = overdue). */
+export function daysUntil(isoDate: string): number {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const target = new Date(y, m - 1, d).getTime();
+  const t = new Date();
+  const today = new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime();
+  return Math.round((target - today) / 86400000);
+}
+
+export const fmtDay = (isoDate: string) => {
+  if (!isoDate) return '';
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+/** Fills {name} {business} {vehicle} {date} {rego} placeholders in a message template. */
+export function fillTemplate(tpl: string, vars: Record<string, string>): string {
+  return tpl.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? vars[k] : m));
+}
+
+export const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? '';
+
+export const PAYMENT_LABEL: Record<string, string> = {
+  cash: 'Cash',
+  card: 'Card',
+  transfer: 'Bank transfer',
+  other: 'Other',
+};
+
+export const CHECK_LABEL: Record<string, { label: string; color: string }> = {
+  ok: { label: 'OK', color: '#16a34a' },
+  attention: { label: 'Needs attention soon', color: '#d97706' },
+  urgent: { label: 'Urgent', color: '#dc2626' },
+  na: { label: 'N/A', color: '#94a3b8' },
+};

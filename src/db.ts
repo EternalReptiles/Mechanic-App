@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { Customer, Job, Photo, Settings, Vehicle } from './types';
+import type { CatalogItem, Customer, Job, Photo, Settings, Vehicle } from './types';
 import { uid } from './utils';
 
 class MechanicDB extends Dexie {
@@ -8,6 +8,7 @@ class MechanicDB extends Dexie {
   jobs!: Table<Job, string>;
   photos!: Table<Photo, string>;
   settings!: Table<Settings, string>;
+  catalog!: Table<CatalogItem, string>;
 
   constructor() {
     super('mechanic-app');
@@ -18,8 +19,54 @@ class MechanicDB extends Dexie {
       photos: 'id, jobId',
       settings: 'id',
     });
+    this.version(2)
+      .stores({ catalog: 'id, name' })
+      .upgrade((tx) => tx.table('catalog').bulkAdd(starterCatalog()));
+    this.on('populate', (tx) => {
+      tx.table('catalog').bulkAdd(starterCatalog());
+    });
   }
 }
+
+function starterCatalog(): CatalogItem[] {
+  const item = (name: string, lines: CatalogItem['lines']): CatalogItem => ({ id: uid(), name, lines });
+  return [
+    item('Logbook service – 4 cyl', [
+      { type: 'labour', description: 'Logbook service labour', qty: 1.5, unitPrice: 120 },
+      { type: 'part', description: 'Engine oil 5W-30 (5L)', qty: 1, unitPrice: 55 },
+      { type: 'part', description: 'Oil filter', qty: 1, unitPrice: 18 },
+      { type: 'part', description: 'Sump plug washer', qty: 1, unitPrice: 2 },
+    ]),
+    item('Front brake pads – replace', [
+      { type: 'labour', description: 'Replace front brake pads', qty: 1, unitPrice: 120 },
+      { type: 'part', description: 'Front brake pads', qty: 1, unitPrice: 85 },
+    ]),
+    item('Battery – supply & fit', [
+      { type: 'labour', description: 'Battery test, supply & fit', qty: 0.5, unitPrice: 120 },
+      { type: 'part', description: 'Battery', qty: 1, unitPrice: 220 },
+    ]),
+    item('Call-out fee', [{ type: 'other', description: 'Mobile call-out fee', qty: 1, unitPrice: 50 }]),
+    item('Diagnostic scan', [{ type: 'labour', description: 'Diagnostic scan & report', qty: 1, unitPrice: 120 }]),
+  ];
+}
+
+export const DEFAULT_CHECKLIST = [
+  'Engine oil level & condition',
+  'Coolant level',
+  'Brake fluid',
+  'Power steering / transmission fluid',
+  'Battery & terminals',
+  'Drive belts',
+  'Hoses & leaks',
+  'Front brakes',
+  'Rear brakes',
+  'Tyres – tread & pressure',
+  'Suspension & steering',
+  'Lights & indicators',
+  'Wipers & washers',
+  'Exhaust',
+  'Air filter',
+];
 
 export const db = new MechanicDB();
 
@@ -42,6 +89,11 @@ export const defaultSettings: Settings = {
   nextJobNumber: 1001,
   invoiceFooter: 'Thank you for your business!',
   quoteFooter: 'This quote is valid for 30 days.',
+  checklistTemplate: DEFAULT_CHECKLIST,
+  serviceIntervalMonths: 12,
+  serviceIntervalKm: 10000,
+  reminderMessage:
+    "Hi {name}, it's {business}. Your {vehicle} is due for a service on {date}. Reply to this message to book a time and we'll come to you.",
 };
 
 export async function getSettings(): Promise<Settings> {
@@ -141,6 +193,7 @@ export async function exportBackup(): Promise<Blob> {
     version: 1,
     exportedAt: new Date().toISOString(),
     settings: await db.settings.toArray(),
+    catalog: await db.catalog.toArray(),
     customers: await db.customers.toArray(),
     vehicles: await db.vehicles.toArray(),
     jobs: await db.jobs.toArray(),
@@ -160,14 +213,16 @@ export async function importBackup(file: File) {
       blob: await (await fetch(p.blob)).blob(),
     })),
   );
-  await db.transaction('rw', [db.settings, db.customers, db.vehicles, db.jobs, db.photos], async () => {
+  await db.transaction('rw', [db.settings, db.customers, db.vehicles, db.jobs, db.photos, db.catalog], async () => {
     await Promise.all([
       db.settings.clear(),
       db.customers.clear(),
       db.vehicles.clear(),
       db.jobs.clear(),
       db.photos.clear(),
+      db.catalog.clear(),
     ]);
+    await db.catalog.bulkPut(data.catalog ?? []);
     await db.settings.bulkPut(data.settings ?? []);
     await db.customers.bulkPut(data.customers ?? []);
     await db.vehicles.bulkPut(data.vehicles ?? []);

@@ -6,7 +6,7 @@ import { Empty, Field, PageHeader } from '../components/ui';
 import { createJob, db, deleteCustomer, newVehicle } from '../db';
 import { useSettings } from '../hooks';
 import type { Customer, Vehicle } from '../types';
-import { mapsUrl, telUrl, vehicleLabel } from '../utils';
+import { fmtDay, mapsUrl, telUrl, vehicleLabel } from '../utils';
 
 function VehicleEditor({ vehicle, onDone }: { vehicle: Vehicle; onDone: () => void }) {
   const [v, setV] = useState(vehicle);
@@ -20,6 +20,9 @@ function VehicleEditor({ vehicle, onDone }: { vehicle: Vehicle; onDone: () => vo
       <Field label="Model"><input value={v.model} onChange={set('model')} /></Field>
       <Field label="VIN"><input value={v.vin} onChange={set('vin')} /></Field>
       <Field label="Odometer (km)"><input inputMode="numeric" value={v.odometer} onChange={set('odometer')} /></Field>
+      <Field label="Next service due"><input type="date" value={v.nextServiceDate ?? ''} onChange={set('nextServiceDate')} /></Field>
+      <Field label="Next service (km)"><input inputMode="numeric" value={v.nextServiceKm ?? ''} onChange={set('nextServiceKm')} /></Field>
+      <Field label="Rego expiry"><input type="date" value={v.regoExpiry ?? ''} onChange={set('regoExpiry')} /></Field>
       <Field label="Notes" wide><textarea rows={2} value={v.notes} onChange={set('notes')} /></Field>
       <div className="row wide">
         <button className="btn primary" onClick={async () => { await db.vehicles.put({ ...v, rego: v.rego.toUpperCase() }); onDone(); }}>Save vehicle</button>
@@ -92,7 +95,7 @@ export default function CustomerPage() {
         ) : (
           <button key={v.id} className="card as-button" onClick={() => setEditingVehicle(v)}>
             <strong>{vehicleLabel(v)}</strong>
-            <div className="muted small">{[v.vin && `VIN ${v.vin}`, v.odometer && `${v.odometer} km`].filter(Boolean).join(' · ')}</div>
+            <div className="muted small">{[v.vin && `VIN ${v.vin}`, v.odometer && `${v.odometer} km`, v.nextServiceDate && `Service due ${fmtDay(v.nextServiceDate)}`].filter(Boolean).join(' · ')}</div>
           </button>
         ),
       )}

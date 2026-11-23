@@ -27,6 +27,11 @@ export interface Vehicle {
   vin: string;
   odometer: string;
   notes: string;
+  /** ISO date (YYYY-MM-DD) */
+  nextServiceDate?: string;
+  nextServiceKm?: string;
+  /** ISO date (YYYY-MM-DD) */
+  regoExpiry?: string;
 }
 
 export type LineItemType = 'labour' | 'part' | 'other';
@@ -39,6 +44,17 @@ export interface LineItem {
   /** Unit price excluding GST */
   unitPrice: number;
 }
+
+export type CheckResult = '' | 'ok' | 'attention' | 'urgent' | 'na';
+
+export interface CheckItem {
+  id: string;
+  label: string;
+  result: CheckResult;
+  note: string;
+}
+
+export type PaymentMethod = '' | 'cash' | 'card' | 'transfer' | 'other';
 
 export interface Job {
   id: string;
@@ -58,6 +74,19 @@ export interface Job {
   createdAt: string;
   invoicedAt: string;
   paidAt: string;
+  checklist?: CheckItem[];
+  paymentMethod?: PaymentMethod;
+  /** Customer sign-off, PNG data URL */
+  signature?: string;
+  signedName?: string;
+  signedAt?: string;
+}
+
+/** A saved price-list entry: a single item, or a package of several lines (e.g. "Logbook service – 4cyl"). */
+export interface CatalogItem {
+  id: string;
+  name: string;
+  lines: Omit<LineItem, 'id'>[];
 }
 
 export interface Photo {
@@ -87,4 +116,8 @@ export interface Settings {
   nextJobNumber: number;
   invoiceFooter: string;
   quoteFooter: string;
+  checklistTemplate: string[];
+  serviceIntervalMonths: number;
+  serviceIntervalKm: number;
+  reminderMessage: string;
 }

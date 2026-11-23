@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Field, PageHeader } from '../components/ui';
 import { db, exportBackup, getSettings, importBackup } from '../db';
 import type { Settings } from '../types';
@@ -89,6 +90,25 @@ export default function SettingsPage() {
         </label>
         <Field label="Invoice footer" wide><textarea rows={2} value={s.invoiceFooter} onChange={text('invoiceFooter')} /></Field>
         <Field label="Quote footer" wide><textarea rows={2} value={s.quoteFooter} onChange={text('quoteFooter')} /></Field>
+      </section>
+
+      <Link to="/settings/price-list" className="card row between">
+        <span><strong>📋 Price list</strong><br /><span className="muted small">Your services, packages and parts with prices</span></span>
+        <span>›</span>
+      </Link>
+
+      <section className="card grid">
+        <h2 className="wide">Inspections &amp; reminders</h2>
+        <Field label="Service interval (months)"><input type="number" inputMode="numeric" value={s.serviceIntervalMonths} onChange={num('serviceIntervalMonths')} /></Field>
+        <Field label="Service interval (km)"><input type="number" inputMode="numeric" value={s.serviceIntervalKm} onChange={num('serviceIntervalKm')} /></Field>
+        <Field label="Service reminder text message" wide>
+          <textarea rows={3} value={s.reminderMessage} onChange={text('reminderMessage')} />
+        </Field>
+        <p className="wide muted small" style={{ margin: 0 }}>Placeholders: {'{name} {business} {vehicle} {rego} {date}'}</p>
+        <Field label="Inspection checklist (one item per line)" wide>
+          <textarea rows={8} value={s.checklistTemplate.join('\n')}
+            onChange={(e) => setS({ ...s, checklistTemplate: e.target.value.split('\n').map((x) => x.trimStart()).filter((x, i, a) => x || i === a.length - 1) })} />
+        </Field>
       </section>
 
       <section className="card grid">

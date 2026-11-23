@@ -2,7 +2,25 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db } from '../db';
 import { useSettings } from '../hooks';
-import { fmtDate, money, totals, vehicleLabel } from '../utils';
+import type { CheckItem } from '../types';
+import { CHECK_LABEL, fmtDate, fmtDay, money, PAYMENT_LABEL, totals, vehicleLabel } from '../utils';
+
+function InspectionTable({ items, onlyFlagged }: { items: CheckItem[]; onlyFlagged?: boolean }) {
+  const rows = items.filter((i) => i.result && (!onlyFlagged || i.result === 'attention' || i.result === 'urgent'));
+  if (!rows.length) return null;
+  return (
+    <table className="doc-table check-table">
+      <tbody>
+        {rows.map((i) => (
+          <tr key={i.id}>
+            <td>{i.label}{i.note && <div className="small muted">{i.note}</div>}</td>
+            <td><span className="check-pill" style={{ background: CHECK_LABEL[i.result].color }}>{CHECK_LABEL[i.result].label}</span></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 export default function DocumentView() {
   const { id = '', docType } = useParams();
@@ -21,14 +39,19 @@ export default function DocumentView() {
 
   const { job, customer, vehicle } = data;
   const isInvoice = docType === 'invoice';
-  const title = isInvoice ? (s.gstRegistered ? 'Tax Invoice' : 'Invoice') : 'Quote';
+  const isReport = docType === 'report';
+  const title = isReport ? 'Inspection Report' : isInvoice ? (s.gstRegistered ? 'Tax Invoice' : 'Invoice') : 'Quote';
+  const checklist = job.checklist ?? [];
+  const flagged = checklist.filter((i) => i.result === 'attention' || i.result === 'urgent');
   const issued = (isInvoice ? job.invoicedAt : '') || new Date().toISOString();
   const due = new Date(new Date(issued).getTime() + s.paymentTermsDays * 86400000).toISOString();
   const t = totals(job.lineItems, s.gstRegistered);
   const docName = `${title} ${job.number}${customer ? ` - ${customer.name}` : ''}`;
 
   async function share() {
-    const text = `${docName}\nTotal: ${money(t.total)}${isInvoice ? `\nDue: ${fmtDate(due)}` : ''}`;
+    const text = isReport
+      ? `${docName}\n${flagged.length ? flagged.map((i) => `• ${i.label}: ${CHECK_LABEL[i.result].label}${i.note ? ` – ${i.note}` : ''}`).join('\n') : 'All checked items OK.'}`
+      : `${docName}\nTotal: ${money(t.total)}${isInvoice ? `\nDue: ${fmtDate(due)}` : ''}`;
     if (navigator.share) {
       try { await navigator.share({ title: docName, text }); } catch { /* cancelled */ }
     } else if (customer?.email) {
@@ -65,15 +88,15 @@ export default function DocumentView() {
           </div>
           <div className="doc-meta">
             <h1>{title}</h1>
-            <div><span>Number</span> {isInvoice ? 'INV' : 'Q'}-{job.number}</div>
+            <div><span>Number</span> {isReport ? 'JOB' : isInvoice ? 'INV' : 'Q'}-{job.number}</div>
             <div><span>Date</span> {fmtDate(issued)}</div>
-            {isInvoice && <div><span>Due</span> {fmtDate(due)}</div>}
+            {isInvoice && job.status !== 'paid' && <div><span>Due</span> {fmtDate(due)}</div>}
           </div>
         </header>
 
         <section className="doc-parties">
           <div>
-            <h3>{isInvoice ? 'Bill to' : 'Prepared for'}</h3>
+            <h3>{isInvoice ? 'Bill to' : 'Customer'}</h3>
             {customer ? (
               <>
                 <strong>{customer.name}</strong>
@@ -100,6 +123,19 @@ export default function DocumentView() {
           </section>
         )}
 
+        {isReport ? (
+          <section>
+            <h3>Inspection results</h3>
+            <p className="small">
+              {flagged.length
+                ? `${flagged.length} item${flagged.length === 1 ? '' : 's'} need attention. Urgent items should be fixed as soon as possible for safety.`
+                : 'No issues found in the items checked.'}
+            </p>
+            <InspectionTable items={checklist} />
+            {job.workNotes && (<><h3>Technician notes</h3><p className="pre">{job.workNotes}</p></>)}
+            {vehicle?.nextServiceDate && <p><strong>Next service due:</strong> {fmtDay(vehicle.nextServiceDate)}{vehicle.nextServiceKm && ` or ${vehicle.nextServiceKm} km`}, whichever comes first.</p>}
+          </section>
+        ) : (<>
         <table className="doc-table">
           <thead>
             <tr><th>Description</th><th>Qty</th><th>Unit</th><th>Amount</th></tr>
@@ -121,7 +157,9 @@ export default function DocumentView() {
           <div><span>Subtotal{s.gstRegistered ? ' (ex GST)' : ''}</span><span>{money(t.subtotal)}</span></div>
           {s.gstRegistered && <div><span>GST</span><span>{money(t.gst)}</span></div>}
           <div className="grand"><span>Total{s.gstRegistered ? ' (inc GST)' : ''}</span><span>{money(t.total)}</span></div>
-          {isInvoice && job.status === 'paid' && <div className="paid-stamp">PAID {fmtDate(job.paidAt)}</div>}
+          {isInvoice && job.status === 'paid' && (
+            <div className="paid-stamp">PAID {fmtDate(job.paidAt)}{job.paymentMethod && ` · ${PAYMENT_LABEL[job.paymentMethod]}`}</div>
+          )}
         </div>
 
         {isInvoice && job.workNotes && (
@@ -131,7 +169,18 @@ export default function DocumentView() {
           </section>
         )}
 
-        {isInvoice && (s.bsb || s.accountNumber) && (
+        {isInvoice && flagged.length > 0 && (
+          <section>
+            <h3>Recommended work</h3>
+            <InspectionTable items={checklist} onlyFlagged />
+          </section>
+        )}
+
+        {isInvoice && vehicle?.nextServiceDate && (
+          <p><strong>Next service due:</strong> {fmtDay(vehicle.nextServiceDate)}{vehicle.nextServiceKm && ` or ${vehicle.nextServiceKm} km`}</p>
+        )}
+
+        {isInvoice && job.status !== 'paid' && (s.bsb || s.accountNumber) && (
           <section className="doc-pay">
             <h3>How to pay</h3>
             <div>Direct deposit{s.bankName && ` – ${s.bankName}`}</div>
@@ -141,7 +190,17 @@ export default function DocumentView() {
           </section>
         )}
 
-        <footer className="doc-foot">{isInvoice ? s.invoiceFooter : s.quoteFooter}</footer>
+        </>)}
+
+        {job.signature && (
+          <section className="doc-sign">
+            <h3>Customer sign-off</h3>
+            <img src={job.signature} alt="Customer signature" />
+            <div className="small">{job.signedName}{job.signedAt && ` · ${fmtDate(job.signedAt)}`}</div>
+          </section>
+        )}
+
+        <footer className="doc-foot">{isReport ? `Thank you for choosing ${s.businessName}.` : isInvoice ? s.invoiceFooter : s.quoteFooter}</footer>
       </article>
     </div>
   );

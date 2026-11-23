@@ -1,5 +1,8 @@
+import { useState } from 'react';
+import { db } from '../db';
 import type { LineItem, LineItemType } from '../types';
 import { money, totals, uid } from '../utils';
+import CatalogPicker from './CatalogPicker';
 
 const TYPE_LABEL: Record<LineItemType, string> = { labour: 'Labour', part: 'Part', other: 'Other' };
 
@@ -14,7 +17,15 @@ export default function LineItems({
   labourRate: number;
   gst: boolean;
 }) {
+  const [picking, setPicking] = useState(false);
   const t = totals(items, gst);
+
+  async function saveToPriceList() {
+    const name = prompt('Name for this price-list item (e.g. "Logbook service – V6")');
+    if (!name) return;
+    await db.catalog.add({ id: uid(), name, lines: items.map(({ id: _id, ...rest }) => rest) });
+    alert(`Saved "${name}" to your price list.`);
+  }
   const set = (id: string, patch: Partial<LineItem>) =>
     onChange(items.map((i) => (i.id === id ? { ...i, ...patch } : i)));
   const add = (type: LineItemType) =>
@@ -63,6 +74,16 @@ export default function LineItems({
           </div>
         </div>
       ))}
+      <button className="btn primary" onClick={() => setPicking(true)}>📋 Add from price list</button>
+      {picking && (
+        <CatalogPicker
+          onClose={() => setPicking(false)}
+          onPick={(c) => {
+            onChange([...items, ...c.lines.map((l) => ({ ...l, id: uid() }))]);
+            setPicking(false);
+          }}
+        />
+      )}
       <div className="row wrap">
         <button className="btn" onClick={() => add('labour')}>+ Labour</button>
         <button className="btn" onClick={() => add('part')}>+ Part</button>
@@ -73,6 +94,9 @@ export default function LineItems({
         {gst && <div><span>GST (10%)</span><span>{money(t.gst)}</span></div>}
         <div className="grand"><span>Total</span><span>{money(t.total)}</span></div>
       </div>
+      {items.length > 0 && (
+        <button className="btn ghost small" onClick={saveToPriceList}>Save these items to price list</button>
+      )}
     </div>
   );
 }
