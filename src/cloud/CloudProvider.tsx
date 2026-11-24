@@ -310,6 +310,13 @@ function SignIn() {
         <button className="btn primary block" disabled={busy}>
           {busy ? 'Please wait…' : mode === 'in' ? 'Sign in' : mode === 'up' ? 'Create account' : 'Send reset link'}
         </button>
+        {mode === 'up' && (
+          <p className="small muted" style={{ textAlign: 'center', margin: '4px 0 0' }}>
+            By creating an account you agree to the{' '}
+            <a href="https://spannr.au/terms" target="_blank" rel="noreferrer">Terms of Service</a> and{' '}
+            <a href="https://spannr.au/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.
+          </p>
+        )}
         <div className="auth-links">
           {mode !== 'in' && <button type="button" className="link" onClick={() => setMode('in')}>I have an account – sign in</button>}
           {mode !== 'up' && <button type="button" className="link" onClick={() => setMode('up')}>New here? Create an account</button>}

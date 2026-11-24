@@ -2,6 +2,8 @@
 const HOME_HOSTS = new Set(['spannr.au', 'www.spannr.au']);
 // Files the home page itself uses.
 const HOME_FILES = new Set(['/icon.svg', '/favicon-32.png', '/apple-touch-icon.png', '/robots.txt']);
+// Pages on spannr.au.
+const PAGES = { '/terms': '/landing/terms/', '/privacy': '/landing/privacy/' };
 
 export default {
   async fetch(request, env) {
@@ -11,6 +13,8 @@ export default {
       if (url.pathname === '/' || url.pathname === '/index.html') {
         return env.ASSETS.fetch(new Request(new URL('/landing/', url), request));
       }
+      const page = PAGES[url.pathname.replace(/\/$/, '')];
+      if (page) return env.ASSETS.fetch(new Request(new URL(page, url), request));
       if (!url.pathname.startsWith('/landing/') && !HOME_FILES.has(url.pathname)) {
         // Anything else (an old link, /v/<token>, /jobs/…) belongs to the app.
         return Response.redirect(`https://app.spannr.au${url.pathname}${url.search}`, 302);
