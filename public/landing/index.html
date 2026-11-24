@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Spannr – job management for mechanics</title>
+<meta name="description" content="Spannr is job management for mobile mechanics and workshops: bookings, quotes customers approve from their phone, video walk-arounds, inspections, invoices and card payments. 30-day free trial." />
+<meta name="theme-color" content="#0f172a" />
+<link rel="icon" href="/icon.svg" type="image/svg+xml" />
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="canonical" href="https://spannr.au/" />
+<meta property="og:title" content="Spannr – job management for mechanics" />
+<meta property="og:description" content="Bookings, quotes customers approve from their phone, video walk-arounds, inspections, invoices and card payments – for mobile mechanics and workshops." />
+<meta property="og:url" content="https://spannr.au/" />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --navy: #0f172a; --navy-2: #1e293b; --amber: #f59e0b; --amber-d: #d97706;
+    --ink: #0f172a; --muted: #475569; --line: #e2e8f0; --bg: #ffffff; --soft: #f8fafc;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 22px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 1rem; border: 2px solid transparent; transition: transform .15s, background .15s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-amber { background: var(--amber); color: var(--navy); }
+  .btn-amber:hover { background: #fbbf24; }
+  .btn-ghost { border-color: rgba(255,255,255,.35); color: #fff; }
+  .btn-ghost:hover { border-color: #fff; }
+
+  /* Nav */
+  header.nav { position: sticky; top: 0; z-index: 10; background: rgba(15,23,42,.92); backdrop-filter: saturate(1.4) blur(10px); }
+  .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-weight: 800; font-size: 1.3rem; letter-spacing: .2px; }
+  .brand svg { width: 32px; height: 32px; }
+  .nav-links { display: flex; align-items: center; gap: 22px; }
+  .nav-links a { color: #cbd5e1; text-decoration: none; font-weight: 500; font-size: .95rem; }
+  .nav-links a:hover { color: #fff; }
+  .nav-links .btn { padding: 9px 16px; font-size: .9rem; color: var(--navy); }
+  .nav-links .btn:hover { color: var(--navy); }
+  @media (max-width: 720px) { .nav-links .hide-m { display: none; } }
+
+  /* Hero */
+  .hero { background: radial-gradient(1200px 500px at 80% -10%, rgba(245,158,11,.18), transparent 60%), var(--navy); color: #fff; padding: 72px 0 84px; overflow: hidden; }
+  .hero .wrap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
+  .eyebrow { display: inline-block; font-weight: 700; font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin-bottom: 14px; }
+  h1 { font-size: clamp(2.1rem, 4.6vw, 3.4rem); line-height: 1.08; margin: 0 0 18px; font-weight: 800; letter-spacing: -.02em; }
+  h1 em { font-style: normal; color: var(--amber); }
+  .lead { font-size: 1.15rem; color: #cbd5e1; max-width: 560px; margin: 0 0 28px; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .fine { margin-top: 14px; font-size: .88rem; color: #94a3b8; }
+
+  /* Phone mock */
+  .phone { justify-self: center; width: 300px; border-radius: 40px; background: #020617; padding: 12px; box-shadow: 0 40px 80px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08); }
+  .screen { border-radius: 30px; background: #f1f5f9; overflow: hidden; color: var(--ink); }
+  .s-top { background: #fff; padding: 22px 16px 12px; border-bottom: 1px solid var(--line); }
+  .s-biz { display: flex; align-items: center; gap: 8px; font-weight: 800; color: #7c3aed; font-size: .95rem; }
+  .s-biz span.dot { width: 26px; height: 26px; border-radius: 8px; background: #7c3aed; display: inline-block; }
+  .s-title { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+  .s-video { margin: 12px; height: 120px; border-radius: 14px; background: linear-gradient(135deg, #334155, #0f172a); position: relative; display: grid; place-items: center; }
+  .s-video::after { content: ''; width: 0; height: 0; border-left: 22px solid rgba(255,255,255,.9); border-top: 14px solid transparent; border-bottom: 14px solid transparent; margin-left: 6px; }
+  .s-video small { position: absolute; left: 10px; bottom: 8px; color: #e2e8f0; font-size: .7rem; }
+  .s-item { margin: 0 12px 8px; background: #fff; border-radius: 12px; padding: 10px 12px; font-size: .8rem; }
+  .s-item .row { display: flex; justify-content: space-between; font-weight: 700; }
+  .s-tag { display: inline-block; font-size: .66rem; font-weight: 700; padding: 2px 7px; border-radius: 99px; margin-top: 4px; }
+  .t-urgent { background: #fee2e2; color: #b91c1c; } .t-soon { background: #fef3c7; color: #92400e; }
+  .s-choice { display: flex; gap: 6px; margin-top: 8px; }
+  .s-choice b { flex: 1; text-align: center; padding: 6px; border-radius: 8px; font-size: .72rem; border: 1px solid var(--line); }
+  .s-choice b.on { background: #16a34a; color: #fff; border-color: #16a34a; }
+  .s-sign { margin: 4px 12px 16px; background: var(--amber); color: var(--navy); text-align: center; font-weight: 800; border-radius: 12px; padding: 12px; font-size: .85rem; }
+
+  /* Sections */
+  section { padding: 80px 0; }
+  .soft { background: var(--soft); }
+  h2 { font-size: clamp(1.7rem, 3.2vw, 2.4rem); line-height: 1.15; margin: 0 0 12px; letter-spacing: -.015em; }
+  .sub { color: var(--muted); font-size: 1.08rem; max-width: 640px; margin: 0 0 40px; }
+  .center { text-align: center; } .center .sub { margin-left: auto; margin-right: auto; }
+
+  .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .mode { border: 1px solid var(--line); border-radius: 16px; padding: 24px; background: #fff; }
+  .mode h3 { margin: 10px 0 6px; font-size: 1.15rem; }
+  .mode p { margin: 0; color: var(--muted); }
+  .ico { width: 44px; height: 44px; border-radius: 12px; background: #fef3c7; display: grid; place-items: center; }
+  .ico svg { width: 24px; height: 24px; stroke: var(--amber-d); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feature { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
+  .feature h3 { margin: 12px 0 6px; font-size: 1.05rem; }
+  .feature p { margin: 0; color: var(--muted); font-size: .96rem; }
+
+  .spotlight { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .checks { list-style: none; padding: 0; margin: 20px 0 0; }
+  .checks li { padding: 8px 0 8px 32px; position: relative; color: var(--ink); }
+  .checks li::before { content: ''; position: absolute; left: 0; top: 11px; width: 20px; height: 20px; border-radius: 99px; background: var(--amber) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center/12px no-repeat; }
+  .card-dark { background: var(--navy); color: #fff; border-radius: 20px; padding: 28px; }
+  .steps { counter-reset: s; display: grid; gap: 14px; }
+  .step { display: flex; gap: 14px; align-items: flex-start; }
+  .step::before { counter-increment: s; content: counter(s); flex: none; width: 30px; height: 30px; border-radius: 99px; background: var(--amber); color: var(--navy); font-weight: 800; display: grid; place-items: center; }
+  .step p { margin: 3px 0 0; color: #cbd5e1; }
+
+  /* Pricing */
+  .toggle { display: inline-flex; background: #e2e8f0; border-radius: 99px; padding: 4px; margin-bottom: 32px; }
+  .toggle button { border: 0; background: transparent; padding: 9px 18px; border-radius: 99px; font: inherit; font-weight: 600; cursor: pointer; color: var(--muted); }
+  .toggle button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .toggle .save { color: #15803d; font-size: .8rem; margin-left: 4px; }
+  .plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: left; }
+  .plan { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: flex; flex-direction: column; position: relative; }
+  .plan.pop { border: 2px solid var(--amber); box-shadow: 0 18px 40px rgba(245,158,11,.15); }
+  .plan .tag { position: absolute; top: -12px; left: 24px; background: var(--amber); color: var(--navy); font-size: .75rem; font-weight: 800; padding: 3px 10px; border-radius: 99px; }
+  .plan h3 { margin: 0; font-size: 1.2rem; }
+  .plan .blurb { color: var(--muted); font-size: .9rem; margin: 4px 0 16px; min-height: 2.6em; }
+  .price { font-size: 2.3rem; font-weight: 800; letter-spacing: -.02em; }
+  .price small { font-size: .9rem; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+  .plan ul { list-style: none; padding: 0; margin: 16px 0 22px; flex: 1; }
+  .plan li { padding: 5px 0 5px 24px; position: relative; font-size: .93rem; }
+  .plan li::before { content: '✓'; position: absolute; left: 0; color: var(--amber-d); font-weight: 800; }
+  .plan .btn { width: 100%; }
+  .btn-navy { background: var(--navy); color: #fff; } .btn-navy:hover { background: var(--navy-2); }
+  .price-note { color: var(--muted); font-size: .92rem; margin-top: 20px; }
+
+  /* FAQ */
+  .faq { max-width: 760px; margin: 0 auto; }
+  details { border-bottom: 1px solid var(--line); padding: 18px 0; }
+  summary { cursor: pointer; font-weight: 700; font-size: 1.05rem; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; color: var(--amber-d); font-size: 1.4rem; line-height: 1; }
+  details[open] summary::after { content: '–'; }
+  details p { color: var(--muted); margin: 10px 0 0; }
+
+  .final { background: var(--navy); color: #fff; text-align: center; }
+  .final .sub { color: #cbd5e1; }
+  footer { background: #020617; color: #94a3b8; padding: 28px 0; font-size: .9rem; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; }
+  footer a { color: #cbd5e1; text-decoration: none; }
+
+  @media (max-width: 960px) {
+    .hero .wrap, .spotlight { grid-template-columns: 1fr; }
+    .phone { margin-top: 12px; }
+    .features, .modes { grid-template-columns: 1fr 1fr; }
+    .plans { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 600px) {
+    section { padding: 60px 0; }
+    .hero { padding: 48px 0 60px; }
+    .features, .modes, .plans { grid-template-columns: 1fr; }
+    .plan .blurb { min-height: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Spannr home">
+      <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#1e293b"/><polyline points="342,150 206,150 152,206 206,256 306,256 360,306 306,362 170,362" fill="none" stroke="#f59e0b" stroke-width="60" stroke-linejoin="miter" stroke-miterlimit="4" stroke-linecap="square"/></svg>
+      Spannr
+    </a>
+    <nav class="nav-links">
+      <a class="hide-m" href="#features">Features</a>
+      <a class="hide-m" href="#pricing">Pricing</a>
+      <a href="https://app.spannr.au">Log in</a>
+      <a class="btn btn-amber" href="https://app.spannr.au">Start free trial</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">Built by a working mechanic</span>
+        <h1>Run your jobs from <em>your phone</em>, not a pile of paperwork.</h1>
+        <p class="lead">Spannr handles your bookings, quotes, inspections, invoices and payments, for mobile mechanics and workshops. Customers approve work from their phone, and you get paid on the spot.</p>
+        <div class="cta-row">
+          <a class="btn btn-amber" href="https://app.spannr.au">Start your 30-day free trial</a>
+          <a class="btn btn-ghost" href="#pricing">See pricing</a>
+        </div>
+        <p class="fine">No credit card needed · Set up in 5 minutes · Cancel any time</p>
+      </div>
+      <div class="phone" aria-hidden="true">
+        <div class="screen">
+          <div class="s-top">
+            <div class="s-biz"><span class="dot"></span>Your Business Name</div>
+            <div class="s-title">Video walk-around · 2019 Toyota HiLux</div>
+          </div>
+          <div class="s-video"><small>▶ 1:24 · Watch your mechanic's video</small></div>
+          <div class="s-item">
+            <div class="row"><span>Front brake pads</span><span>$289</span></div>
+            <span class="s-tag t-urgent">Urgent · 2.5 mm left</span>
+            <div class="s-choice"><b class="on">✓ Go ahead</b><b>Not now</b></div>
+          </div>
+          <div class="s-item">
+            <div class="row"><span>Battery</span><span>$245</span></div>
+            <span class="s-tag t-soon">Soon · 62% health</span>
+            <div class="s-choice"><b>✓ Go ahead</b><b class="on" style="background:#64748b;border-color:#64748b">Not now</b></div>
+          </div>
+          <div class="s-sign">Sign &amp; approve – $289.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap center">
+      <h2>Mobile, workshop, or both</h2>
+      <p class="sub">Tell Spannr how you work when you sign up and it sets itself up to suit. You can change it any time.</p>
+      <div class="modes" style="text-align:left">
+        <div class="mode">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg></div>
+          <h3>Mobile mechanics</h3>
+          <p>Your day's jobs with maps, one-tap calls and texts, customers' cars and history, and invoices done before you leave the driveway.</p>
+        </div>
+        <div class="mode">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 21V8l9-5 9 5v13"/><path d="M7 21v-8h10v8"/><path d="M7 17h10"/></svg></div>
+          <h3>Workshops</h3>
+          <p>A workshop board showing every car on site, technicians' jobs, key tags, promised times and "ready for pickup", on a big desktop screen.</p>
+        </div>
+        <div class="mode">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.17-2.83L3 3"/><path d="m15 9 6-6"/></svg></div>
+          <h3>Both</h3>
+          <p>Book a car into the workshop or a job at the customer's place from the same calendar. Spannr keeps track of where each job happens.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="soft" id="features">
+    <div class="wrap">
+      <h2>Everything you need, without the clutter</h2>
+      <p class="sub">Made by someone who spends their day under cars. Big buttons, few taps, and it works with greasy hands.</p>
+      <div class="features">
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          <h3>Bookings &amp; schedule</h3>
+          <p>A week view of every booking, plus each customer's vehicles, rego and service history in one place.</p>
+        </div>
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div>
+          <h3>Quotes &amp; invoices</h3>
+          <p>Build them from your own price list in seconds. GST is done for you, and every document carries your logo and colours.</p>
+        </div>
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></div>
+          <h3>Video walk-arounds</h3>
+          <p>Film the car, list what it needs with prices, and send it. The customer watches, approves or declines each item, and signs.</p>
+        </div>
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+          <h3>Inspections that mean something</h3>
+          <p>Battery test results, brake pad, rotor and tyre tread measurements in mm, and a clear report your customer can see.</p>
+        </div>
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <h3>Automatic texts &amp; emails</h3>
+          <p>Booking confirmations, reminders the day before, service reminders and receipts, all sent in your business's name.</p>
+        </div>
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+          <h3>Get paid faster</h3>
+          <p>Send an invoice customers pay by card, Apple Pay or Google Pay, with Tap to Pay on iPhone coming soon. Jobs are marked paid automatically.</p>
+        </div>
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>A simple app for your techs</h3>
+          <p>Technicians see only their jobs and a checklist to fill in, like oil litres and pad thickness, then tap "Finished". No prices, no clutter.</p>
+        </div>
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z"/><path d="M12 6v6l4 2"/></svg></div>
+          <h3>Service reminders</h3>
+          <p>Spannr remembers when each car is due for its next service and rego, so you can bring customers back without a diary.</p>
+        </div>
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg></div>
+          <h3>Works without signal</h3>
+          <p>Keep working in a carpark basement or out bush. Everything syncs across your phone, tablet and desktop when you're back online.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap spotlight">
+      <div>
+        <span class="eyebrow">Customer approvals</span>
+        <h2>Stop chasing "yes" over the phone</h2>
+        <p class="sub" style="margin-bottom:0">Customers see the problem for themselves, so they're more likely to go ahead. You also get a signed record of what they approved, which protects you if there's ever a dispute.</p>
+        <ul class="checks">
+          <li>Customer approves or declines each repair separately</li>
+          <li>Signature and your terms &amp; conditions on every approval</li>
+          <li>Approved items drop straight onto the job's invoice</li>
+          <li>Declined work is noted on the job for next time</li>
+        </ul>
+      </div>
+      <div class="card-dark">
+        <div class="steps">
+          <div class="step"><div><strong>Film the car</strong><p>Walk around it with your phone and point out what you've found.</p></div></div>
+          <div class="step"><div><strong>Add prices</strong><p>Pick parts and labour from your price list. Items flagged in the inspection are already filled in.</p></div></div>
+          <div class="step"><div><strong>Send it</strong><p>The customer gets a text or email with a link. There's no app for them to download.</p></div></div>
+          <div class="step"><div><strong>They approve and sign</strong><p>You're notified straight away, and the work is ready to go.</p></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="soft" id="pricing">
+    <div class="wrap center">
+      <h2>One price for your business, not per user</h2>
+      <p class="sub">Every plan starts with a 30-day free trial with everything unlocked. No credit card needed.</p>
+      <div class="toggle" role="group" aria-label="Billing period">
+        <button type="button" class="on" data-period="month">Monthly</button>
+        <button type="button" data-period="year">Yearly <span class="save">2 months free</span></button>
+      </div>
+      <div class="plans">
+        <div class="plan">
+          <h3>Solo</h3>
+          <p class="blurb">For the one-person mobile mechanic.</p>
+          <div class="price" data-month="39" data-year="390">$39<small>/month + GST</small></div>
+          <ul><li>1 user</li><li>Jobs, quotes &amp; invoices</li><li>Customers, vehicles &amp; schedule</li><li>Inspections, photos &amp; signatures</li><li>Service reminders</li><li>Card payments</li></ul>
+          <a class="btn btn-navy" href="https://app.spannr.au">Start free trial</a>
+        </div>
+        <div class="plan pop">
+          <span class="tag">Most popular</span>
+          <h3>Pro</h3>
+          <p class="blurb">Win more work with customer approvals.</p>
+          <div class="price" data-month="65" data-year="650">$65<small>/month + GST</small></div>
+          <ul><li>Up to 3 users</li><li>Everything in Solo</li><li>Remote quote approval &amp; sign-off</li><li>Video walk-arounds</li><li>Automatic booking texts &amp; emails</li><li>100 texts a month included</li></ul>
+          <a class="btn btn-amber" href="https://app.spannr.au">Start free trial</a>
+        </div>
+        <div class="plan">
+          <h3>Team</h3>
+          <p class="blurb">For workshops with a few technicians.</p>
+          <div class="price" data-month="95" data-year="950">$95<small>/month + GST</small></div>
+          <ul><li>Up to 8 users</li><li>Everything in Pro</li><li>Workshop board</li><li>Assign jobs to technicians</li><li>Tap to Pay on iPhone (coming soon)</li><li>300 texts a month included</li></ul>
+          <a class="btn btn-navy" href="https://app.spannr.au">Start free trial</a>
+        </div>
+        <div class="plan">
+          <h3>Business</h3>
+          <p class="blurb">Unlimited team, priority support.</p>
+          <div class="price" data-month="149" data-year="1490">$149<small>/month + GST</small></div>
+          <ul><li>Unlimited users</li><li>Everything in Team</li><li>1,000 texts a month included</li><li>Priority support</li></ul>
+          <a class="btn btn-navy" href="https://app.spannr.au">Start free trial</a>
+        </div>
+      </div>
+      <p class="price-note">Prices in Australian dollars plus GST. Card payments are processed by Stripe at Stripe's standard rates, plus a 0.5% Spannr fee.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 class="center">Questions</h2>
+      <div class="faq">
+        <details><summary>Do I need a credit card to try it?</summary><p>No. Sign up and you get 30 days with every feature unlocked. Choose a plan only if you want to keep going.</p></details>
+        <details><summary>Does it work on iPhone, Android and computers?</summary><p>Yes. Spannr works in the web browser on any phone, tablet or computer, and you can add it to your home screen like an app. Workshops get a layout made for desktop screens, and an iPhone app with Tap to Pay is on the way.</p></details>
+        <details><summary>Do my customers need to download anything?</summary><p>No. Quotes, video walk-arounds, sign-offs and invoices open from a link in a text or email, on any phone.</p></details>
+        <details><summary>Is it per user?</summary><p>No. You pay one price for your business. Each plan includes a set number of users (unlimited on Business), so adding a technician doesn't add to your bill.</p></details>
+        <details><summary>How do card payments work?</summary><p>You connect your own Stripe account in a few minutes, and payments go straight to your bank. Stripe charges its standard card fees and Spannr adds 0.5%. There are no monthly terminal fees.</p></details>
+        <details><summary>Can I cancel any time?</summary><p>Yes. There's no lock-in contract. Cancel from your billing settings and you keep access until the end of the period you've paid for.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap">
+      <h2>Spend less time on paperwork and more time on the tools</h2>
+      <p class="sub" style="margin-left:auto;margin-right:auto">Try Spannr free for 30 days. Set up in five minutes, with no card needed.</p>
+      <a class="btn btn-amber" href="https://app.spannr.au">Start your free trial</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="yr">2026</span> Spannr · Made in Australia</span>
+    <span><a href="https://app.spannr.au">Log in</a></span>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+  const buttons = document.querySelectorAll('.toggle button');
+  buttons.forEach((b) => b.addEventListener('click', () => {
+    buttons.forEach((x) => x.classList.toggle('on', x === b));
+    const yearly = b.dataset.period === 'year';
+    document.querySelectorAll('.price').forEach((p) => {
+      p.innerHTML = '$' + (yearly ? p.dataset.year : p.dataset.month) + '<small>/' + (yearly ? 'year' : 'month') + ' + GST</small>';
+    });
+  }));
+</script>
+</body>
+</html>

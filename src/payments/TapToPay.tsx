@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCloud } from '../cloud/CloudProvider';
+import Upgrade from '../components/Upgrade';
 import { useSettings } from '../hooks';
 import type { Job } from '../types';
 import { money, totals } from '../utils';
@@ -7,12 +8,13 @@ import { cancelTap, tapToPayAvailable, tapToPayForJob } from './tapToPay';
 
 /** "Tap to Pay" on the job: the customer taps their card, phone or watch on the mechanic's phone. */
 export default function TapToPay({ job, businessName, onPaid }: { job: Job; businessName: string; onPaid: (paidAt: string) => void }) {
-  const { businessId } = useCloud();
+  const { businessId, can } = useCloud();
   const settings = useSettings();
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   if (!tapToPayAvailable) return null;
+  if (!can('tapToPay')) return <Upgrade feature="tapToPay" what="Tap to Pay" />;
   const total = totals(job.lineItems, settings.gstRegistered).total;
 
   async function tap() {

@@ -275,6 +275,11 @@ async function portal(ctx: Ctx) {
 
 // ---------- Tap to Pay (Stripe Terminal, on the business's own Stripe account) ----------
 
+async function requireTapToPayPlan(ctx: Ctx) {
+  const { data: plan } = await admin.rpc('business_plan', { bid: ctx.businessId });
+  if (!['team', 'business', 'trial'].includes(String(plan))) throw new Error('Tap to Pay is on the Team plan and above.');
+}
+
 async function activeAccount(ctx: Ctx) {
   const row = await getRow(ctx.businessId);
   if (!row) throw new Error('Set up card payments in Settings first.');
@@ -335,6 +340,7 @@ async function jobForPayment(ctx: Ctx, jobId: string) {
 
 /** Creates the in-person PaymentIntent for a job (Spannr's fee taken from it). */
 async function terminalPayment(ctx: Ctx, jobId: string) {
+  await requireTapToPayPlan(ctx);
   const row = await activeAccount(ctx);
   const opt = { stripeAccount: row.account_id };
   const { job, total, businessName } = await jobForPayment(ctx, jobId);

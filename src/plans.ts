@@ -14,7 +14,7 @@ export const PLANS: Record<PlanKey, { name: string; monthly: number; users: numb
   },
   team: {
     name: 'Team', monthly: 95, users: 8, sms: 300, blurb: 'For workshops with a few technicians.',
-    features: ['Up to 8 users', 'Everything in Pro', 'Workshop board', 'Assign jobs to technicians', 'Tap to Pay (coming soon)', '300 texts / month'],
+    features: ['Up to 8 users', 'Everything in Pro', 'Workshop board', 'Assign jobs to technicians', 'Tap to Pay on iPhone (coming soon)', '300 texts / month'],
   },
   business: {
     name: 'Business', monthly: 149, users: null, sms: 1000, blurb: 'Unlimited team, priority support.',
