@@ -1,0 +1,11 @@
+// Cloudflare deployment settings for Spannr.
+// The app is a static single-page app: Cloudflare serves the built files in ./dist
+// and sends any unknown path (e.g. /jobs/123, /v/<token>) to index.html.
+{
+  "name": "spannr",
+  "compatibility_date": "2025-06-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
