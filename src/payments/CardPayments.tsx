@@ -34,7 +34,16 @@ export default function CardPayments() {
     if (!STRIPE_PUBLISHABLE_KEY || !isAdmin || (!status?.connected && !onboarding)) return null;
     return loadConnectAndInitialize({
       publishableKey: STRIPE_PUBLISHABLE_KEY,
-      fetchClientSecret: async () => (await stripeApi<{ clientSecret: string }>('onboard', businessId)).clientSecret,
+      fetchClientSecret: async () => {
+        try {
+          return (await stripeApi<{ clientSecret: string }>('onboard', businessId)).clientSecret;
+        } catch (e) {
+          // Show Stripe's actual reason instead of the embedded component's generic error.
+          setErr((e as Error).message);
+          setOnboarding(false);
+          throw e;
+        }
+      },
       appearance: { variables: { colorPrimary: '#f59e0b', borderRadius: '10px', fontFamily: 'system-ui, sans-serif' } },
     });
   }, [businessId, isAdmin, status?.connected, onboarding]);
