@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { httpClient: Stripe.cr
 const plans = [
   { key: 'solo', name: 'Spannr Solo', desc: '1 user. Jobs, quotes, invoices, inspections, card payments.', monthly: 3900 },
   { key: 'pro', name: 'Spannr Pro', desc: 'Up to 3 users. Adds remote sign-offs, video walk-arounds and automatic messages (100 texts/month).', monthly: 6500 },
-  { key: 'team', name: 'Spannr Team', desc: 'Up to 8 users. Adds workshop board, technician assignment and roles (300 texts/month).', monthly: 9500 },
+  { key: 'team', name: 'Spannr Team', desc: 'Up to 8 users. Adds workshop board, technician assignment and Tap to Pay (300 texts/month).', monthly: 9500 },
   { key: 'business', name: 'Spannr Business', desc: 'Unlimited users, 1,000 texts/month, priority support.', monthly: 14900 },
 ];
 
