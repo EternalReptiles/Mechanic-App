@@ -52,11 +52,38 @@ export interface LineItem {
 
 export type CheckResult = '' | 'ok' | 'attention' | 'urgent' | 'na';
 
+/** rating = OK / Soon / Urgent / N/A; battery = battery test; measure = readings (e.g. mm per wheel) plus a rating */
+export type InspectionKind = 'rating' | 'battery' | 'measure';
+
+export interface BatteryTest {
+  volts?: number | null;
+  /** Cold cranking amps measured by the tester */
+  cca?: number | null;
+  /** Battery's rated CCA (on the label) */
+  rated?: number | null;
+}
+
+export interface InspectionTemplateItem {
+  label: string;
+  kind: InspectionKind;
+  unit?: string;
+  /** Where readings are taken, e.g. ['L', 'R'] or ['FL', 'FR', 'RL', 'RR'] */
+  positions?: string[];
+  /** Readings below these set the rating automatically */
+  thresholds?: { urgentBelow?: number; soonBelow?: number };
+}
+
 export interface CheckItem {
   id: string;
   label: string;
   result: CheckResult;
   note: string;
+  kind?: InspectionKind;
+  unit?: string;
+  positions?: string[];
+  thresholds?: InspectionTemplateItem['thresholds'];
+  readings?: Record<string, number | null>;
+  battery?: BatteryTest;
 }
 
 export type PaymentMethod = '' | 'cash' | 'card' | 'transfer' | 'other';
@@ -174,7 +201,8 @@ export interface Settings {
   nextJobNumber: number;
   invoiceFooter: string;
   quoteFooter: string;
-  checklistTemplate: string[];
+  /** Vehicle inspection items (plain strings are rating items, kept for older saved settings) */
+  checklistTemplate: (string | InspectionTemplateItem)[];
   serviceIntervalMonths: number;
   serviceIntervalKm: number;
   reminderMessage: string;

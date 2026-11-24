@@ -111,23 +111,8 @@ function starterCatalog(): CatalogItem[] {
   ];
 }
 
-export const DEFAULT_CHECKLIST = [
-  'Engine oil level & condition',
-  'Coolant level',
-  'Brake fluid',
-  'Power steering / transmission fluid',
-  'Battery & terminals',
-  'Drive belts',
-  'Hoses & leaks',
-  'Front brakes',
-  'Rear brakes',
-  'Tyres – tread & pressure',
-  'Suspension & steering',
-  'Lights & indicators',
-  'Wipers & washers',
-  'Exhaust',
-  'Air filter',
-];
+export { DEFAULT_INSPECTION as DEFAULT_CHECKLIST } from './inspection';
+import { DEFAULT_INSPECTION } from './inspection';
 
 export const db = new MechanicDB();
 db.use({ stack: 'dbcore', name: 'sync-tracking', create: trackingMiddleware });
@@ -187,7 +172,7 @@ export const defaultSettings: Settings = {
   nextJobNumber: 1001,
   invoiceFooter: 'Thank you for your business!',
   quoteFooter: 'This quote is valid for 30 days.',
-  checklistTemplate: DEFAULT_CHECKLIST,
+  checklistTemplate: DEFAULT_INSPECTION,
   serviceIntervalMonths: 6,
   serviceIntervalKm: 10000,
   reminderMessage:

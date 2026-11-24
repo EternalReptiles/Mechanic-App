@@ -557,3 +557,10 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
   .quick-actions .btn { flex: 0 0 auto; }
   .plans { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* Inspection readings */
+.readings { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 6px; }
+.reading { display: flex; flex-direction: column; gap: 2px; font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+.reading-in { display: flex; align-items: center; gap: 4px; }
+.reading-in input { min-height: 40px; padding: 6px 8px; font-weight: 700; font-size: 1rem; }
+.reading-in em { font-style: normal; font-size: 0.75rem; }

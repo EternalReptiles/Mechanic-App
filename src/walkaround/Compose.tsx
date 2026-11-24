@@ -8,6 +8,7 @@ import { Field, PageHeader } from '../components/ui';
 import { db } from '../db';
 import { useSettings } from '../hooks';
 import { firstName, money, smsUrl, uid, vehicleLabel } from '../utils';
+import { readingsText } from '../inspection';
 import {
   fillTerms,
   fmtMB,
@@ -56,7 +57,7 @@ export default function Compose() {
       flagged.map((c) => ({
         id: uid(),
         title: c.label,
-        note: c.note,
+        note: [readingsText(c), c.note].filter(Boolean).join(' – '),
         priority: c.result === 'urgent' ? 'urgent' : 'soon',
         lines: [],
         total: 0,

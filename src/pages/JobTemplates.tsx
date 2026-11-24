@@ -3,7 +3,8 @@ import { Field, PageHeader } from '../components/ui';
 import { db, getSettings } from '../db';
 import { useAutosave } from '../hooks';
 import { DEFAULT_TEMPLATES, templatesFor } from '../jobTemplates';
-import type { JobTemplate, Settings, TaskFieldType, TaskTemplateItem } from '../types';
+import type { InspectionKind, InspectionTemplateItem, JobTemplate, Settings, TaskFieldType, TaskTemplateItem } from '../types';
+import { DEFAULT_INSPECTION, normalizeInspection } from '../inspection';
 import { uid } from '../utils';
 
 const TYPE_LABEL: Record<TaskFieldType, string> = { check: 'Tick box', yesno: 'Yes / No', number: 'Number', text: 'Text', choice: 'Choice' };
@@ -29,9 +30,65 @@ export default function JobTemplates() {
     setT(t.id, { items });
   };
 
+  const insp = normalizeInspection(s.checklistTemplate);
+  const setInsp = (list: InspectionTemplateItem[]) => setS({ ...s, checklistTemplate: list });
+  const setI = (idx: number, patch: Partial<InspectionTemplateItem>) => setInsp(insp.map((x, k) => (k === idx ? { ...x, ...patch } : x)));
+  const KIND: Record<InspectionKind, string> = { rating: 'OK / Soon / Urgent', battery: 'Battery test', measure: 'Measurement' };
+
   return (
     <>
       <PageHeader back title="Job checklists" />
+      <section className="card">
+        <div className="row between">
+          <button className="link" style={{ padding: 0, fontSize: '1.05rem' }} onClick={() => setOpen(open === 'inspection' ? null : 'inspection')}>
+            {open === 'inspection' ? '▾' : '▸'} Vehicle inspection
+          </button>
+          <span className="small muted">{insp.length} items</span>
+        </div>
+        {open === 'inspection' && (
+          <div className="tpl-edit">
+            <p className="small muted" style={{ margin: 0 }}>
+              The health check on every job. Measurements can set the rating automatically (e.g. pads under 3 mm = Urgent).
+            </p>
+            {insp.map((it, idx) => (
+              <div key={idx} className="tpl-item">
+                <div className="row">
+                  <input className="grow" value={it.label} aria-label="Item" onChange={(e) => setI(idx, { label: e.target.value })} />
+                  <select value={it.kind} aria-label="Type" onChange={(e) => {
+                    const kind = e.target.value as InspectionKind;
+                    setI(idx, kind === 'measure' ? { kind, unit: it.unit || 'mm', positions: it.positions?.length ? it.positions : ['L', 'R'] } : { kind });
+                  }}>
+                    {Object.entries(KIND).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
+                {it.kind === 'measure' && (
+                  <div className="row wrap small">
+                    <input className="unit-in" placeholder="Unit" value={it.unit ?? ''} onChange={(e) => setI(idx, { unit: e.target.value })} />
+                    <input className="grow" placeholder="Positions, e.g. L, R or FL, FR, RL, RR" value={(it.positions ?? []).join(', ')}
+                      onChange={(e) => setI(idx, { positions: e.target.value.split(',').map((p) => p.trim()).filter(Boolean) })} />
+                    <input className="unit-in" type="number" step="any" placeholder="Urgent below" aria-label="Urgent below"
+                      value={it.thresholds?.urgentBelow ?? ''} onChange={(e) => setI(idx, { thresholds: { ...it.thresholds, urgentBelow: e.target.value === '' ? undefined : e.target.valueAsNumber } })} />
+                    <input className="unit-in" type="number" step="any" placeholder="Soon below" aria-label="Soon below"
+                      value={it.thresholds?.soonBelow ?? ''} onChange={(e) => setI(idx, { thresholds: { ...it.thresholds, soonBelow: e.target.value === '' ? undefined : e.target.valueAsNumber } })} />
+                  </div>
+                )}
+                <div className="row small">
+                  <span className="grow" />
+                  <button className="icon-btn" aria-label="Move up" onClick={() => { const l = [...insp]; const [x] = l.splice(idx, 1); l.splice(Math.max(0, idx - 1), 0, x); setInsp(l); }}>↑</button>
+                  <button className="icon-btn" aria-label="Move down" onClick={() => { const l = [...insp]; const [x] = l.splice(idx, 1); l.splice(Math.min(l.length, idx + 1), 0, x); setInsp(l); }}>↓</button>
+                  <button className="icon-btn danger" aria-label="Remove item" onClick={() => setInsp(insp.filter((_, k) => k !== idx))}>✕</button>
+                </div>
+              </div>
+            ))}
+            <div className="row wrap">
+              <button className="btn" onClick={() => setInsp([...insp, { label: 'New item', kind: 'rating' }])}>+ Add item</button>
+              <span className="grow" />
+              <button className="btn ghost" onClick={() => confirm('Reset the vehicle inspection to the standard list?') && setInsp(DEFAULT_INSPECTION)}>Reset to standard</button>
+            </div>
+          </div>
+        )}
+      </section>
+      <h2>Technician job checklists</h2>
       <p className="muted small">
         Technicians fill these in on each job – tick boxes, measurements like oil litres or pad thickness, and choices. Items marked
         required must be done before a job can be marked finished. Number items can add to the invoice automatically (e.g. litres of oil × price per litre).

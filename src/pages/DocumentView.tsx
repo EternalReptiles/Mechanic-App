@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { brandVars } from '../brand';
+import { BATTERY_RESULTS, readingsText } from '../inspection';
 import { db } from '../db';
 import { useSettings } from '../hooks';
 import type { CheckItem } from '../types';
@@ -14,8 +15,16 @@ function InspectionTable({ items, onlyFlagged }: { items: CheckItem[]; onlyFlagg
       <tbody>
         {rows.map((i) => (
           <tr key={i.id}>
-            <td>{i.label}{i.note && <div className="small muted">{i.note}</div>}</td>
-            <td><span className="check-pill" style={{ background: CHECK_LABEL[i.result].color }}>{CHECK_LABEL[i.result].label}</span></td>
+            <td>
+              {i.label}
+              {readingsText(i) && <div className="small"><strong>{readingsText(i)}</strong></div>}
+              {i.note && <div className="small muted">{i.note}</div>}
+            </td>
+            <td>
+              <span className="check-pill" style={{ background: CHECK_LABEL[i.result].color }}>
+                {i.kind === 'battery' ? BATTERY_RESULTS.find((r) => r.result === i.result)?.label ?? CHECK_LABEL[i.result].label : CHECK_LABEL[i.result].label}
+              </span>
+            </td>
           </tr>
         ))}
       </tbody>

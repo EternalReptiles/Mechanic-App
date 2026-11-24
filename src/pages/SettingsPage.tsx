@@ -166,10 +166,10 @@ export default function SettingsPage() {
             <textarea rows={2} value={s.readyMessage} onChange={text('readyMessage')} />
           </Field>
         )}
-        <Field label="Inspection checklist (one item per line)" wide>
-          <textarea rows={8} value={s.checklistTemplate.join('\n')}
-            onChange={(e) => setS({ ...s, checklistTemplate: e.target.value.split('\n').map((x) => x.trimStart()).filter((x, i, a) => x || i === a.length - 1) })} />
-        </Field>
+        <p className="wide small" style={{ margin: 0 }}>
+          The vehicle inspection list (battery test, pad / rotor / tyre measurements…) is edited in{' '}
+          <Link to="/settings/checklists">Job checklists</Link>.
+        </p>
       </section>
 
       <section className="card grid">
