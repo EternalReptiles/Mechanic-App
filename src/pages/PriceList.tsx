@@ -5,6 +5,7 @@ import { Empty, PageHeader } from '../components/ui';
 import { db, removeRecords } from '../db';
 import type { CatalogItem, LineItemType } from '../types';
 import { money, uid } from '../utils';
+import NumberInput from '../components/NumberInput';
 
 function Editor({ item, onDone }: { item: CatalogItem; onDone: () => void }) {
   const [c, setC] = useState(item);
@@ -29,10 +30,10 @@ function Editor({ item, onDone }: { item: CatalogItem; onDone: () => void }) {
           </div>
           <div className="row">
             <label className="mini">{l.type === 'labour' ? 'Hours' : 'Qty'}
-              <input type="number" step="any" value={l.qty} onChange={(e) => setLine(i, { qty: e.target.valueAsNumber || 0 })} />
+              <NumberInput value={l.qty} onChange={(n) => setLine(i, { qty: n })} />
             </label>
             <label className="mini">Unit price (ex GST)
-              <input type="number" step="any" value={l.unitPrice} onChange={(e) => setLine(i, { unitPrice: e.target.valueAsNumber || 0 })} />
+              <NumberInput value={l.unitPrice} onChange={(n) => setLine(i, { unitPrice: n })} />
             </label>
             <button className="icon-btn danger" aria-label="Remove line" onClick={() => setC({ ...c, lines: c.lines.filter((_, j) => j !== i) })}>✕</button>
           </div>

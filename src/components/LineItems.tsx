@@ -3,6 +3,7 @@ import { db } from '../db';
 import type { LineItem, LineItemType } from '../types';
 import { money, totals, uid } from '../utils';
 import CatalogPicker from './CatalogPicker';
+import NumberInput from './NumberInput';
 
 const TYPE_LABEL: Record<LineItemType, string> = { labour: 'Labour', part: 'Part', other: 'Other' };
 
@@ -65,13 +66,11 @@ export default function LineItems({
           <div className="row">
             <label className="mini">
               {i.type === 'labour' ? 'Hours' : 'Qty'}
-              <input type="number" inputMode="decimal" step="any" value={i.qty}
-                onChange={(e) => set(i.id, { qty: e.target.valueAsNumber || 0 })} />
+              <NumberInput value={i.qty} onChange={(n) => set(i.id, { qty: n })} />
             </label>
             <label className="mini">
               Unit price (ex GST)
-              <input type="number" inputMode="decimal" step="any" value={i.unitPrice}
-                onChange={(e) => set(i.id, { unitPrice: e.target.valueAsNumber || 0 })} />
+              <NumberInput value={i.unitPrice} onChange={(n) => set(i.id, { unitPrice: n })} />
             </label>
             <span className="line-total">{money(i.qty * i.unitPrice)}</span>
             <button className="icon-btn danger" aria-label="Remove line"

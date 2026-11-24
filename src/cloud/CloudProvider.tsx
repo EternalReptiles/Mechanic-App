@@ -6,6 +6,7 @@ import { EMPTY_PLAN, planAllows, type EffectivePlan, type Feature, type PlanInfo
 import { personName } from '../utils';
 import { supabase, withTimeout } from './supabase';
 import { pendingCount, startSync, stopSync, syncNow } from './sync';
+import NumberInput from '../components/NumberInput';
 
 export type Role = 'owner' | 'admin' | 'tech';
 
@@ -414,8 +415,7 @@ function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error
         <div className="grid">
           <label className="field">
             <span>Hourly labour rate (ex GST)</span>
-            <input type="number" inputMode="decimal" min={0} step="any" required value={rate || ''}
-              onChange={(e) => setRate(e.target.valueAsNumber || 0)} />
+            <NumberInput min={0} required placeholder="" value={rate} onChange={setRate} />
           </label>
           <label className="field">
             <span>ABN (optional)</span>

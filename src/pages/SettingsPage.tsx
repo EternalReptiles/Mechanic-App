@@ -11,6 +11,7 @@ import { Field, PageHeader } from '../components/ui';
 import { useAutosave } from '../hooks';
 import { db, DEFAULT_TERMS, exportBackup, getSettings, importBackup, WORKSHOP_TERMS_EXTRA } from '../db';
 import type { Settings } from '../types';
+import NumberInput from '../components/NumberInput';
 
 export default function SettingsPage() {
   const [s, setS] = useState<Settings | null>(null);
@@ -27,8 +28,7 @@ export default function SettingsPage() {
 
   const text = (k: keyof Settings) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setS({ ...s, [k]: e.target.value });
-  const num = (k: keyof Settings) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setS({ ...s, [k]: e.target.valueAsNumber || 0 });
+  const num = (k: keyof Settings) => (n: number) => setS({ ...s, [k]: n });
 
   function onLogo(file?: File) {
     if (!file) return;
@@ -127,9 +127,9 @@ export default function SettingsPage() {
 
       <section className="card grid">
         <h2 className="wide">Pricing &amp; invoicing</h2>
-        <Field label="Default labour rate per hour (ex GST)"><input type="number" inputMode="decimal" value={s.labourRate} onChange={num('labourRate')} /></Field>
-        <Field label="Payment terms (days)"><input type="number" inputMode="numeric" value={s.paymentTermsDays} onChange={num('paymentTermsDays')} /></Field>
-        <Field label="Job / invoice numbers start from"><input type="number" inputMode="numeric" value={s.nextJobNumber} onChange={num('nextJobNumber')} /></Field>
+        <Field label="Default labour rate per hour (ex GST)"><NumberInput inputMode="decimal" value={s.labourRate} onChange={num('labourRate')} /></Field>
+        <Field label="Payment terms (days)"><NumberInput inputMode="numeric" value={s.paymentTermsDays} onChange={num('paymentTermsDays')} /></Field>
+        <Field label="Job / invoice numbers start from"><NumberInput inputMode="numeric" value={s.nextJobNumber} onChange={num('nextJobNumber')} /></Field>
         <label className="field checkbox">
           <input type="checkbox" checked={s.gstRegistered} onChange={(e) => setS({ ...s, gstRegistered: e.target.checked })} />
           <span>Registered for GST (add 10%)</span>
@@ -155,8 +155,8 @@ export default function SettingsPage() {
 
       <section className="card grid">
         <h2 className="wide">Inspections &amp; reminders</h2>
-        <Field label="Service interval (months)"><input type="number" inputMode="numeric" value={s.serviceIntervalMonths} onChange={num('serviceIntervalMonths')} /></Field>
-        <Field label="Service interval (km)"><input type="number" inputMode="numeric" value={s.serviceIntervalKm} onChange={num('serviceIntervalKm')} /></Field>
+        <Field label="Service interval (months)"><NumberInput inputMode="numeric" value={s.serviceIntervalMonths} onChange={num('serviceIntervalMonths')} /></Field>
+        <Field label="Service interval (km)"><NumberInput inputMode="numeric" value={s.serviceIntervalKm} onChange={num('serviceIntervalKm')} /></Field>
         <Field label="Service reminder text message" wide>
           <textarea rows={3} value={s.reminderMessage} onChange={text('reminderMessage')} />
         </Field>

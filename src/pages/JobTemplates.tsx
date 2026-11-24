@@ -6,6 +6,7 @@ import { DEFAULT_TEMPLATES, templatesFor } from '../jobTemplates';
 import type { InspectionKind, InspectionTemplateItem, JobTemplate, Settings, TaskFieldType, TaskTemplateItem } from '../types';
 import { DEFAULT_INSPECTION, normalizeInspection } from '../inspection';
 import { uid } from '../utils';
+import NumberInput from '../components/NumberInput';
 
 const TYPE_LABEL: Record<TaskFieldType, string> = { check: 'Tick box', yesno: 'Yes / No', number: 'Number', text: 'Text', choice: 'Choice' };
 
@@ -130,8 +131,8 @@ export default function JobTemplates() {
                     {it.invoice && (
                       <>
                         <input className="grow" placeholder="Invoice line" value={it.invoice.description} onChange={(e) => setItem(t, it.id, { invoice: { ...it.invoice!, description: e.target.value } })} />
-                        <input className="unit-in" type="number" step="any" aria-label={`Price per ${it.unit || 'unit'} ex GST`} placeholder="$ / unit"
-                          value={it.invoice.unitPrice} onChange={(e) => setItem(t, it.id, { invoice: { ...it.invoice!, unitPrice: e.target.valueAsNumber || 0 } })} />
+                        <NumberInput className="unit-in" aria-label={`Price per ${it.unit || 'unit'} ex GST`} placeholder="$ / unit"
+                          value={it.invoice.unitPrice} onChange={(n) => setItem(t, it.id, { invoice: { ...it.invoice!, unitPrice: n } })} />
                         <span className="muted">per {it.unit || 'unit'} ex GST</span>
                       </>
                     )}

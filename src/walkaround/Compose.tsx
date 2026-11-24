@@ -22,6 +22,7 @@ import {
   type WalkItem,
 } from './model';
 import VideoRecorder from './VideoRecorder';
+import NumberInput from '../components/NumberInput';
 
 export default function Compose() {
   const { id = '' } = useParams();
@@ -209,10 +210,10 @@ export default function Compose() {
             {i.lines.map((l, n) => (
               <div key={n} className="row small">
                 <input className="grow" value={l.description} onChange={(e) => setItem(i.id, { lines: i.lines.map((x, k) => (k === n ? { ...x, description: e.target.value } : x)) })} />
-                <input className="qty" type="number" step="any" value={l.qty} aria-label="Qty"
-                  onChange={(e) => setItem(i.id, { lines: i.lines.map((x, k) => (k === n ? { ...x, qty: e.target.valueAsNumber || 0 } : x)) })} />
-                <input className="price" type="number" step="any" value={l.unitPrice} aria-label="Unit price ex GST"
-                  onChange={(e) => setItem(i.id, { lines: i.lines.map((x, k) => (k === n ? { ...x, unitPrice: e.target.valueAsNumber || 0 } : x)) })} />
+                <NumberInput className="qty" value={l.qty} aria-label="Qty"
+                  onChange={(v) => setItem(i.id, { lines: i.lines.map((x, k) => (k === n ? { ...x, qty: v } : x)) })} />
+                <NumberInput className="price" value={l.unitPrice} aria-label="Unit price ex GST"
+                  onChange={(v) => setItem(i.id, { lines: i.lines.map((x, k) => (k === n ? { ...x, unitPrice: v } : x)) })} />
                 <button className="icon-btn danger" aria-label="Remove price line" onClick={() => setItem(i.id, { lines: i.lines.filter((_, k) => k !== n) })}>✕</button>
               </div>
             ))}
