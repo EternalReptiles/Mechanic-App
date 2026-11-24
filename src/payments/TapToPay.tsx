@@ -4,7 +4,7 @@ import Upgrade from '../components/Upgrade';
 import { useSettings } from '../hooks';
 import type { Job } from '../types';
 import { money, totals } from '../utils';
-import { cancelTap, tapToPayAvailable, tapToPayForJob } from './tapToPay';
+import { cancelTap, tapToPayAvailable, tapToPayForJob } from './terminal';
 
 /** "Tap to Pay" on the job: the customer taps their card, phone or watch on the mechanic's phone. */
 export default function TapToPay({ job, businessName, onPaid }: { job: Job; businessName: string; onPaid: (paidAt: string) => void }) {
