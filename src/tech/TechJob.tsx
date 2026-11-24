@@ -6,6 +6,7 @@ import Photos from '../components/Photos';
 import TaskChecklist from '../components/TaskChecklist';
 import { Field, PageHeader, StatusBadge } from '../components/ui';
 import { useCloud } from '../cloud/CloudProvider';
+import { WalkaroundSection } from '../walkaround/WalkaroundList';
 import { db } from '../db';
 import { useAutosave, useSettings } from '../hooks';
 import { finishJobPatch, missingRequired, tasksFromTemplate, templatesFor } from '../jobTemplates';
@@ -16,7 +17,7 @@ import { firstName, fmtDateTime, mapsUrl, smsUrl, telUrl } from '../utils';
 export default function TechJob() {
   const { id = '' } = useParams();
   const settings = useSettings();
-  const { userId, memberName } = useCloud();
+  const { userId, memberName, can } = useCloud();
   const [job, setJob] = useState<Job | null | undefined>(undefined);
   const [err, setErr] = useState('');
   const loaded = useRef('');
@@ -115,9 +116,18 @@ export default function TechJob() {
       </section>
 
       <details className="card">
-        <summary><strong>Vehicle inspection</strong> <span className="muted small">(OK / soon / urgent)</span></summary>
+        <summary><strong>Vehicle inspection</strong> <span className="muted small">(battery, brakes, tyres…)</span></summary>
         <Checklist items={job.checklist ?? []} template={settings.checklistTemplate} onChange={(checklist) => update({ checklist })} />
       </details>
+
+      {can('walkarounds') && (
+        <WalkaroundSection
+          job={job}
+          onAddLines={(lines, walkId) =>
+            update({ lineItems: [...job.lineItems, ...lines], appliedWalkarounds: [...(job.appliedWalkarounds ?? []), walkId] })
+          }
+        />
+      )}
 
       {err && <p className="error">{err}</p>}
       {job.finishedAt ? (
