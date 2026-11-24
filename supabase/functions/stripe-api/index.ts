@@ -1,6 +1,6 @@
 // Spannr ⇄ Stripe Connect: set up card payments for a business and create repair invoices.
 // Called from the app with the signed-in user's token: { action, businessId, ... }.
-import { admin, APP_FEE_RATE, cardPaymentsStatus, cors, json, stripe } from '../_shared/stripe.ts';
+import { admin, APP_FEE_RATE, cardPaymentsStatus, cors, json, stripe, syncBranding } from '../_shared/stripe.ts';
 
 type Ctx = { businessId: string; userEmail: string; isAdmin: boolean };
 
@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
 
 async function getRow(businessId: string) {
   const { data } = await admin.from('stripe_accounts').select('*').eq('business_id', businessId).maybeSingle();
-  return data as { account_id: string; card_payments_status: string; gst_tax_rate_id: string | null } | null;
+  return data as { account_id: string; card_payments_status: string; gst_tax_rate_id: string | null; branding_hash: string | null } | null;
 }
 
 async function settingsFor(businessId: string) {
@@ -56,6 +56,13 @@ async function status(ctx: Ctx) {
     await admin.from('stripe_accounts')
       .update({ card_payments_status: cardPayments, updated_at: new Date().toISOString() })
       .eq('business_id', ctx.businessId);
+  }
+  if (cardPayments === 'active') {
+    try {
+      await syncBranding(ctx.businessId, row.account_id, row.branding_hash);
+    } catch (e) {
+      console.error('branding sync failed', e);
+    }
   }
   return { connected: true, accountId: row.account_id, cardPayments };
 }
@@ -84,7 +91,7 @@ async function onboard(ctx: Ctx) {
       metadata: { spannr_business_id: ctx.businessId },
     } as any, { idempotencyKey: `spannr-account-${ctx.businessId}` });
     await admin.from('stripe_accounts').insert({ business_id: ctx.businessId, account_id: account.id });
-    row = { account_id: account.id, card_payments_status: 'pending', gst_tax_rate_id: null };
+    row = { account_id: account.id, card_payments_status: 'pending', gst_tax_rate_id: null, branding_hash: null };
   }
   const session = await stripe.accountSessions.create({
     account: row.account_id,
@@ -108,6 +115,11 @@ async function createInvoice(ctx: Ctx, jobId: string) {
   const cardPayments = await cardPaymentsStatus(row.account_id);
   if (cardPayments !== 'active') throw new Error('Card payments are not active yet – finish setting up in Settings → Card payments.');
   const opt = { stripeAccount: row.account_id };
+  try {
+    await syncBranding(ctx.businessId, row.account_id, row.branding_hash); // logo + colour on the Stripe invoice
+  } catch (e) {
+    console.error('branding sync failed', e);
+  }
 
   const { data: jobRow } = await admin.from('jobs').select('data, deleted').eq('business_id', ctx.businessId).eq('id', jobId).maybeSingle();
   if (!jobRow || jobRow.deleted) throw new Error('Job not found – make sure it has synced (check the sync badge).');

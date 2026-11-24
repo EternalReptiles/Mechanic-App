@@ -145,6 +145,8 @@ export interface Settings {
   readyMessage: string;
   /** Terms & conditions customers agree to when signing. Placeholders: {business} {days} */
   terms: string;
+  /** Brand colour (hex) for documents, customer pages and Stripe invoices */
+  brandColor?: string;
   /** IANA time zone used for message times and quiet hours, e.g. "Australia/Sydney" */
   timezone?: string;
   /** Automatic booking confirmations and reminders (sent by the server) */
@@ -162,4 +164,6 @@ export interface NotifySettings {
   enabledAt: number;
   confirmTemplate: string;
   reminderTemplate: string;
+  /** Text/email a paid-invoice receipt when a customer pays by card (default on) */
+  receiptEnabled?: boolean;
 }

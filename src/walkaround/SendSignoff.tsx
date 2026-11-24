@@ -33,7 +33,7 @@ export default function SendSignoff({ job, customer, vehicle, onSent }: { job: J
           : `Hi ${firstName(customer.name)}, here's the quote for your ${v} (${money(t.total)}). Please check it, then approve or decline and sign.`
         : `Hi ${firstName(customer.name)}, the work on your ${v} is done. Please check the details and sign off (${money(t.total)}, due ${fmtDay(dayKey(due))}).`;
     const content: WalkContent = {
-      business: { name: settings.businessName, phone: settings.phone, email: settings.email, logo: settings.logo, abn: settings.abn },
+      business: { name: settings.businessName, phone: settings.phone, email: settings.email, logo: settings.logo, abn: settings.abn, brandColor: settings.brandColor },
       customerName: customer.name,
       vehicle: vehicleLabel(vehicle),
       message,

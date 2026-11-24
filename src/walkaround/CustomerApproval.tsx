@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { brandVars } from '../brand';
 import { supabase } from '../cloud/supabase';
 import SignaturePad from '../components/SignaturePad';
 import { fmtDay, money, telUrl } from '../utils';
@@ -112,7 +113,7 @@ export default function CustomerApproval() {
   }
 
   return (
-    <div className="cust">
+    <div className="cust" style={brandVars(c.business.brandColor)}>
       <header className="cust-head">
         {c.business.logo && <img src={c.business.logo} alt="" />}
         <div>

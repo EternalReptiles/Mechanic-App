@@ -463,3 +463,14 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .pay-pill { font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
 .pay-pill.on { color: #16a34a; border-color: #16a34a; }
 .stripe-embed { padding: 10px; }
+
+/* ---------- Business branding ---------- */
+.color-input { width: 56px; height: 44px; padding: 4px; }
+.brand-swatch { padding: 10px 14px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; }
+.doc .doc-head { border-bottom-color: var(--brand, #0f172a); }
+.doc .doc-meta h1 { color: var(--brand, #0f172a); }
+.doc .doc-table th { background: color-mix(in srgb, var(--brand, #0f172a) 12%, #fff); }
+.doc .totals .grand { border-top-color: var(--brand, #0f172a); }
+.cust .cust-head { border-bottom-color: var(--brand, #0f172a); }
+.cust .cust-total { border-top-color: var(--brand, #0f172a); }
+.cust .btn.primary { background: var(--brand, #f59e0b); border-color: var(--brand, #f59e0b); color: var(--on-brand, #1c1917); }

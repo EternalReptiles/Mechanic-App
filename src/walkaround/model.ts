@@ -48,7 +48,7 @@ export interface SignRepair {
 }
 
 export interface WalkContent {
-  business: { name: string; phone: string; email: string; logo: string; abn: string };
+  business: { name: string; phone: string; email: string; logo: string; abn: string; brandColor?: string };
   customerName: string;
   vehicle: string;
   message: string;

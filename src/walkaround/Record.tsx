@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { brandVars } from '../brand';
 import { supabase } from '../cloud/supabase';
 import { fmtDay, money } from '../utils';
 import { KIND_LABEL, PRIORITY, quoteOutcome, signStatement, termLines, videoUrl, type WalkRecord } from './model';
@@ -37,7 +38,7 @@ export default function Record() {
         <button className="btn" onClick={() => navigate(-1)}>← Back</button>
         <button className="btn primary" onClick={() => window.print()}>Print / Save PDF</button>
       </div>
-      <article className="doc">
+      <article className="doc" style={brandVars(c.business.brandColor)}>
         <header className="doc-head">
           <div>
             {c.business.logo && <img src={c.business.logo} alt="" className="doc-logo" />}

@@ -64,6 +64,10 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
         Spannr texts and emails your customers for you – even when your phone is off. Nothing is sent between 9pm and 7:30am.
       </p>
       <label className="field checkbox wide">
+        <input type="checkbox" checked={n.receiptEnabled !== false} onChange={(e) => set({ receiptEnabled: e.target.checked })} />
+        <span>Send a receipt with the paid invoice when a customer pays by card</span>
+      </label>
+      <label className="field checkbox wide">
         <input type="checkbox" checked={n.confirmEnabled} onChange={(e) => set({ confirmEnabled: e.target.checked })} />
         <span>Send a booking confirmation when a job is booked in</span>
       </label>

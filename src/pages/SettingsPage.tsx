@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCloud } from '../cloud/CloudProvider';
 import SyncBadge from '../cloud/SyncBadge';
 import AutoMessages from '../components/AutoMessages';
+import { brandColor, onBrand } from '../brand';
 import { Field, PageHeader } from '../components/ui';
 import { useAutosave } from '../hooks';
 import { db, DEFAULT_TERMS, exportBackup, getSettings, importBackup, WORKSHOP_TERMS_EXTRA } from '../db';
@@ -106,6 +107,14 @@ export default function SettingsPage() {
               <input type="file" accept="image/*" hidden onChange={(e) => onLogo(e.target.files?.[0])} />
             </label>
             {s.logo && <button className="btn ghost" onClick={() => setS({ ...s, logo: '' })}>Remove</button>}
+          </div>
+        </div>
+        <div className="field wide">
+          <span>Brand colour (quotes, invoices, customer pages and Stripe invoices)</span>
+          <div className="row">
+            <input type="color" className="color-input" value={brandColor(s.brandColor)} onChange={(e) => setS({ ...s, brandColor: e.target.value })} />
+            <span className="brand-swatch" style={{ background: brandColor(s.brandColor), color: onBrand(brandColor(s.brandColor)) }}>Sample button</span>
+            {s.brandColor && <button className="btn ghost" onClick={() => setS({ ...s, brandColor: undefined })}>Reset</button>}
           </div>
         </div>
       </section>

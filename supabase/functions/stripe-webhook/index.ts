@@ -1,7 +1,7 @@
 // Stripe Connect webhook: keeps Spannr in step with invoices and accounts.
 // Security: we never trust the request body. Each event is fetched back from Stripe by id
 // (on the connected account it came from), so a forged request can't mark anything paid.
-import { admin, cardPaymentsStatus, markJobPaid, stripe } from '../_shared/stripe.ts';
+import { admin, cardPaymentsStatus, markJobPaid, queueReceipt, stripe } from '../_shared/stripe.ts';
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('ok');
@@ -37,7 +37,11 @@ Deno.serve(async (req) => {
           hosted_invoice_url: inv.hosted_invoice_url ?? undefined,
           updated_at: new Date().toISOString(),
         }).eq('id', inv.id);
-        if (event.type === 'invoice.paid') await markJobPaid(row.business_id, row.job_id, paidAt ?? new Date().toISOString());
+        if (event.type === 'invoice.paid') {
+          const when = paidAt ?? new Date().toISOString();
+          await markJobPaid(row.business_id, row.job_id, when);
+          await queueReceipt(row.business_id, row.job_id, { number: (inv as any).number, total: inv.total, hosted_invoice_url: inv.hosted_invoice_url }, when);
+        }
       }
     } else if (event.type === 'account.updated' && event.account) {
       const status = await cardPaymentsStatus(event.account);

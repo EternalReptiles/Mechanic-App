@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate, useParams } from 'react-router-dom';
+import { brandVars } from '../brand';
 import { db } from '../db';
 import { useSettings } from '../hooks';
 import type { CheckItem } from '../types';
@@ -74,7 +75,7 @@ export default function DocumentView() {
         <button className="btn" onClick={share}>Share</button>
       </div>
 
-      <article className="doc">
+      <article className="doc" style={brandVars(s.brandColor)}>
         <header className="doc-head">
           <div>
             {s.logo && <img src={s.logo} alt="" className="doc-logo" />}

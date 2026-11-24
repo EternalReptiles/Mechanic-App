@@ -5,7 +5,7 @@ import { fmtDateTime } from '../utils';
 
 interface Msg {
   id: string;
-  kind: 'confirmation' | 'reminder';
+  kind: 'confirmation' | 'reminder' | 'receipt';
   channel: 'sms' | 'email';
   to_address: string;
   status: 'queued' | 'sending' | 'sent' | 'failed' | 'skipped';
@@ -43,7 +43,7 @@ export default function JobMessages({ jobId }: { jobId: string }) {
       <span className="small muted">Automatic messages</span>
       {list.map((m) => (
         <div key={m.id} className={`msg-row ${m.status}`}>
-          <span>{m.channel === 'sms' ? '💬' : '✉'} {m.kind === 'confirmation' ? 'Booking confirmation' : 'Reminder'}</span>
+          <span>{m.channel === 'sms' ? '💬' : '✉'} {m.kind === 'confirmation' ? 'Booking confirmation' : m.kind === 'receipt' ? 'Payment receipt' : 'Reminder'}</span>
           <span className="small">
             {STATUS[m.status]} {fmtDateTime(m.sent_at || m.created_at)}
             {m.error && <span className="muted"> – {m.error}</span>}

@@ -18,7 +18,7 @@ export default function JobCardPayment({ job, customer, businessName, onInvoiced
   const [invoices, setInvoices] = useState<StripeInvoiceRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const [sent, setSent] = useState<{ url: string; total: number } | null>(null);
+  const [sent, setSent] = useState<{ url: string; total: number; receipt?: boolean; number?: string | null } | null>(null);
 
   const load = useCallback(async () => {
     if (!navigator.onLine || !STRIPE_PUBLISHABLE_KEY) return;
@@ -58,8 +58,12 @@ export default function JobCardPayment({ job, customer, businessName, onInvoiced
         token=""
         link={sent.url}
         customer={customer}
-        message={`Hi ${firstName(customer?.name ?? '')}, here's your invoice from ${businessName} for ${money(sent.total / 100)}. You can pay by card, Apple Pay or Google Pay:`}
-        subject={`Invoice from ${businessName}`}
+        message={
+          sent.receipt
+            ? `Hi ${firstName(customer?.name ?? '')}, thanks for your payment of ${money(sent.total / 100)} to ${businessName} for ${sent.number ?? 'your invoice'}. Your paid invoice:`
+            : `Hi ${firstName(customer?.name ?? '')}, here's your invoice from ${businessName} for ${money(sent.total / 100)}. You can pay by card, Apple Pay or Google Pay:`
+        }
+        subject={sent.receipt ? `Receipt from ${businessName}` : `Invoice from ${businessName}`}
         onDone={() => setSent(null)}
       />
     );
@@ -91,6 +95,9 @@ export default function JobCardPayment({ job, customer, businessName, onInvoiced
           <span className="small">
             {LABEL[i.status] ?? i.status} {fmtDateTime(i.paid_at || i.created_at)}
             {i.status === 'open' && i.hosted_invoice_url && <> · <a href={i.hosted_invoice_url} target="_blank" rel="noreferrer">View</a></>}
+            {i.status === 'paid' && i.hosted_invoice_url && (
+              <> · <button className="link" onClick={() => setSent({ url: i.hosted_invoice_url!, total: i.total, receipt: true, number: i.number })}>Send receipt</button></>
+            )}
           </span>
         </div>
       ))}

@@ -107,7 +107,7 @@ export default function Compose() {
           phone: settings.phone,
           email: settings.email,
           logo: settings.logo,
-          abn: settings.abn,
+          abn: settings.abn, brandColor: settings.brandColor,
         },
         customerName: customer?.name ?? '',
         vehicle: vehicleLabel(vehicle),
