@@ -35,12 +35,14 @@ export async function markJobPaid(businessId: string, jobId: string, paidAtIso: 
   const { data: job } = await admin.from('jobs').select('data').eq('business_id', businessId).eq('id', jobId).maybeSingle();
   if (!job) return;
   const d = job.data as Record<string, unknown>;
-  if (d.status === 'paid') return;
+  // Stripe is the record of truth for a card payment: use its method and time, even if the
+  // job was already marked paid by hand.
+  if (d.status === 'paid' && d.paymentMethod === 'card' && d.paidAt === paidAtIso) return;
   const next = {
     ...d,
     status: 'paid',
     paymentMethod: 'card',
-    paidAt: d.paidAt || paidAtIso,
+    paidAt: paidAtIso,
     invoicedAt: d.invoicedAt || paidAtIso,
   };
   await admin.from('jobs').update({ data: next, updated_at: Date.now() }).eq('business_id', businessId).eq('id', jobId);

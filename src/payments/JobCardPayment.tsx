@@ -68,7 +68,9 @@ export default function JobCardPayment({ job, customer, businessName, onInvoiced
   return (
     <section className="card">
       <h2>💳 Card payment</h2>
-      {!active ? (
+      {job.status === 'paid' && !invoices.some((i) => i.status === 'open') ? (
+        <p className="small muted" style={{ margin: 0 }}>This job is marked as paid, so there's nothing to send.</p>
+      ) : !active ? (
         <p className="small muted" style={{ margin: 0 }}>
           Let customers pay this invoice by card. <Link to="/settings/payments">Set up card payments</Link>
         </p>

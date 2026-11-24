@@ -112,6 +112,8 @@ async function createInvoice(ctx: Ctx, jobId: string) {
   const { data: jobRow } = await admin.from('jobs').select('data, deleted').eq('business_id', ctx.businessId).eq('id', jobId).maybeSingle();
   if (!jobRow || jobRow.deleted) throw new Error('Job not found – make sure it has synced (check the sync badge).');
   const job = jobRow.data as Record<string, any>;
+  // Never ask a customer to pay for a job that's already been paid (e.g. cash or a card reader).
+  if (job.status === 'paid') throw new Error('This job is already marked as paid, so no card invoice was sent.');
   const lines = (job.lineItems ?? []) as { description: string; qty: number; unitPrice: number }[];
   if (!lines.length) throw new Error('Add labour and parts to the job first.');
   if (!job.customerId) throw new Error('Add a customer to the job first.');
