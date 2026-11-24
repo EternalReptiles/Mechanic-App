@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useCloud, type Role } from '../cloud/CloudProvider';
 import { supabase } from '../cloud/supabase';
 import { Empty, Field, PageHeader } from '../components/ui';
+import { PLANS } from '../plans';
 
 interface Member { user_id: string; email: string; role: Role }
 interface Invite { email: string; role: Role }
@@ -14,7 +15,8 @@ const ROLE_HELP: Record<Role, string> = {
 };
 
 export default function Team() {
-  const { businessId, businessName, userId, isAdmin } = useCloud();
+  const { businessId, businessName, userId, isAdmin, plan } = useCloud();
+  const limit = plan.effective === 'trial' || plan.effective === 'expired' ? null : PLANS[plan.effective].users;
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [email, setEmail] = useState('');
@@ -41,7 +43,10 @@ export default function Team() {
     setErr('');
     const clean = email.trim().toLowerCase();
     const { error } = await supabase.from('invites').upsert({ business_id: businessId, email: clean, role });
-    if (error) return setErr(error.message);
+    if (error)
+      return setErr(/row-level security/i.test(error.message)
+        ? `Your plan includes ${limit ?? 'a limited number of'} user${limit === 1 ? '' : 's'}. Upgrade in Settings → Plan & billing to add more.`
+        : error.message);
     setJustInvited(clean);
     setEmail('');
     void load();
@@ -55,7 +60,7 @@ export default function Team() {
       <PageHeader back title="Team" />
       {err && <p className="error">{err}</p>}
 
-      <h2>People</h2>
+      <h2>People {limit && <span className="muted small">({members.length + invites.length} of {limit} on your plan)</span>}</h2>
       {members.map((m) => (
         <div key={m.user_id} className="card row between">
           <div>

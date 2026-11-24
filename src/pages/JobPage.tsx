@@ -11,6 +11,7 @@ import { useCloud } from '../cloud/CloudProvider';
 import ApprovalList, { WalkaroundSection } from '../walkaround/WalkaroundList';
 import SendSignoff from '../walkaround/SendSignoff';
 import JobMessages from '../components/JobMessages';
+import Upgrade from '../components/Upgrade';
 import JobCardPayment from '../payments/JobCardPayment';
 import { quoteOutcome } from '../walkaround/model';
 import { db, deleteJob } from '../db';
@@ -57,7 +58,7 @@ export default function JobPage() {
   const [params, setParams] = useSearchParams();
   const tab = (params.get('tab') as Tab) || 'details';
   const settings = useSettings();
-  const { team } = useCloud();
+  const { team, can } = useCloud();
   const [job, setJob] = useState<Job | null | undefined>(undefined);
   const [signing, setSigning] = useState(false);
   const [sentCount, setSentCount] = useState(0);
@@ -266,7 +267,7 @@ export default function JobPage() {
                 <button className={inWorkshop ? 'on solid' : ''} onClick={() => update({ location: 'workshop' })}>🔧 In workshop</button>
               </div>
             )}
-            {team.length > 1 && (
+            {team.length > 1 && can('workshop') && (
               <Field label="Technician" wide>
                 <select value={job.assignedTo ?? ''} onChange={(e) => update({ assignedTo: e.target.value })}>
                   <option value="">— Unassigned —</option>
@@ -320,12 +321,12 @@ export default function JobPage() {
             <Link className="btn block" to={`/jobs/${job.id}/report`}>📋 View inspection report</Link>
           )}
         </section>
-        <WalkaroundSection
+        {!can('walkarounds') ? <Upgrade feature="walkarounds" what="Video walk-arounds" /> : <WalkaroundSection
           job={job}
           onAddLines={(lines, walkId) =>
             update({ lineItems: [...job.lineItems, ...lines], appliedWalkarounds: [...(job.appliedWalkarounds ?? []), walkId] })
           }
-        />
+        />}
         </>
       )}
 
@@ -348,7 +349,11 @@ export default function JobPage() {
               if (!['invoiced', 'paid'].includes(job.status)) setStatus('invoiced');
             }}
           />
-          <SendSignoff job={job} customer={customer} vehicle={vehicle} onSent={() => setSentCount((n) => n + 1)} />
+          {can('signoffs') ? (
+            <SendSignoff job={job} customer={customer} vehicle={vehicle} onSent={() => setSentCount((n) => n + 1)} />
+          ) : (
+            <Upgrade feature="signoffs" what="Remote quote approval and sign-off" />
+          )}
           <ApprovalList
             job={job}
             kinds={['quote', 'completion']}

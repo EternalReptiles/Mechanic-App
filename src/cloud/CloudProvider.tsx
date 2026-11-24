@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { clearLocalData, db, getMeta, getSettings, markAllDirty, setMeta, WORKSHOP_REMINDER, WORKSHOP_TERMS_EXTRA } from '../db';
 import type { BusinessType } from '../types';
+import { EMPTY_PLAN, planAllows, type EffectivePlan, type Feature, type PlanInfo } from '../plans';
 import { personName } from '../utils';
 import { supabase, withTimeout } from './supabase';
 import { pendingCount, startSync, stopSync, syncNow } from './sync';
@@ -27,6 +28,9 @@ interface CloudCtx extends Membership {
   isAdmin: boolean;
   team: TeamMember[];
   memberName: (userId?: string) => string;
+  plan: PlanInfo;
+  can: (feature: Feature) => boolean;
+  refreshPlan: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -131,9 +135,34 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
 
   const ready = phase.kind === 'ready' ? phase.m : null;
   const [team, setTeam] = useState<TeamMember[]>([]);
+  const [plan, setPlan] = useState<PlanInfo>(EMPTY_PLAN);
+  const refreshPlan = useCallback(async () => {
+    if (!ready) return;
+    const [{ data: b }, { data: eff }] = await Promise.all([
+      supabase.from('businesses')
+        .select('plan, plan_status, plan_interval, trial_ends_at, current_period_end, cancel_at_period_end')
+        .eq('id', ready.businessId).maybeSingle(),
+      supabase.rpc('business_plan', { bid: ready.businessId }),
+    ]);
+    if (!b || !eff) return;
+    const p: PlanInfo = {
+      effective: eff as EffectivePlan,
+      plan: b.plan,
+      status: b.plan_status,
+      interval: b.plan_interval,
+      trialEndsAt: b.trial_ends_at,
+      periodEnd: b.current_period_end,
+      cancelAtPeriodEnd: !!b.cancel_at_period_end,
+    };
+    setPlan(p);
+    void setMeta('plan', p);
+  }, [ready?.businessId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!ready) return;
     startSync(ready.businessId);
+    // Plan (cached so it works offline), then refreshed from the server.
+    getMeta<PlanInfo>('plan').then((p) => p && setPlan(p));
+    void refreshPlan();
     // Team list for assigning jobs; cached so it works offline.
     getMeta<TeamMember[]>('team').then((t) => t && setTeam(t));
     supabase
@@ -185,7 +214,9 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
 
   const m = phase.m;
   return (
-    <Ctx.Provider value={{ ...m, isAdmin: m.role === 'owner' || m.role === 'admin', signOut, team, memberName }}>
+    <Ctx.Provider
+      value={{ ...m, isAdmin: m.role === 'owner' || m.role === 'admin', signOut, team, memberName, plan, refreshPlan, can: (f) => planAllows(plan.effective, f) }}
+    >
       {children}
     </Ctx.Provider>
   );

@@ -474,3 +474,19 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .cust .cust-head { border-bottom-color: var(--brand, #0f172a); }
 .cust .cust-total { border-top-color: var(--brand, #0f172a); }
 .cust .btn.primary { background: var(--brand, #f59e0b); border-color: var(--brand, #f59e0b); color: var(--on-brand, #1c1917); }
+
+/* ---------- Plans & billing ---------- */
+.upgrade { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; font-size: 0.9rem; }
+.plan-now .plan-name { font-size: 1.2rem; }
+.plan-now.warn { border-color: var(--danger); }
+.interval { margin: 6px 0 12px; }
+.plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.plan-card { position: relative; display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.plan-card h2 { margin: 0; }
+.plan-card.popular { border: 2px solid var(--primary); }
+.plan-card.current { border: 2px solid #16a34a; }
+.plan-card .tag { position: absolute; top: -10px; right: 12px; background: var(--primary); color: #1c1917; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
+.plan-card .price strong { font-size: 1.8rem; }
+.plan-card .price span { color: var(--muted); font-size: 0.85rem; margin-left: 4px; }
+.plan-card ul { list-style: none; padding: 0; margin: 4px 0 8px; display: flex; flex-direction: column; gap: 4px; font-size: 0.88rem; flex: 1; }

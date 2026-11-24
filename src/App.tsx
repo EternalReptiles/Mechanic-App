@@ -13,6 +13,7 @@ import DocumentView from './pages/DocumentView';
 import PriceList from './pages/PriceList';
 import Team from './pages/Team';
 import CardPayments from './payments/CardPayments';
+import Billing from './pages/Billing';
 import CloudProvider from './cloud/CloudProvider';
 import Compose from './walkaround/Compose';
 import CustomerApproval from './walkaround/CustomerApproval';
@@ -67,6 +68,7 @@ function StaffApp() {
                   <Route path="/reminders" element={<Reminders />} />
                   <Route path="/settings/team" element={<Team />} />
                   <Route path="/settings/payments" element={<CardPayments />} />
+                  <Route path="/settings/billing" element={<Billing />} />
                 </Routes>
               </main>
               <BottomNav />

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useCloud } from '../cloud/CloudProvider';
 import SyncBadge from '../cloud/SyncBadge';
 import AutoMessages from '../components/AutoMessages';
+import Upgrade from '../components/Upgrade';
+import { planLabel } from '../plans';
 import { brandColor, onBrand } from '../brand';
 import { Field, PageHeader } from '../components/ui';
 import { useAutosave } from '../hooks';
@@ -69,6 +71,7 @@ export default function SettingsPage() {
         <div className="row wrap" style={{ marginTop: 10 }}>
           <Link to="/settings/team" className="btn">👥 Team</Link>
           <Link to="/settings/payments" className="btn">💳 Card payments</Link>
+          <Link to="/settings/billing" className="btn">⭐ Plan: {planLabel(cloud.plan)}</Link>
           <button className="btn ghost" onClick={() => void cloud.signOut()}>Sign out</button>
         </div>
       </section>
@@ -145,7 +148,7 @@ export default function SettingsPage() {
         <span>›</span>
       </Link>
 
-      <AutoMessages s={s} onChange={setS} />
+      {cloud.can('autoMessages') ? <AutoMessages s={s} onChange={setS} /> : <Upgrade feature="autoMessages" what="Automatic booking messages" />}
 
       <section className="card grid">
         <h2 className="wide">Inspections &amp; reminders</h2>

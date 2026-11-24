@@ -2,7 +2,7 @@
 // Called from the app with the signed-in user's token: { action, businessId, ... }.
 import { admin, APP_FEE_RATE, cardPaymentsStatus, cors, json, stripe, syncBranding } from '../_shared/stripe.ts';
 
-type Ctx = { businessId: string; userEmail: string; isAdmin: boolean };
+type Ctx = { businessId: string; userEmail: string; isAdmin: boolean; origin: string };
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -17,7 +17,8 @@ Deno.serve(async (req) => {
     const { data: member } = await admin
       .from('members').select('role').eq('business_id', businessId).eq('user_id', user.id).maybeSingle();
     if (!member) return json({ error: 'You are not a member of this business.' }, 403);
-    const ctx: Ctx = { businessId, userEmail: user.email ?? '', isAdmin: ['owner', 'admin'].includes(member.role) };
+    const origin = /^https?:\/\/[\w.:-]+$/.test(req.headers.get('Origin') ?? '') ? req.headers.get('Origin')! : (Deno.env.get('SPANNR_APP_URL') ?? '');
+    const ctx: Ctx = { businessId, userEmail: user.email ?? '', isAdmin: ['owner', 'admin'].includes(member.role), origin };
 
     switch (body.action) {
       case 'status':
@@ -27,6 +28,12 @@ Deno.serve(async (req) => {
         return json(await onboard(ctx));
       case 'create_invoice':
         return json(await createInvoice(ctx, String(body.jobId ?? '')));
+      case 'subscribe':
+        if (!ctx.isAdmin) return json({ error: 'Only the owner or an admin can change the plan.' }, 403);
+        return json(await subscribe(ctx, String(body.plan ?? ''), String(body.interval ?? 'month')));
+      case 'portal':
+        if (!ctx.isAdmin) return json({ error: 'Only the owner or an admin can manage billing.' }, 403);
+        return json(await portal(ctx));
       default:
         return json({ error: 'Unknown action' }, 400);
     }
@@ -67,32 +74,36 @@ async function status(ctx: Ctx) {
   return { connected: true, accountId: row.account_id, cardPayments };
 }
 
+/** The business's Stripe account (created once): takes card payments and pays Spannr's subscription. */
+async function ensureAccount(ctx: Ctx) {
+  const existing = await getRow(ctx.businessId);
+  if (existing) return existing;
+  const s = await settingsFor(ctx.businessId);
+  const name = String(s.businessName || 'My business');
+  const account = await stripe.v2.core.accounts.create({
+    display_name: name,
+    contact_email: ctx.userEmail || undefined,
+    dashboard: 'full',
+    identity: { country: 'au' },
+    configuration: {
+      merchant: { capabilities: { card_payments: { requested: true } } },
+      // Lets the business pay Spannr's subscription from the same account.
+      customer: { capabilities: { automatic_indirect_tax: { requested: true } } },
+    },
+    defaults: {
+      currency: 'aud',
+      locales: ['en-AU'],
+      responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' },
+    },
+    metadata: { spannr_business_id: ctx.businessId },
+  } as any, { idempotencyKey: `spannr-account-${ctx.businessId}` });
+  await admin.from('stripe_accounts').insert({ business_id: ctx.businessId, account_id: account.id });
+  return { account_id: account.id, card_payments_status: 'pending', gst_tax_rate_id: null, branding_hash: null };
+}
+
 /** Creates the business's connected account (once) and an Account Session for embedded components. */
 async function onboard(ctx: Ctx) {
-  let row = await getRow(ctx.businessId);
-  if (!row) {
-    const s = await settingsFor(ctx.businessId);
-    const name = String(s.businessName || 'My business');
-    const account = await stripe.v2.core.accounts.create({
-      display_name: name,
-      contact_email: ctx.userEmail || undefined,
-      dashboard: 'full',
-      identity: { country: 'au' },
-      configuration: {
-        merchant: { capabilities: { card_payments: { requested: true } } },
-        // Lets the business pay Spannr's subscription from the same account later.
-        customer: { capabilities: { automatic_indirect_tax: { requested: true } } },
-      },
-      defaults: {
-        currency: 'aud',
-        locales: ['en-AU'],
-        responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' },
-      },
-      metadata: { spannr_business_id: ctx.businessId },
-    } as any, { idempotencyKey: `spannr-account-${ctx.businessId}` });
-    await admin.from('stripe_accounts').insert({ business_id: ctx.businessId, account_id: account.id });
-    row = { account_id: account.id, card_payments_status: 'pending', gst_tax_rate_id: null, branding_hash: null };
-  }
+  const row = await ensureAccount(ctx);
   const session = await stripe.accountSessions.create({
     account: row.account_id,
     components: {
@@ -208,4 +219,48 @@ async function createInvoice(ctx: Ctx, jobId: string) {
     application_fee: appFee, last_event: 'created',
   });
   return { id: fin.id, url: fin.hosted_invoice_url, number: fin.number, total: fin.total, emailed: !!cust.email };
+}
+
+const PLANS = ['solo', 'pro', 'team', 'business'];
+
+/** Stripe Checkout for a Spannr subscription, billed to the business's own Stripe account. */
+async function subscribe(ctx: Ctx, plan: string, interval: string) {
+  if (!PLANS.includes(plan)) throw new Error('Unknown plan.');
+  const lookup = `spannr_${plan}_${interval === 'year' ? 'yearly' : 'monthly'}`;
+  const { data: biz } = await admin.from('businesses').select('plan, plan_status').eq('id', ctx.businessId).maybeSingle();
+  if (biz?.plan && ['active', 'trialing', 'past_due'].includes(biz.plan_status ?? '')) {
+    // Already subscribed: plan changes happen in the billing portal (with proration).
+    return portal(ctx);
+  }
+  const row = await ensureAccount(ctx);
+  const price = (await stripe.prices.list({ lookup_keys: [lookup], active: true, limit: 1 })).data[0];
+  if (!price) throw new Error('That plan is not available.');
+  const gst = (await stripe.taxRates.list({ active: true, limit: 100 })).data.find((r) => r.metadata?.spannr === 'gst');
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    customer_account: row.account_id,
+    managed_payments: { enabled: false }, // Spannr is the seller and charges its own GST
+    line_items: [{ price: price.id, quantity: 1 }],
+    subscription_data: {
+      default_tax_rates: gst ? [gst.id] : [],
+      metadata: { spannr_business_id: ctx.businessId, spannr_plan: plan },
+    },
+    metadata: { spannr_business_id: ctx.businessId },
+    success_url: `${ctx.origin}/settings/billing?done=1`,
+    cancel_url: `${ctx.origin}/settings/billing`,
+  } as any);
+  return { url: session.url };
+}
+
+/** Stripe's billing portal: switch plan, update card, cancel, see invoices. */
+async function portal(ctx: Ctx) {
+  const row = await getRow(ctx.businessId);
+  if (!row) throw new Error('No subscription yet.');
+  const cfg = (await stripe.billingPortal.configurations.list({ limit: 100 })).data.find((c) => c.metadata?.spannr === 'portal');
+  const session = await stripe.billingPortal.sessions.create({
+    customer_account: row.account_id,
+    configuration: cfg?.id,
+    return_url: `${ctx.origin}/settings/billing`,
+  } as any);
+  return { url: session.url };
 }

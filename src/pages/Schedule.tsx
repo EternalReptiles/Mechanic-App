@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import Board from './Board';
+import { useCloud } from '../cloud/CloudProvider';
 import { Link } from 'react-router-dom';
 import JobCard from '../components/JobCard';
 import { Empty, PageHeader } from '../components/ui';
@@ -11,7 +12,8 @@ import { addDays, dayKey, fmtTime, startOfWeek, STATUS } from '../utils';
 export default function Schedule() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const settings = useSettings();
-  const hasWorkshop = settings.businessType !== 'mobile';
+  const { can } = useCloud();
+  const hasWorkshop = settings.businessType !== 'mobile' && can('workshop');
   const [chosen, setView] = useState<'board' | 'week' | null>(null);
   const view = chosen ?? (settings.businessType === 'workshop' ? 'board' : 'week');
   const { customerMap, vehicleMap } = useLookups();

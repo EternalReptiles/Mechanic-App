@@ -96,6 +96,9 @@ export async function queueReceipt(businessId: string, jobId: string, inv: { num
   ]);
   const s = (st?.data ?? {}) as Record<string, any>;
   if (s.notify?.receiptEnabled === false) return;
+  // Automatic messages are a Pro-and-up feature.
+  const { data: plan } = await admin.rpc('business_plan', { bid: businessId });
+  if (!['pro', 'team', 'business', 'trial'].includes(String(plan))) return;
   const customerId = (job?.data as Record<string, any> | undefined)?.customerId;
   if (!customerId) return;
   const { data: c } = await admin.from('customers').select('data').eq('business_id', businessId).eq('id', customerId).maybeSingle();
@@ -115,4 +118,22 @@ export async function queueReceipt(businessId: string, jobId: string, inv: { num
       subject: `Payment received – ${business}`, body, ...r,
     });
   }
+}
+
+/** Copies a Stripe subscription onto the business (plan, status, renewal date). */
+export async function applySubscription(sub: any) {
+  const businessId = sub?.metadata?.spannr_business_id;
+  if (!businessId) return;
+  const item = sub.items?.data?.[0];
+  const m = String(item?.price?.lookup_key ?? '').match(/^spannr_(solo|pro|team|business)_(monthly|yearly)$/);
+  const ended = ['canceled', 'incomplete_expired'].includes(sub.status);
+  const periodEnd = item?.current_period_end ?? sub.current_period_end;
+  await admin.from('businesses').update({
+    plan: ended ? null : m?.[1] ?? null,
+    plan_status: sub.status,
+    plan_interval: m ? (m[2] === 'yearly' ? 'year' : 'month') : null,
+    current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+    cancel_at_period_end: !!sub.cancel_at_period_end,
+    stripe_subscription_id: ended ? null : sub.id,
+  }).eq('id', businessId);
 }

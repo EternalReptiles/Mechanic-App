@@ -4,6 +4,7 @@ import JobCard from '../components/JobCard';
 import { Empty, PageHeader } from '../components/ui';
 import { useEffect, useState } from 'react';
 import { useCloud } from '../cloud/CloudProvider';
+import { daysLeft } from '../plans';
 import { supabase } from '../cloud/supabase';
 import SyncBadge from '../cloud/SyncBadge';
 import { createJob, db } from '../db';
@@ -13,7 +14,7 @@ import { addDays, dayKey, daysUntil, money, STATUS, totals } from '../utils';
 export default function Dashboard() {
   const navigate = useNavigate();
   const settings = useSettings();
-  const { isAdmin, businessId } = useCloud();
+  const { isAdmin, businessId, plan } = useCloud();
   // Customers who've answered a video walk-around since we last looked.
   const [responses, setResponses] = useState<{ job_id: string; signed_name: string; kind: string }[]>([]);
   useEffect(() => {
@@ -69,6 +70,10 @@ export default function Dashboard() {
   );
 
   async function newJob() {
+    if (plan.effective === 'expired') {
+      navigate('/settings/billing');
+      return;
+    }
     const job = await createJob();
     navigate(`/jobs/${job.id}`);
   }
@@ -79,6 +84,19 @@ export default function Dashboard() {
         title={settings.businessName || 'Dashboard'}
         actions={<><SyncBadge /><button className="btn primary" onClick={newJob}>+ New job</button></>}
       />
+
+      {(plan.effective === 'expired' || plan.status === 'past_due' || (plan.effective === 'trial' && daysLeft(plan.trialEndsAt) <= 7)) && (
+        <Link to="/settings/billing" className="banner attention">
+          <span>
+            {plan.effective === 'expired'
+              ? '⭐ Your free trial has ended – choose a plan to keep creating jobs.'
+              : plan.status === 'past_due'
+                ? "⚠ Your Spannr payment didn't go through – update your card."
+                : `⭐ ${daysLeft(plan.trialEndsAt)} days left in your free trial – choose a plan.`}
+          </span>
+          <span>›</span>
+        </Link>
+      )}
 
       {responses.length > 0 && (
         <Link to={`/jobs/${responses[0].job_id}?tab=${responses[0].kind === 'walkaround' ? 'inspection' : 'billing'}`} className="banner attention">

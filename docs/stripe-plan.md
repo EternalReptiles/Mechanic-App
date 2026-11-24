@@ -40,3 +40,20 @@ for an Australian SaaS platform for mobile mechanics and workshops. Test environ
 ## Blueprints returned by the planner
 - `blueprint-subscription-billing-checkout.md` – product + recurring price, subscription Checkout Session, lifecycle webhooks.
 - `blueprint-customer-portal-integration-accounts-v2.md` – portal configuration, portal sessions, portal-driven changes.
+
+## Spannr plans (built)
+
+| Plan | Monthly (+GST) | Yearly (+GST) | Users | Texts / month | Adds |
+|---|---|---|---|---|---|
+| Solo | $39 | $390 | 1 | – | Jobs, quotes, invoices, inspections, card payments |
+| Pro | $65 | $650 | 3 | 100 | Remote sign-offs, video walk-arounds, automatic messages |
+| Team | $95 | $950 | 8 | 300 | Workshop board, technician assignment, Tap to Pay (coming) |
+| Business | $149 | $1,490 | unlimited | 1,000 | Priority support |
+
+- 30-day free trial with everything unlocked; no card needed. After it ends without a plan, new jobs are blocked until a plan is chosen.
+- Stripe prices use lookup keys `spannr_<plan>_<monthly|yearly>`; created by `scripts/stripe-setup-plans.mjs` (re-run with the live key at launch).
+- Checkout: `mode=subscription`, `customer_account` = the business's Accounts v2 account, `managed_payments` disabled (Spannr is the seller and adds its own 10% GST tax rate).
+- Billing portal: switch between the 8 prices (prorated), update card, cancel at period end, invoice history.
+- Plan changes flow only from Stripe webhooks (`customer.subscription.*`, `checkout.session.completed`) into `businesses.plan*`; users can't edit them.
+- Enforced on the server: sign-offs/walk-arounds (Pro+), automatic messages (Pro+) and monthly text allowance, user limits on invites.
+- No RevenueCat / in-app purchases: businesses subscribe on the web; the iOS/Android apps will only sign in (no prices or buy buttons in the store apps).

@@ -14,7 +14,7 @@ export default function Jobs() {
   const [params, setParams] = useSearchParams();
   const status = (params.get('status') as JobStatus | null) ?? null;
   const mine = params.get('mine') === '1';
-  const { userId, team } = useCloud();
+  const { userId, team, plan } = useCloud();
   const [q, setQ] = useState('');
   const settings = useSettings();
   const { customerMap, vehicleMap } = useLookups();
@@ -33,6 +33,10 @@ export default function Jobs() {
   });
 
   async function newJob() {
+    if (plan.effective === 'expired') {
+      navigate('/settings/billing');
+      return;
+    }
     const job = await createJob();
     navigate(`/jobs/${job.id}`);
   }
