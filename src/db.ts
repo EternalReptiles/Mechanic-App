@@ -188,7 +188,7 @@ export const defaultSettings: Settings = {
   invoiceFooter: 'Thank you for your business!',
   quoteFooter: 'This quote is valid for 30 days.',
   checklistTemplate: DEFAULT_CHECKLIST,
-  serviceIntervalMonths: 12,
+  serviceIntervalMonths: 6,
   serviceIntervalKm: 10000,
   reminderMessage:
     "Hi {name}, it's {business}. Your {vehicle} is due for a service on {date}. Reply to this message to book a time and we'll come to you.",

@@ -80,7 +80,7 @@ export default function Reminders() {
         ))
       ) : (
         <Empty>
-          Nothing due in the next {windowDays} days. Set "Next service due" on a vehicle (or tap "Remind in 12 months" when
+          Nothing due in the next {windowDays} days. Set "Next service due" on a vehicle (or tap "Remind in {settings.serviceIntervalMonths} months" when
           you finish a job) and it will show up here.
         </Empty>
       )}
