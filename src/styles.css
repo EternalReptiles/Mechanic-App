@@ -450,3 +450,6 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .repair-tag input { min-height: 34px; padding: 4px 8px; font-size: 0.82rem; }
 .repair-lines { margin: 0; padding-left: 18px; font-size: 0.85rem; color: #475569; }
 .all-btns { margin: 4px 0 10px; }
+.nav-icon svg { display: block; height: 1.3rem; width: auto; }
+.loading-screen { align-items: center; justify-content: center; }
+.loading-screen img { border-radius: 16px; }

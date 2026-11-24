@@ -1,5 +1,6 @@
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { useSettings } from './hooks';
+import { SpannrSymbol } from './components/Logo';
 import Dashboard from './pages/Dashboard';
 import Jobs from './pages/Jobs';
 import JobPage from './pages/JobPage';
@@ -19,7 +20,7 @@ import Reminders from './pages/Reminders';
 function BottomNav() {
   const { businessType } = useSettings();
   const nav = [
-    { to: '/', label: 'Home', icon: '⌂', end: true },
+    { to: '/', label: 'Home', icon: <SpannrSymbol size={20} />, end: true },
     { to: '/jobs', label: 'Jobs', icon: '🔧' },
     businessType === 'workshop'
       ? { to: '/schedule', label: 'Workshop', icon: '🚗' }

@@ -164,7 +164,13 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
     setPhase({ kind: 'signedOut' });
   }, []);
 
-  if (phase.kind === 'loading') return <div className="auth-wrap"><p className="muted">Loading…</p></div>;
+  if (phase.kind === 'loading')
+    return (
+      <div className="auth-wrap loading-screen">
+        <img src="/icon.svg" alt="Spannr" width={72} height={72} />
+        <p className="muted">Loading…</p>
+      </div>
+    );
   if (phase.kind === 'signedOut') return <SignIn />;
   if (phase.kind === 'recovery') return <NewPassword onDone={() => supabase.auth.getSession().then(({ data }) => enter(data.session))} />;
   if (phase.kind === 'noBusiness')
