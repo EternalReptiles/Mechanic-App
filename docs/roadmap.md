@@ -1,0 +1,29 @@
+# Spannr – what's next
+
+## Now (using it at LNC)
+- [ ] Use Spannr for real jobs at LNC and note anything slow, missing or annoying
+- [ ] Rename the new Stripe account "LNC – Spannr payments" so it's clear which is which
+- [ ] Request Apple's **distribution** Tap to Pay entitlement (needed for TestFlight and the App Store); a screen recording of a real payment helps
+- [ ] Re-run the iPhone app from Xcode every ~7 days (development builds expire) until TestFlight is set up
+
+## Before selling to other mechanics
+- [ ] Company: accountant chat → ASIC registration → company ABN/TFN/GST, bank account
+- [ ] Move Spannr's Stripe account and Apple developer account to the company (convert the Apple account, don't open a new one)
+- [ ] Lawyer review of spannr.au/terms and spannr.au/privacy → fill in the legal name/ABN/state → remove the "Draft" notes
+- [ ] Proper mailbox for @spannr.au (replace Cloudflare forwarding)
+- [ ] **"Connect your existing Stripe account"** option on Card payments (OAuth), alongside "Set up new"
+- [ ] Automatic deletion of closed business accounts after 90 days (promised in the Terms/Privacy)
+- [ ] Show the fee breakdown on paid jobs (Stripe fee, Spannr fee, you receive) – optional
+- [ ] Each business's own text allowance tracked against ClickSend costs
+
+## Launch
+- [ ] App Store Connect app (au.spannr.app), TestFlight for LNC techs and the first workshops
+- [ ] Cloud builds (e.g. Codemagic) once the Mac's Xcode is too old for App Store submissions
+- [ ] App Store listing: screenshots, description, privacy answers; set iPhone-only
+- [ ] Marketing: Instagram, mechanic Facebook groups, Google, word of mouth
+
+## Later
+- [ ] Android app (project is ready in `android/`)
+- [ ] Stripe card readers (WisePOS E / S700) sent from the desktop
+- [ ] Linkly / Tyro integration so workshops can keep their existing EFTPOS machines
+- [ ] Businesses sending email from their own domain (top plan)
