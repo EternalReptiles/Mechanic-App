@@ -453,3 +453,8 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .nav-icon svg { display: block; height: 1.3rem; width: auto; }
 .loading-screen { align-items: center; justify-content: center; }
 .loading-screen img { border-radius: 16px; }
+.preview { margin: 0; background: var(--bg); border: 1px dashed var(--border); border-radius: 8px; padding: 8px 10px; }
+.job-messages { display: flex; flex-direction: column; gap: 4px; }
+.msg-row { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 0.88rem; padding: 6px 8px; border-radius: 8px; background: var(--bg); }
+.msg-row.sent { color: #16a34a; }
+.msg-row.failed { color: var(--danger); }

@@ -85,6 +85,10 @@ export default function CustomerPage() {
         <Field label="Email"><input type="email" value={c.email} onChange={set('email')} /></Field>
         <Field label="Address" wide><input value={c.address} onChange={set('address')} /></Field>
         <Field label="Notes" wide><textarea rows={2} value={c.notes} onChange={set('notes')} /></Field>
+        <label className="field checkbox wide">
+          <input type="checkbox" checked={!!c.noAutoMessages} onChange={(e) => setC({ ...c, noAutoMessages: e.target.checked })} />
+          <span>Don't send automatic booking messages to this customer</span>
+        </label>
       </section>
 
       <h2>Vehicles</h2>

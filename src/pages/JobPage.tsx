@@ -10,6 +10,7 @@ import { Field, PageHeader, StatusBadge } from '../components/ui';
 import { useCloud } from '../cloud/CloudProvider';
 import ApprovalList, { WalkaroundSection } from '../walkaround/WalkaroundList';
 import SendSignoff from '../walkaround/SendSignoff';
+import JobMessages from '../components/JobMessages';
 import { quoteOutcome } from '../walkaround/model';
 import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
@@ -282,6 +283,7 @@ export default function JobPage() {
                   status: job.status === 'quote' && e.target.value ? 'scheduled' : job.status,
                 })} />
             </Field>
+            <JobMessages jobId={job.id} />
             <Field label="Duration">
               <select value={job.durationMins} onChange={(e) => update({ durationMins: Number(e.target.value) })}>
                 {[30, 60, 90, 120, 180, 240, 360, 480].map((m) => <option key={m} value={m}>{m < 60 ? `${m} min` : `${m / 60} hr`}</option>)}

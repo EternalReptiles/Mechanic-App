@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCloud } from '../cloud/CloudProvider';
 import SyncBadge from '../cloud/SyncBadge';
+import AutoMessages from '../components/AutoMessages';
 import { Field, PageHeader } from '../components/ui';
 import { useAutosave } from '../hooks';
 import { db, DEFAULT_TERMS, exportBackup, getSettings, importBackup, WORKSHOP_TERMS_EXTRA } from '../db';
@@ -133,6 +134,8 @@ export default function SettingsPage() {
         <span><strong>📋 Price list</strong><br /><span className="muted small">Your services, packages and parts with prices</span></span>
         <span>›</span>
       </Link>
+
+      <AutoMessages s={s} onChange={setS} />
 
       <section className="card grid">
         <h2 className="wide">Inspections &amp; reminders</h2>

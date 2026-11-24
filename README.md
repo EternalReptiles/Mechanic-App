@@ -8,6 +8,7 @@ Job management for mobile mechanics and workshops: customers, vehicles, bookings
 - **Video walk-around.** Record the car in the app (or choose a video), list the recommended work with priorities and prices (flagged inspection items are filled in automatically), and text or email a link. The customer watches, taps Yes or No for each item, and signs, with no app or login. You get a dashboard alert, a one-tap "add approved work to job", and a printable approval record (time, IP address, device, signature, and a SHA-256 fingerprint of what was shown). The quote is locked once sent, and the response is locked once signed.
 - **Remote sign-off.** From the Billing tab, send the quote (before work) or the finished job (after work) to the customer's phone. They see the itemised amount (and the payment due date for a sign-off), tick to agree to your terms & conditions, and sign. The signed record captures exactly what they agreed to.
 - **Terms & conditions.** These are editable in Settings and shown on every sign-off and walk-around. The defaults cover payment due date, approved work only, customer-supplied parts, existing faults and declined work, parts warranty, and the Australian Consumer Law statement. Have a lawyer review them.
+- **Automatic booking messages.** A confirmation is sent when a job is booked (and again if the time changes), plus a reminder 2, 24 or 48 hours before, by SMS (ClickSend) and/or email (Resend). The server sends them, so they go out even when every phone is off. Nothing is sent 9pm–7:30am. Wording is editable, customers can be opted out, and each job shows what was sent.
 - **Teams.** Owners invite staff by email as Admin or Technician. Jobs can be assigned to a technician, who can filter to "My jobs". Technicians don't see takings or business settings.
 - **Cloud sync that works without signal.** Data is saved on the device first and synced when there's reception, with a status badge. Photos sync through private cloud storage.
 
@@ -52,3 +53,19 @@ The old Netlify site (spannr.netlify.app, `scripts/deploy-netlify.sh`) is no lon
 4. ✅ Video walk-around: record a video, send it with a quote, and the customer approves or declines each item and signs online.
 5. Customer messages and payments: automatic email and SMS, online quote approval, card payment links (Stripe), Xero export.
 6. Selling it: monthly subscriptions (Stripe Billing), a marketing and sign-up site, and onboarding for new shops.
+
+## Automatic messages: setup
+
+These run inside Supabase (`supabase/migrations/0007_auto_messages.sql`). Every minute, `pg_cron` runs `run_notifications()`, which queues due confirmations and reminders and sends them with `pg_net`.
+
+Provider keys are stored in **Supabase → Project Settings → Vault → Secrets**:
+
+| Secret name | Value |
+|---|---|
+| `clicksend_username` | ClickSend account username (email) |
+| `clicksend_api_key` | ClickSend API key |
+| `sms_from` | *(optional)* sender ID or dedicated number |
+| `resend_api_key` | Resend API key |
+| `email_from` | Sending address on a domain verified in Resend, e.g. `bookings@spannr.au` |
+
+While a provider's keys are missing, its messages are recorded as "Not sent – not set up yet".

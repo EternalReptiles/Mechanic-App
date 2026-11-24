@@ -16,6 +16,8 @@ export interface Customer {
   address: string;
   notes: string;
   createdAt: string;
+  /** Opt out of automatic booking confirmations and reminders */
+  noAutoMessages?: boolean;
 }
 
 export interface Vehicle {
@@ -143,4 +145,21 @@ export interface Settings {
   readyMessage: string;
   /** Terms & conditions customers agree to when signing. Placeholders: {business} {days} */
   terms: string;
+  /** IANA time zone used for message times and quiet hours, e.g. "Australia/Sydney" */
+  timezone?: string;
+  /** Automatic booking confirmations and reminders (sent by the server) */
+  notify?: NotifySettings;
+}
+
+export interface NotifySettings {
+  confirmEnabled: boolean;
+  reminderEnabled: boolean;
+  /** Hours before the booking to send the reminder */
+  reminderHours: number;
+  sms: boolean;
+  email: boolean;
+  /** When automatic messages were switched on (ms); earlier bookings aren't confirmed */
+  enabledAt: number;
+  confirmTemplate: string;
+  reminderTemplate: string;
 }
