@@ -4,7 +4,7 @@ import { useCloud } from '../cloud/CloudProvider';
 import { supabase } from '../cloud/supabase';
 import type { Job } from '../types';
 import { fmtDateTime, money, uid } from '../utils';
-import { KIND_LABEL, shareLink, type RequestKind, type WalkRecord } from './model';
+import { KIND_LABEL, quoteOutcome, shareLink, type RequestKind, type WalkRecord } from './model';
 
 /** Requests sent to the customer for a job (walk-arounds, quote approvals, sign-offs) and their answers. */
 export default function ApprovalList({
@@ -56,8 +56,9 @@ export default function ApprovalList({
         const items = w.content.items;
         const approved = items.filter((i) => w.decisions?.[i.id] === 'approved');
         const applied = job.appliedWalkarounds?.includes(w.id);
+        const qo = w.kind === 'quote' ? quoteOutcome(w.decisions) : null;
         return (
-          <div key={w.id} className={`wa-row${w.responded_at ? ' responded' : ''}`}>
+          <div key={w.id} className={`wa-row${w.responded_at ? (qo?.outcome === 'declined' ? ' declined' : ' responded') : ''}`}>
             <div className="small muted">
               {KIND_LABEL[w.kind]} · sent {fmtDateTime(w.created_at)}
               {w.kind !== 'walkaround' && w.content.total != null && ` · ${money(w.content.total)}`}
@@ -71,6 +72,11 @@ export default function ApprovalList({
                       <li key={i.id} className={w.decisions?.[i.id]}>{w.decisions?.[i.id] === 'approved' ? '✓' : '✕'} {i.title}</li>
                     ))}
                   </ul>
+                </div>
+              ) : qo?.outcome === 'declined' ? (
+                <div>
+                  <strong>✕ Declined by {w.signed_name}</strong>{qo.reason && ` – ${qo.reason}`}
+                  <div className="small muted">Signed to confirm they declined the work</div>
                 </div>
               ) : (
                 <div>

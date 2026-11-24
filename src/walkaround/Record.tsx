@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../cloud/supabase';
 import { fmtDay, money } from '../utils';
-import { KIND_LABEL, PRIORITY, signStatement, termLines, videoUrl, type WalkRecord } from './model';
+import { KIND_LABEL, PRIORITY, quoteOutcome, signStatement, termLines, videoUrl, type WalkRecord } from './model';
 
 const dt = (s: string | null) => (s ? new Date(s).toLocaleString('en-AU', { dateStyle: 'medium', timeStyle: 'long' }) : '—');
 
@@ -18,7 +18,9 @@ export default function Record() {
   if (w === null) return <p className="empty">Record not found (are you online?).</p>;
   const c = w.content;
   const kind = w.kind ?? 'walkaround';
-  const statement = signStatement(kind, c.business.name, `${money(Number(w.approved_total ?? c.total ?? 0))}${c.gst ? ' (inc GST)' : ''}`, c.dueDate ? fmtDay(c.dueDate) : undefined);
+  const qo = kind === 'quote' ? quoteOutcome(w.decisions) : null;
+  const declined = qo?.outcome === 'declined';
+  const statement = signStatement(kind, c.business.name, `${money(Number(c.total ?? w.approved_total ?? 0))}${c.gst ? ' (inc GST)' : ''}`, c.dueDate ? fmtDay(c.dueDate) : undefined, declined);
 
   return (
     <div className="doc-page">
@@ -36,7 +38,7 @@ export default function Record() {
           <div className="doc-meta">
             <h1>{kind === 'walkaround' ? 'Customer approval record' : `${KIND_LABEL[kind]} record`}</h1>
             {c.jobNumber && <div>Job #{c.jobNumber}</div>}
-            <div>{w.responded_at ? 'SIGNED' : 'NOT YET SIGNED'}</div>
+            <div>{w.responded_at ? (declined ? 'DECLINED – SIGNED' : qo ? 'APPROVED – SIGNED' : 'SIGNED') : 'NOT YET SIGNED'}</div>
           </div>
         </header>
 
@@ -77,6 +79,12 @@ export default function Record() {
               <div className="grand"><span>Total{c.gst ? ' (inc GST)' : ''}</span><span>{money(c.total ?? 0)}</span></div>
             </div>
             {c.dueDate && <p><strong>Payment due: {fmtDay(c.dueDate)}</strong></p>}
+            {qo && (
+              <p className={declined ? 'outcome declined' : 'outcome approved'}>
+                Customer decision: <strong>{declined ? 'DECLINED' : 'APPROVED'}</strong>
+                {declined && qo.reason && <> – reason given: “{qo.reason}”</>}
+              </p>
+            )}
             {c.workNotes && (<><h3>Work carried out</h3><p className="pre small">{c.workNotes}</p></>)}
           </>
         )}
@@ -107,8 +115,9 @@ export default function Record() {
 
         <section>
           <h3>Customer statement</h3>
+          {declined && <p className="small muted">Terms &amp; conditions don't apply – the customer declined the quote.</p>}
           <p className="small"><strong>{statement}</strong></p>
-          {c.terms && (
+          {c.terms && !declined && (
             <>
               <h3>Terms &amp; conditions shown to the customer</h3>
               <ol className="small">

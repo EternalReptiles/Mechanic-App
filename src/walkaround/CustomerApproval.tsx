@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../cloud/supabase';
 import SignaturePad from '../components/SignaturePad';
 import { fmtDay, money, telUrl } from '../utils';
-import { PRIORITY, signStatement, termLines, videoUrl, type RequestKind, type WalkContent } from './model';
+import { DECLINE_REASONS, PRIORITY, quoteOutcome, signStatement, termLines, videoUrl, type RequestKind, type WalkContent } from './model';
 
 interface Loaded {
   kind: RequestKind;
@@ -12,7 +12,7 @@ interface Loaded {
   video_path: string | null;
   expired: boolean;
   responded_at: string | null;
-  decisions: Record<string, 'approved' | 'declined'> | null;
+  decisions: Record<string, string> | null;
   approved_total: number | null;
   signed_name: string | null;
   signature: string | null;
@@ -30,6 +30,9 @@ export default function CustomerApproval() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [agree, setAgree] = useState(false);
+  const [choice, setChoice] = useState<'approved' | 'declined' | null>(null);
+  const [reason, setReason] = useState('');
+  const [reasonNote, setReasonNote] = useState('');
 
   async function load() {
     const { data, error } = await supabase.rpc('get_walkaround', { p_token: token });
@@ -52,19 +55,25 @@ export default function CustomerApproval() {
   const shown = done ? w.decisions ?? {} : decisions;
   const approvedTotal = isWalk ? c.items.filter((i) => shown[i.id] === 'approved').reduce((s, i) => s + i.total, 0) : c.total ?? 0;
   const allDecided = !isWalk || c.items.every((i) => shown[i.id]);
-  const hasTerms = !!c.terms?.trim();
-  const statement = signStatement(kind, c.business.name, `${money(approvedTotal)}${c.gst ? ' (inc GST)' : ''}`, c.dueDate ? fmtDay(c.dueDate) : undefined);
+  const isQuote = kind === 'quote';
+  const outcome = quoteOutcome(w.decisions);
+  const declined = isQuote && (done ? outcome?.outcome === 'declined' : choice === 'declined');
+  const hasTerms = !!c.terms?.trim() && !declined;
+  const statement = signStatement(kind, c.business.name, `${money(declined ? 0 : approvedTotal)}${c.gst ? ' (inc GST)' : ''}`, c.dueDate ? fmtDay(c.dueDate) : undefined, declined);
 
   async function submit() {
     setErr('');
     if (!allDecided) return setErr('Please choose Yes or No for every item.');
+    if (isQuote && !choice) return setErr('Please choose Approve or Decline.');
     if (!name.trim()) return setErr('Please type your name.');
     if (!signature) return setErr('Please sign in the box.');
     if (hasTerms && !agree) return setErr('Please tick the box to agree to the terms and conditions.');
     setBusy(true);
     const { error } = await supabase.rpc('respond_walkaround', {
       p_token: token,
-      p_decisions: decisions,
+      p_decisions: isQuote
+        ? { outcome: choice, reason: [reason, reasonNote.trim()].filter(Boolean).join(' – ') }
+        : decisions,
       p_name: name.trim(),
       p_signature: signature,
       p_agree_terms: agree,
@@ -94,7 +103,9 @@ export default function CustomerApproval() {
             {isWalk
               ? approvedTotal > 0 ? ` Approved work: ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}.` : ' No work was approved.'
               : kind === 'quote'
-                ? ` You approved the quote for ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}.`
+                ? declined
+                  ? ' You declined this quote.'
+                  : ` You approved the quote for ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}.`
                 : ` You signed off the work: ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}${c.dueDate ? `, due ${fmtDay(c.dueDate)}` : ''}.`}
           </p>
           <button className="btn" onClick={() => window.print()}>Save a copy (PDF)</button>
@@ -175,7 +186,32 @@ export default function CustomerApproval() {
         </section>
       )}
 
-      {!done && !w.expired && (
+      {isQuote && !done && !w.expired && (
+        <section className="cust-choice">
+          <h2>Your decision</h2>
+          <div className="yn big">
+            <button className={choice === 'approved' ? 'yes on' : 'yes'} onClick={() => { setChoice('approved'); setErr(''); }}>✓ Approve quote</button>
+            <button className={choice === 'declined' ? 'no on' : 'no'} onClick={() => { setChoice('declined'); setErr(''); }}>✕ Decline quote</button>
+          </div>
+          {choice === 'declined' && (
+            <div className="decline-reason">
+              <span className="small">Reason (optional)</span>
+              <div className="chips wrap">
+                {DECLINE_REASONS.map((r) => (
+                  <button key={r} className={`chip${reason === r ? ' active' : ''}`} onClick={() => setReason(reason === r ? '' : r)}>{r}</button>
+                ))}
+              </div>
+              <input placeholder="Anything else you'd like to tell us?" value={reasonNote} onChange={(e) => setReasonNote(e.target.value)} />
+            </div>
+          )}
+        </section>
+      )}
+
+      {isQuote && done && outcome?.outcome === 'declined' && (
+        <p className="declined-note">✕ Quote declined{outcome.reason ? ` – ${outcome.reason}` : ''}</p>
+      )}
+
+      {!done && !w.expired && (!isQuote || choice) && (
         <section className="cust-sign">
           <h2>Confirm &amp; sign</h2>
           <label className="field">
@@ -202,7 +238,7 @@ export default function CustomerApproval() {
           )}
           {err && <p className="error">{err}</p>}
           <button className="btn primary block big" disabled={busy} onClick={submit}>
-            {busy ? 'Sending…' : 'Submit my response'}
+            {busy ? 'Sending…' : isQuote ? (declined ? 'Submit – decline quote' : 'Submit – approve quote') : 'Submit my response'}
           </button>
         </section>
       )}

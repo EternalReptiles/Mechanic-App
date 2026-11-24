@@ -27,7 +27,7 @@ export default function SendSignoff({ job, customer, vehicle, onSent }: { job: J
     const v = vehicle ? [vehicle.make, vehicle.model].filter(Boolean).join(' ') || vehicle.rego : 'vehicle';
     const message =
       kind === 'quote'
-        ? `Hi ${firstName(customer.name)}, here's the quote for your ${v} (${money(t.total)}). Please check it and sign to approve the work.`
+        ? `Hi ${firstName(customer.name)}, here's the quote for your ${v} (${money(t.total)}). Please check it, then approve or decline and sign.`
         : `Hi ${firstName(customer.name)}, the work on your ${v} is done. Please check the details and sign off (${money(t.total)}, due ${fmtDay(dayKey(due))}).`;
     const content: WalkContent = {
       business: { name: settings.businessName, phone: settings.phone, email: settings.email, logo: settings.logo, abn: settings.abn },
@@ -70,8 +70,8 @@ export default function SendSignoff({ job, customer, vehicle, onSent }: { job: J
         signed record.
       </p>
       <div className="row wrap">
-        <button className={`btn grow ${before ? 'primary' : ''}`} disabled={busy} onClick={() => send('quote')}>📄 Send quote to approve</button>
-        <button className={`btn grow ${!before ? 'primary' : ''}`} disabled={busy} onClick={() => send('completion')}>✅ Send job sign-off</button>
+        <button className={`btn grow wrap-text ${before ? 'primary' : ''}`} disabled={busy} onClick={() => send('quote')}>📄 Send quote to approve</button>
+        <button className={`btn grow wrap-text ${!before ? 'primary' : ''}`} disabled={busy} onClick={() => send('completion')}>✅ Send job sign-off</button>
       </div>
       {err && <p className="error">{err}</p>}
     </section>

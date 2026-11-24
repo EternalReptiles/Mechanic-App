@@ -432,3 +432,16 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .terms ol { padding-left: 20px; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
 .agree { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; padding: 6px 0; }
 .agree input { width: 24px; height: 24px; min-height: 24px; flex: none; margin-top: 1px; }
+.btn.wrap-text { white-space: normal; text-align: center; flex-basis: 140px; }
+.yn.big button { min-height: 60px; font-size: 1.05rem; }
+.cust-choice { margin: 12px 0; }
+.decline-reason { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.chips.wrap { flex-wrap: wrap; overflow: visible; }
+.cust .chip { background: #fff; color: #0f172a; border-color: #cbd5e1; }
+.cust .chip.active { background: #475569; color: #fff; border-color: #475569; }
+.cust .decline-reason input { background: #fff; color: #0f172a; border-color: #cbd5e1; }
+.declined-note { font-weight: 700; color: #475569; background: #f1f5f9; border-radius: 8px; padding: 10px; }
+.wa-row.declined strong { color: var(--danger); }
+.outcome { padding: 8px 10px; border-radius: 8px; }
+.outcome.approved { background: #f0fdf4; color: #166534; }
+.outcome.declined { background: #fef2f2; color: #991b1b; }

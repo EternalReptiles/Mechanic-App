@@ -24,7 +24,7 @@ export type RequestKind = 'walkaround' | 'quote' | 'completion';
 
 export const KIND_LABEL: Record<RequestKind, string> = {
   walkaround: 'Video walk-around',
-  quote: 'Quote approval',
+  quote: 'Quote',
   completion: 'Job sign-off',
 };
 
@@ -71,7 +71,8 @@ export interface WalkRecord {
   content_hash: string;
   viewed_at: string | null;
   responded_at: string | null;
-  decisions: Record<string, 'approved' | 'declined'> | null;
+  /** Walk-around: item id -> approved/declined. Quote: {outcome, reason}. */
+  decisions: Record<string, string> | null;
   approved_total: number | null;
   signed_name: string | null;
   signature: string | null;
@@ -117,8 +118,21 @@ export function termLines(terms: string): { heading: string; text: string }[] {
     });
 }
 
+export const DECLINE_REASONS = ['Too expensive', 'Getting another quote', 'Not needed right now', 'Other'];
+
+/** For quotes: whether the customer approved or declined, and why. */
+export function quoteOutcome(decisions: unknown): { outcome: 'approved' | 'declined'; reason: string } | null {
+  const d = decisions as { outcome?: string; reason?: string } | null;
+  if (!d || (d.outcome !== 'approved' && d.outcome !== 'declined')) return null;
+  return { outcome: d.outcome, reason: d.reason ?? '' };
+}
+
+export const declineStatement = (business: string) =>
+  `I have reviewed the quote above and decline the work. I understand ${business} recommended this work and I accept responsibility for not having it done.`;
+
 /** What the customer is agreeing to when they sign. */
-export function signStatement(kind: RequestKind, business: string, total: string, due?: string): string {
+export function signStatement(kind: RequestKind, business: string, total: string, due?: string, declined = false): string {
+  if (declined) return declineStatement(business);
   if (kind === 'quote')
     return `I authorise ${business} to carry out the work above and agree to pay ${total} for it, on the terms and conditions below.`;
   if (kind === 'completion')
