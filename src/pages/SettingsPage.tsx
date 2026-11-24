@@ -67,6 +67,7 @@ export default function SettingsPage() {
         <SyncBadge detailed />
         <div className="row wrap" style={{ marginTop: 10 }}>
           <Link to="/settings/team" className="btn">👥 Team</Link>
+          <Link to="/settings/payments" className="btn">💳 Card payments</Link>
           <button className="btn ghost" onClick={() => void cloud.signOut()}>Sign out</button>
         </div>
       </section>

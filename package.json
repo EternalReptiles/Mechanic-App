@@ -19,6 +19,8 @@
   },
   "homepage": "https://github.com/EternalReptiles/Mechanic-App#readme",
   "dependencies": {
+    "@stripe/connect-js": "^3.5.1",
+    "@stripe/react-connect-js": "^3.5.1",
     "@supabase/supabase-js": "^2.47.10",
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^1.1.7",

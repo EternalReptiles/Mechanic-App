@@ -1,0 +1,9 @@
+# Supabase project settings used when deploying Edge Functions.
+project_id = "lmtmsnkjowgeturblzzj"
+
+[functions.stripe-api]
+verify_jwt = true
+
+# Stripe calls this directly; requests are verified by fetching each event back from Stripe.
+[functions.stripe-webhook]
+verify_jwt = false

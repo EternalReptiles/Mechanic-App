@@ -11,6 +11,7 @@ import { useCloud } from '../cloud/CloudProvider';
 import ApprovalList, { WalkaroundSection } from '../walkaround/WalkaroundList';
 import SendSignoff from '../walkaround/SendSignoff';
 import JobMessages from '../components/JobMessages';
+import JobCardPayment from '../payments/JobCardPayment';
 import { quoteOutcome } from '../walkaround/model';
 import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
@@ -339,6 +340,14 @@ export default function JobPage() {
             <Link className="btn grow" to={`/jobs/${job.id}/quote`}>📄 Quote</Link>
             <Link className="btn grow" to={`/jobs/${job.id}/invoice`}>🧾 Invoice</Link>
           </div>
+          <JobCardPayment
+            job={job}
+            customer={customer}
+            businessName={settings.businessName}
+            onInvoiced={() => {
+              if (!['invoiced', 'paid'].includes(job.status)) setStatus('invoiced');
+            }}
+          />
           <SendSignoff job={job} customer={customer} vehicle={vehicle} onSent={() => setSentCount((n) => n + 1)} />
           <ApprovalList
             job={job}

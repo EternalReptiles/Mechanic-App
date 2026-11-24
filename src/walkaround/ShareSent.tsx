@@ -5,6 +5,7 @@ import { shareLink } from './model';
 /** After creating a request: text / email / copy the customer's link. */
 export default function ShareSent({
   token,
+  link: fullLink,
   customer,
   message,
   subject,
@@ -12,13 +13,15 @@ export default function ShareSent({
   doneLabel = 'Done',
 }: {
   token: string;
+  /** Use this URL instead of a Spannr link built from the token */
+  link?: string;
   customer?: Customer;
   message: string;
   subject: string;
   onDone: () => void;
   doneLabel?: string;
 }) {
-  const link = shareLink(token);
+  const link = fullLink || shareLink(token);
   const text = `${message.trim()}\n\n${link}`;
   return (
     <div className="card share-sent">

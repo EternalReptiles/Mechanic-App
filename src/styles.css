@@ -458,3 +458,8 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .msg-row { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 0.88rem; padding: 6px 8px; border-radius: 8px; background: var(--bg); }
 .msg-row.sent { color: #16a34a; }
 .msg-row.failed { color: var(--danger); }
+
+/* ---------- Card payments ---------- */
+.pay-pill { font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+.pay-pill.on { color: #16a34a; border-color: #16a34a; }
+.stripe-embed { padding: 10px; }
