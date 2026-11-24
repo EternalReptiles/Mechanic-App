@@ -547,8 +547,7 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
   .bottom-nav a { flex-direction: row; justify-content: flex-start; gap: 12px; font-size: 0.95rem; padding: 11px 12px; min-width: 0; }
   .bottom-nav a.active { background: rgba(245, 158, 11, .14); }
   .bottom-nav .nav-icon { font-size: 1.1rem; }
-  .content { margin-left: 220px; max-width: 1200px; padding: 20px 36px 40px; }
-  .content:has(.board) { max-width: none; }
+  .content { margin-left: 220px; max-width: none; padding: 20px 36px 40px; }
   .preview-bar { margin-left: 220px; }
   .page-header h1 { font-size: 1.6rem; }
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
