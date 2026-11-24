@@ -34,7 +34,9 @@ npm run dev       # development server
 npm run build     # production build in dist/
 ```
 
-**Live site:** https://spannr.netlify.app. To publish a new version, run `NETLIFY_AUTH_TOKEN=… ./scripts/deploy-netlify.sh`. Open the site on your phone and choose **Add to Home Screen** to install it.
+**Live site:** https://mechanic-app.withered-bonus-405e.workers.dev, hosted on Cloudflare. Cloudflare builds and publishes automatically whenever `main` changes (`npm run build`, then `npx wrangler deploy`, configured in `wrangler.jsonc`). Open the site on your phone and choose **Add to Home Screen** to install it.
+
+The old Netlify site (spannr.netlify.app, `scripts/deploy-netlify.sh`) is no longer used.
 
 ## Architecture
 
