@@ -207,8 +207,8 @@ function Brand() {
   return (
     <div className="auth-brand">
       <img src="/icon.svg" alt="" width={56} height={56} />
-      <h1>Mechanic App</h1>
-      <p className="muted">Jobs, quotes, invoices &amp; inspections for mobile mechanics</p>
+      <h1>Spannr</h1>
+      <p className="muted">Jobs, quotes, sign-offs &amp; invoices for mechanics</p>
     </div>
   );
 }

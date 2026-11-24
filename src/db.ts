@@ -328,7 +328,7 @@ export async function exportBackup(): Promise<Blob> {
 
 export async function importBackup(file: File) {
   const data = JSON.parse(await file.text());
-  if (data.app !== 'mechanic-app') throw new Error('This is not a Mechanic App backup file.');
+  if (data.app !== 'mechanic-app') throw new Error('This is not a Spannr backup file.');
   const photos: Photo[] = await Promise.all(
     (data.photos ?? []).map(async (p: Photo & { blob: string }) => ({
       ...p,

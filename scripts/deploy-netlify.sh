@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the app and publishes it to Netlify (https://mechanic-app-au.netlify.app).
+# Builds the app and publishes it to Netlify (https://spannr.netlify.app).
 # Needs a Netlify personal access token in NETLIFY_AUTH_TOKEN.
 set -euo pipefail
 SITE_ID="5c5c2436-4613-43fb-9fed-098144d6cf02"

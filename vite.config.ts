@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'Mechanic App',
-        short_name: 'Mechanic',
-        description: 'Job management for mobile mechanics',
+        name: 'Spannr',
+        short_name: 'Spannr',
+        description: 'Jobs, quotes, customer sign-offs and invoices for mechanics',
         theme_color: '#0f172a',
         background_color: '#f1f5f9',
         display: 'standalone',

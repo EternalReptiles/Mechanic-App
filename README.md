@@ -1,4 +1,4 @@
-# Mechanic App
+# Spannr
 
 Job management for mobile mechanics and workshops: customers, vehicles, bookings, quotes, tax invoices and job photos. It runs as an installable web app (PWA) on a phone, tablet or computer, and keeps working offline.
 
@@ -34,7 +34,7 @@ npm run dev       # development server
 npm run build     # production build in dist/
 ```
 
-**Live site:** https://mechanic-app-au.netlify.app. To publish a new version, run `NETLIFY_AUTH_TOKEN=… ./scripts/deploy-netlify.sh`. Open the site on your phone and choose **Add to Home Screen** to install it.
+**Live site:** https://spannr.netlify.app. To publish a new version, run `NETLIFY_AUTH_TOKEN=… ./scripts/deploy-netlify.sh`. Open the site on your phone and choose **Add to Home Screen** to install it.
 
 ## Architecture
 

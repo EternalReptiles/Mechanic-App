@@ -48,7 +48,7 @@ export default function Team() {
   }
 
   const shareText = (to: string) =>
-    `Hi! I've added you to ${businessName} on Mechanic App. Open ${window.location.origin} on your phone, tap "Create an account" and sign up with ${to} – you'll be straight in. Tip: use "Add to Home Screen" so it works like an app.`;
+    `Hi! I've added you to ${businessName} on Spannr. Open ${window.location.origin} on your phone, tap "Create an account" and sign up with ${to} – you'll be straight in. Tip: use "Add to Home Screen" so it works like an app.`;
 
   return (
     <>
