@@ -1,6 +1,7 @@
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { useSettings } from './hooks';
 import { SpannrSymbol } from './components/Logo';
+import { CalendarDays, Car, Settings as SettingsIcon, Users, Wrench } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import Jobs from './pages/Jobs';
 import JobPage from './pages/JobPage';
@@ -19,14 +20,15 @@ import Reminders from './pages/Reminders';
 
 function BottomNav() {
   const { businessType } = useSettings();
+  const icon = { size: 22, strokeWidth: 2 };
   const nav = [
     { to: '/', label: 'Home', icon: <SpannrSymbol size={20} />, end: true },
-    { to: '/jobs', label: 'Jobs', icon: '🔧' },
+    { to: '/jobs', label: 'Jobs', icon: <Wrench {...icon} /> },
     businessType === 'workshop'
-      ? { to: '/schedule', label: 'Workshop', icon: '🚗' }
-      : { to: '/schedule', label: 'Schedule', icon: '📅' },
-    { to: '/customers', label: 'Customers', icon: '👤' },
-    { to: '/settings', label: 'Settings', icon: '⚙' },
+      ? { to: '/schedule', label: 'Workshop', icon: <Car {...icon} /> }
+      : { to: '/schedule', label: 'Schedule', icon: <CalendarDays {...icon} /> },
+    { to: '/customers', label: 'Customers', icon: <Users {...icon} /> },
+    { to: '/settings', label: 'Settings', icon: <SettingsIcon {...icon} /> },
   ];
   return (
     <nav className="bottom-nav">
