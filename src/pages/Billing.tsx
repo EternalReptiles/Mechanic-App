@@ -4,6 +4,11 @@ import { useCloud } from '../cloud/CloudProvider';
 import { PageHeader } from '../components/ui';
 import { stripeApi } from '../payments/api';
 import { daysLeft, PLAN_ORDER, PLANS, planLabel, type PlanKey } from '../plans';
+import { platform } from '../native';
+
+// Apple doesn't allow buying a subscription outside the App Store from inside an iPhone app,
+// so the iPhone app only shows the plan.
+const VIEW_ONLY = platform === 'ios';
 
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
 
@@ -50,14 +55,14 @@ export default function Billing() {
             <div className="small muted">Current plan</div>
             <strong className="plan-name">{planLabel(plan)}</strong>
           </div>
-          {subscribed && isAdmin && (
+          {subscribed && isAdmin && !VIEW_ONLY && (
             <button className="btn" disabled={!!busy} onClick={() => go('portal')}>{busy === 'portal' ? 'Opening…' : 'Manage billing'}</button>
           )}
         </div>
         {plan.effective === 'trial' && (
-          <p className="small">Everything is unlocked during your trial. It ends on {fmt(plan.trialEndsAt)} ({daysLeft(plan.trialEndsAt)} days) – choose a plan to keep going.</p>
+          <p className="small">Everything is unlocked during your trial. It ends on {fmt(plan.trialEndsAt)} ({daysLeft(plan.trialEndsAt)} days){VIEW_ONLY ? '.' : ' – choose a plan to keep going.'}</p>
         )}
-        {plan.effective === 'expired' && <p className="small">Your free trial has ended. Choose a plan to keep creating jobs and sending quotes.</p>}
+        {plan.effective === 'expired' && <p className="small">Your free trial has ended. {VIEW_ONLY ? '' : 'Choose a plan to keep creating jobs and sending quotes.'}</p>}
         {plan.status === 'past_due' && <p className="small">⚠ Your last payment didn't go through. Tap Manage billing to update your card.</p>}
         {subscribed && plan.periodEnd && (
           <p className="small muted">
@@ -66,6 +71,10 @@ export default function Billing() {
         )}
       </section>
 
+      {VIEW_ONLY ? (
+        <p className="muted small">Plan changes aren't available in the iPhone app.</p>
+      ) : (
+      <>
       {!isAdmin && <p className="muted small">Only the owner or an admin can change the plan.</p>}
       {err && <p className="error">{err}</p>}
 
@@ -100,6 +109,8 @@ export default function Billing() {
         })}
       </div>
       <p className="muted small">Prices in AUD plus GST. One price per business. Cancel any time from Manage billing. Payments are handled securely by Stripe.</p>
+      </>
+      )}
     </>
   );
 }

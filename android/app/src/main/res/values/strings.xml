@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Spannr</string>
+    <string name="title_activity_main">Spannr</string>
+    <string name="package_name">au.spannr.app</string>
+    <string name="custom_url_scheme">au.spannr.app</string>
+</resources>

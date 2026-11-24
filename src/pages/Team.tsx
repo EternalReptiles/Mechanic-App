@@ -3,6 +3,7 @@ import { useCloud, type Role } from '../cloud/CloudProvider';
 import { supabase } from '../cloud/supabase';
 import { Empty, Field, PageHeader } from '../components/ui';
 import { PLANS } from '../plans';
+import { APP_URL } from '../native';
 
 interface Member { user_id: string; email: string; role: Role }
 interface Invite { email: string; role: Role }
@@ -53,7 +54,7 @@ export default function Team() {
   }
 
   const shareText = (to: string) =>
-    `Hi! I've added you to ${businessName} on Spannr. Open ${window.location.origin} on your phone, tap "Create an account" and sign up with ${to} – you'll be straight in. Tip: use "Add to Home Screen" so it works like an app.`;
+    `Hi! I've added you to ${businessName} on Spannr. Open ${APP_URL} on your phone, tap "Create an account" and sign up with ${to} – you'll be straight in. Tip: use "Add to Home Screen" so it works like an app.`;
 
   return (
     <>

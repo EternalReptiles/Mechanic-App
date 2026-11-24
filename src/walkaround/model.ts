@@ -1,5 +1,6 @@
 import type { LineItem } from '../types';
 import { round2 } from '../utils';
+import { APP_URL } from '../native';
 
 export type Priority = 'urgent' | 'soon' | 'optional';
 
@@ -108,7 +109,7 @@ export function videoUrl(path: string): string {
 }
 
 export function shareLink(token: string): string {
-  return `${window.location.origin}/v/${token}`;
+  return `${APP_URL}/v/${token}`;
 }
 
 export const fmtMB = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;

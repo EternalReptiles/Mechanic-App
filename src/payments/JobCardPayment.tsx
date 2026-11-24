@@ -6,12 +6,15 @@ import type { Customer, Job } from '../types';
 import { firstName, fmtDateTime, money } from '../utils';
 import ShareSent from '../walkaround/ShareSent';
 import { STRIPE_PUBLISHABLE_KEY, stripeApi, type PaymentsStatus, type StripeInvoiceRow } from './api';
+import TapToPay from './TapToPay';
 
 const LABEL: Record<string, string> = { open: 'Waiting for payment', paid: '✓ Paid by card', void: 'Cancelled', uncollectible: 'Marked uncollectible', draft: 'Draft' };
 
 /** Billing tab: send a Stripe invoice the customer can pay by card, and show its status. */
-export default function JobCardPayment({ job, customer, businessName, onInvoiced }: {
+export default function JobCardPayment({ job, customer, businessName, onInvoiced, onPaid }: {
   job: Job; customer?: Customer; businessName: string; onInvoiced: () => void;
+  /** Tap to Pay succeeded: the job screen updates its copy so it doesn't save over "Paid". */
+  onPaid?: (paidAt: string) => void;
 }) {
   const { businessId } = useCloud();
   const [status, setStatus] = useState<PaymentsStatus | null>(null);
@@ -80,6 +83,7 @@ export default function JobCardPayment({ job, customer, businessName, onInvoiced
         </p>
       ) : (
         <>
+          {onPaid && <TapToPay job={job} businessName={businessName} onPaid={onPaid} />}
           <p className="muted small" style={{ marginTop: 0 }}>
             Sends a Stripe invoice with a pay link (card, Apple Pay, Google Pay). The job is marked paid automatically when they pay.
           </p>

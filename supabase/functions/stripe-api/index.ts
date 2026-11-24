@@ -1,6 +1,6 @@
 // Spannr ⇄ Stripe Connect: set up card payments for a business and create repair invoices.
 // Called from the app with the signed-in user's token: { action, businessId, ... }.
-import { admin, APP_FEE_RATE, cardPaymentsStatus, cors, json, stripe, syncBranding } from '../_shared/stripe.ts';
+import { admin, APP_FEE_RATE, cardPaymentsStatus, cors, json, settleTerminalPayment, stripe, syncBranding } from '../_shared/stripe.ts';
 
 type Ctx = { businessId: string; userEmail: string; isAdmin: boolean; origin: string };
 
@@ -28,6 +28,14 @@ Deno.serve(async (req) => {
         return json(await onboard(ctx));
       case 'create_invoice':
         return json(await createInvoice(ctx, String(body.jobId ?? '')));
+      case 'terminal_location':
+        return json({ locationId: await terminalLocation(ctx) });
+      case 'terminal_token':
+        return json(await terminalToken(ctx));
+      case 'terminal_payment':
+        return json(await terminalPayment(ctx, String(body.jobId ?? '')));
+      case 'terminal_complete':
+        return json(await terminalComplete(ctx, String(body.paymentIntentId ?? '')));
       case 'subscribe':
         if (!ctx.isAdmin) return json({ error: 'Only the owner or an admin can change the plan.' }, 403);
         return json(await subscribe(ctx, String(body.plan ?? ''), String(body.interval ?? 'month')));
@@ -263,4 +271,94 @@ async function portal(ctx: Ctx) {
     return_url: `${ctx.origin}/settings/billing`,
   } as any);
   return { url: session.url };
+}
+
+// ---------- Tap to Pay (Stripe Terminal, on the business's own Stripe account) ----------
+
+async function activeAccount(ctx: Ctx) {
+  const row = await getRow(ctx.businessId);
+  if (!row) throw new Error('Set up card payments in Settings first.');
+  if ((await cardPaymentsStatus(row.account_id)) !== 'active')
+    throw new Error('Card payments are not active yet – finish setting up in Settings → Card payments.');
+  return row as typeof row & { terminal_location_id?: string | null };
+}
+
+const STATES = 'NSW|VIC|QLD|SA|WA|TAS|NT|ACT';
+
+/** The business's address for its Terminal location: from Stripe, or the address in Spannr Settings. */
+async function locationAddress(ctx: Ctx, accountId: string) {
+  const acct = (await stripe.accounts.retrieve(accountId)) as any;
+  const a = acct.company?.address ?? acct.individual?.address ?? acct.business_profile?.support_address;
+  if (a?.line1 && a?.city && a?.postal_code) return { line1: a.line1, line2: a.line2 || undefined, city: a.city, state: a.state || undefined, postal_code: a.postal_code, country: 'AU' };
+  const s = await settingsFor(ctx.businessId);
+  const m = String(s.address ?? '').replace(/\s+/g, ' ').trim().match(new RegExp(`^(.+?),\\s*([^,]+?),?\\s+(${STATES})\\s+(\\d{4})(,?\\s*Australia)?$`, 'i'));
+  if (!m) throw new Error('Add your full business address in Settings first (e.g. 12 Main St, Newcastle NSW 2300) – Tap to Pay needs it.');
+  return { line1: m[1], city: m[2], state: m[3].toUpperCase(), postal_code: m[4], country: 'AU' };
+}
+
+/** The business's Terminal location (created once from its address). */
+async function terminalLocation(ctx: Ctx) {
+  const row = await activeAccount(ctx);
+  if (row.terminal_location_id) return row.terminal_location_id;
+  const s = await settingsFor(ctx.businessId);
+  const loc = await stripe.terminal.locations.create({
+    display_name: String(s.businessName || 'My business').slice(0, 100),
+    address: await locationAddress(ctx, row.account_id),
+    metadata: { spannr_business_id: ctx.businessId },
+  } as any, { stripeAccount: row.account_id });
+  await admin.from('stripe_accounts').update({ terminal_location_id: loc.id }).eq('business_id', ctx.businessId);
+  return loc.id;
+}
+
+/** A one-time Terminal connection token for the business's Stripe account. */
+async function terminalToken(ctx: Ctx) {
+  const locationId = await terminalLocation(ctx);
+  const row = await getRow(ctx.businessId);
+  const token = await stripe.terminal.connectionTokens.create({ location: locationId }, { stripeAccount: row!.account_id });
+  return { secret: token.secret, locationId };
+}
+
+/** Job total in cents, same as the invoice: lines (+10% GST when registered). */
+async function jobForPayment(ctx: Ctx, jobId: string) {
+  const { data: jobRow } = await admin.from('jobs').select('data, deleted').eq('business_id', ctx.businessId).eq('id', jobId).maybeSingle();
+  if (!jobRow || jobRow.deleted) throw new Error('Job not found – make sure it has synced (check the sync badge).');
+  const job = jobRow.data as Record<string, any>;
+  if (job.status === 'paid') throw new Error('This job is already marked as paid.');
+  const lines = (job.lineItems ?? []) as { qty: number; unitPrice: number }[];
+  if (!lines.length) throw new Error('Add labour and parts to the job first.');
+  const s = await settingsFor(ctx.businessId);
+  const subtotal = lines.reduce((sum, l) => sum + cents((Number(l.qty) || 0) * (Number(l.unitPrice) || 0)), 0);
+  const total = s.gstRegistered !== false ? Math.round(subtotal * 1.1) : subtotal;
+  if (total < 50) throw new Error('The job total must be at least $0.50.');
+  return { job, total, businessName: String(s.businessName || '') };
+}
+
+/** Creates the in-person PaymentIntent for a job (Spannr's fee taken from it). */
+async function terminalPayment(ctx: Ctx, jobId: string) {
+  const row = await activeAccount(ctx);
+  const opt = { stripeAccount: row.account_id };
+  const { job, total, businessName } = await jobForPayment(ctx, jobId);
+  const appFee = Math.round(total * APP_FEE_RATE);
+  const pi = await stripe.paymentIntents.create({
+    amount: total,
+    currency: 'aud',
+    allowed_payment_method_types: ['card_present'],
+    capture_method: 'automatic',
+    application_fee_amount: appFee || undefined,
+    description: [`Job #${job.number}`, job.title].filter(Boolean).join(' – '),
+    statement_descriptor_suffix: businessName ? businessName.replace(/[^A-Za-z0-9 ]/g, '').slice(0, 22) || undefined : undefined,
+    metadata: { spannr_job_id: jobId, spannr_business_id: ctx.businessId, spannr_job_number: String(job.number ?? '') },
+  }, opt);
+  await admin.from('stripe_terminal_payments').insert({
+    id: pi.id, business_id: ctx.businessId, job_id: jobId, account_id: row.account_id,
+    amount: total, application_fee: appFee, status: pi.status,
+  });
+  return { clientSecret: pi.client_secret, id: pi.id, amount: total };
+}
+
+/** Called after the tap: checks the payment with Stripe and marks the job paid. */
+async function terminalComplete(ctx: Ctx, paymentIntentId: string) {
+  const { data: rec } = await admin.from('stripe_terminal_payments').select('*').eq('id', paymentIntentId).eq('business_id', ctx.businessId).maybeSingle();
+  if (!rec) throw new Error('Payment not found.');
+  return settleTerminalPayment(rec.account_id, paymentIntentId);
 }

@@ -5,6 +5,7 @@ import { Empty, PageHeader } from '../components/ui';
 import { useEffect, useState } from 'react';
 import { useCloud } from '../cloud/CloudProvider';
 import { daysLeft } from '../plans';
+import { platform } from '../native';
 import { supabase } from '../cloud/supabase';
 import SyncBadge from '../cloud/SyncBadge';
 import { createJob, db } from '../db';
@@ -92,10 +93,10 @@ export default function Dashboard() {
         <Link to="/settings/billing" className="banner attention">
           <span>
             {plan.effective === 'expired'
-              ? '⭐ Your free trial has ended – choose a plan to keep creating jobs.'
+              ? `⭐ Your free trial has ended${platform === 'ios' ? '.' : ' – choose a plan to keep creating jobs.'}`
               : plan.status === 'past_due'
                 ? "⚠ Your Spannr payment didn't go through – update your card."
-                : `⭐ ${daysLeft(plan.trialEndsAt)} days left in your free trial – choose a plan.`}
+                : `⭐ ${daysLeft(plan.trialEndsAt)} days left in your free trial${platform === 'ios' ? '.' : ' – choose a plan.'}`}
           </span>
           <span>›</span>
         </Link>

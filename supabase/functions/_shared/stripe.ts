@@ -89,7 +89,7 @@ export function auMobile(phone: string | undefined): string | null {
 }
 
 /** Queues a "payment received" text/email with the paid invoice link (sent by the messages pipeline). */
-export async function queueReceipt(businessId: string, jobId: string, inv: { number?: string | null; total: number; hosted_invoice_url?: string | null }, paidAtIso: string) {
+export async function queueReceipt(businessId: string, jobId: string, inv: { number?: string | null; total: number; hosted_invoice_url?: string | null; label?: string }, paidAtIso: string) {
   const [{ data: st }, { data: job }] = await Promise.all([
     admin.from('settings').select('data').eq('business_id', businessId).eq('id', 'settings').maybeSingle(),
     admin.from('jobs').select('data').eq('business_id', businessId).eq('id', jobId).maybeSingle(),
@@ -107,7 +107,7 @@ export async function queueReceipt(businessId: string, jobId: string, inv: { num
   const business = String(s.businessName || 'us');
   const first = String(cust.name || '').trim().split(/\s+/)[0] || 'there';
   const amount = '$' + (inv.total / 100).toFixed(2);
-  const body = `Hi ${first}, thanks for your payment of ${amount} to ${business} for ${inv.number ?? 'your invoice'}. Your paid invoice: ${inv.hosted_invoice_url ?? ''}`.trim();
+  const body = `Hi ${first}, thanks for your payment of ${amount} to ${business} for ${inv.number ?? 'your invoice'}. ${inv.label ?? 'Your paid invoice'}: ${inv.hosted_invoice_url ?? ''}`.trim();
   const rows = [] as Record<string, unknown>[];
   const sms = auMobile(cust.phone);
   if (sms) rows.push({ channel: 'sms', to_address: sms });
@@ -136,4 +136,25 @@ export async function applySubscription(sub: any) {
     cancel_at_period_end: !!sub.cancel_at_period_end,
     stripe_subscription_id: ended ? null : sub.id,
   }).eq('id', businessId);
+}
+
+/** Checks an in-person (Tap to Pay) payment with Stripe; when it succeeded, marks the job paid and sends the receipt once. */
+export async function settleTerminalPayment(accountId: string, paymentIntentId: string) {
+  const pi = (await stripe.paymentIntents.retrieve(paymentIntentId, { expand: ['latest_charge'] }, { stripeAccount: accountId })) as any;
+  const charge = pi.latest_charge as { receipt_url?: string; created?: number } | null;
+  const paidAt = pi.status === 'succeeded' ? new Date((charge?.created ?? Math.floor(Date.now() / 1000)) * 1000).toISOString() : null;
+  const fields = { status: pi.status, receipt_url: charge?.receipt_url ?? null, paid_at: paidAt, updated_at: new Date().toISOString() };
+  if (pi.status === 'succeeded') {
+    // Only the first caller to flip it to succeeded marks the job paid and sends the receipt.
+    const { data: won } = await admin.from('stripe_terminal_payments').update(fields)
+      .eq('id', pi.id).neq('status', 'succeeded').select('business_id, job_id');
+    const rec = won?.[0];
+    if (rec) {
+      await markJobPaid(rec.business_id, rec.job_id, paidAt!);
+      await queueReceipt(rec.business_id, rec.job_id, { number: `Job #${pi.metadata?.spannr_job_number ?? ''}`.trim(), total: pi.amount, hosted_invoice_url: charge?.receipt_url ?? null, label: 'Your receipt' }, paidAt!);
+    }
+  } else {
+    await admin.from('stripe_terminal_payments').update(fields).eq('id', pi.id).neq('status', 'succeeded');
+  }
+  return { status: pi.status, amount: pi.amount, receiptUrl: charge?.receipt_url ?? null, paidAt };
 }

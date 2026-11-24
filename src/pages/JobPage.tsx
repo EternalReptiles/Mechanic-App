@@ -381,6 +381,7 @@ export default function JobPage() {
             onInvoiced={() => {
               if (!['invoiced', 'paid'].includes(job.status)) setStatus('invoiced');
             }}
+            onPaid={(paidAt) => update({ status: 'paid', paymentMethod: 'card', paidAt, invoicedAt: job.invoicedAt || paidAt })}
           />
           {can('signoffs') ? (
             <SendSignoff job={job} customer={customer} vehicle={vehicle} onSent={() => setSentCount((n) => n + 1)} />

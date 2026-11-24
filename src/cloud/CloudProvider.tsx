@@ -7,6 +7,7 @@ import { personName } from '../utils';
 import { supabase, withTimeout } from './supabase';
 import { pendingCount, startSync, stopSync, syncNow } from './sync';
 import NumberInput from '../components/NumberInput';
+import { APP_URL } from '../native';
 
 export type Role = 'owner' | 'admin' | 'tech';
 
@@ -272,12 +273,12 @@ function SignIn() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin },
+          options: { emailRedirectTo: APP_URL },
         });
         if (error) throw error;
         if (!data.session) setMsg(`Nearly there! We've emailed a confirmation link to ${email}. Tap it, then sign in here.`);
       } else {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: APP_URL });
         if (error) throw error;
         setMsg(`If ${email} has an account, a password reset link is on its way.`);
       }

@@ -43,13 +43,18 @@ h3 { font-size: 0.95rem; margin: 0 0 6px; }
 .content {
   max-width: 760px;
   margin: 0 auto;
-  padding: 12px 16px calc(90px + env(safe-area-inset-bottom));
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(90px + env(safe-area-inset-bottom));
+}
+/* iPhone app: keep content clear of the clock / Dynamic Island (zero in a normal browser) */
+body::before {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top);
+  background: var(--bg, #f1f5f9); z-index: 30; pointer-events: none;
 }
 
 .page-header {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 0 12px;
-  position: sticky; top: 0; z-index: 5;
+  position: sticky; top: env(safe-area-inset-top); z-index: 5;
   background: var(--bg);
 }
 .page-header h1 { flex: 1; min-width: 0; }
@@ -248,7 +253,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); o
 .tabs {
   display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 4px; margin-bottom: 12px;
-  position: sticky; top: 56px; z-index: 4;
+  position: sticky; top: calc(56px + env(safe-area-inset-top)); z-index: 4;
 }
 .tabs button {
   flex: 1; border: none; background: transparent; color: var(--muted);
@@ -493,7 +498,7 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 
 /* ---------- Technician app ---------- */
 .side-brand { display: none; }
-.preview-bar { position: sticky; top: 0; z-index: 20; background: var(--primary); color: #1c1917; font-weight: 700; text-align: center; padding: 6px; font-size: 0.85rem; }
+.preview-bar { position: sticky; top: env(safe-area-inset-top); z-index: 20; background: var(--primary); color: #1c1917; font-weight: 700; text-align: center; padding: 6px; font-size: 0.85rem; }
 .preview-bar .link { color: #1c1917; }
 .tech-card { display: flex; flex-direction: column; gap: 8px; }
 .tech-card-link { text-decoration: none; display: flex; flex-direction: column; gap: 4px; }
@@ -564,3 +569,7 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .reading-in { display: flex; align-items: center; gap: 4px; }
 .reading-in input { min-height: 40px; padding: 6px 8px; font-weight: 700; font-size: 1rem; }
 .reading-in em { font-style: normal; font-size: 0.75rem; }
+
+/* Tap to Pay */
+.tap-to-pay { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line, #e2e8f0); }
+.tap-to-pay .btn + .btn { margin-top: 8px; }
