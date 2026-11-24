@@ -3,7 +3,7 @@ import { useCloud } from '../cloud/CloudProvider';
 import { supabase } from '../cloud/supabase';
 import { useSettings } from '../hooks';
 import type { Customer, Job, Vehicle } from '../types';
-import { dayKey, firstName, fmtDay, money, totals, vehicleLabel } from '../utils';
+import { dayKey, firstName, fmtDay, groupRepairs, money, totals, vehicleLabel } from '../utils';
 import { fillTerms, KIND_LABEL, type RequestKind, type WalkContent } from './model';
 import ShareSent from './ShareSent';
 
@@ -25,9 +25,12 @@ export default function SendSignoff({ job, customer, vehicle, onSent }: { job: J
     const issued = job.invoicedAt ? new Date(job.invoicedAt) : new Date();
     const due = new Date(issued.getTime() + settings.paymentTermsDays * 86400000);
     const v = vehicle ? [vehicle.make, vehicle.model].filter(Boolean).join(' ') || vehicle.rego : 'vehicle';
+    const repairs = kind === 'quote' ? groupRepairs(job.lineItems, settings.gstRegistered) : [];
     const message =
       kind === 'quote'
-        ? `Hi ${firstName(customer.name)}, here's the quote for your ${v} (${money(t.total)}). Please check it, then approve or decline and sign.`
+        ? repairs.length >= 2
+          ? `Hi ${firstName(customer.name)}, here's the quote for your ${v}: ${repairs.length} repairs, ${money(t.total)} for everything. Choose which ones you'd like done now, then sign.`
+          : `Hi ${firstName(customer.name)}, here's the quote for your ${v} (${money(t.total)}). Please check it, then approve or decline and sign.`
         : `Hi ${firstName(customer.name)}, the work on your ${v} is done. Please check the details and sign off (${money(t.total)}, due ${fmtDay(dayKey(due))}).`;
     const content: WalkContent = {
       business: { name: settings.businessName, phone: settings.phone, email: settings.email, logo: settings.logo, abn: settings.abn },
@@ -47,6 +50,17 @@ export default function SendSignoff({ job, customer, vehicle, onSent }: { job: J
       gstAmount: t.gst,
       total: t.total,
       dueDate: kind === 'completion' ? dayKey(due) : undefined,
+      repairs:
+        repairs.length >= 2
+          ? repairs.map((r) => ({
+              id: r.id,
+              title: r.title,
+              lines: r.lines.map((l) => ({ description: l.description, qty: l.qty, unitPrice: l.unitPrice, amount: Math.round(l.qty * l.unitPrice * 100) / 100 })),
+              lineIds: r.lines.map((l) => l.id),
+              subtotal: r.subtotal,
+              total: r.total,
+            }))
+          : undefined,
     };
     const { data, error } = await supabase
       .from('walkarounds')

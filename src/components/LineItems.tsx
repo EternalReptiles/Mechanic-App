@@ -40,8 +40,13 @@ export default function LineItems({
       },
     ]);
 
+  const repairNames = [...new Set(items.map((i) => i.repair?.trim()).filter(Boolean))] as string[];
+
   return (
     <div className="line-items">
+      <datalist id="repair-names">
+        {repairNames.map((r) => <option key={r} value={r} />)}
+      </datalist>
       {items.map((i) => (
         <div key={i.id} className="line-item">
           <div className="row">
@@ -72,6 +77,11 @@ export default function LineItems({
             <button className="icon-btn danger" aria-label="Remove line"
               onClick={() => onChange(items.filter((x) => x.id !== i.id))}>✕</button>
           </div>
+          <label className="repair-tag">
+            <span>🔧 Repair</span>
+            <input list="repair-names" placeholder="e.g. Front brakes (groups lines for customer approval)" value={i.repair ?? ''}
+              onChange={(e) => set(i.id, { repair: e.target.value })} />
+          </label>
         </div>
       ))}
       <button className="btn primary" onClick={() => setPicking(true)}>📋 Add from price list</button>
@@ -79,7 +89,8 @@ export default function LineItems({
         <CatalogPicker
           onClose={() => setPicking(false)}
           onPick={(c) => {
-            onChange([...items, ...c.lines.map((l) => ({ ...l, id: uid() }))]);
+            // Lines from one price-list item form one repair the customer can approve or decline.
+            onChange([...items, ...c.lines.map((l) => ({ ...l, id: uid(), repair: c.name }))]);
             setPicking(false);
           }}
         />

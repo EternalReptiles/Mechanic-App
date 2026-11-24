@@ -12,11 +12,14 @@ export default function ApprovalList({
   kinds,
   refreshKey,
   onAddLines,
+  onApplyQuote,
 }: {
   job: Job;
   kinds: RequestKind[];
   refreshKey?: unknown;
   onAddLines?: (lines: Job['lineItems'], walkId: string) => void;
+  /** Quote with per-repair choices: drop declined repairs from the job */
+  onApplyQuote?: (w: WalkRecord) => void;
 }) {
   const { businessId } = useCloud();
   const [list, setList] = useState<WalkRecord[] | null>(null);
@@ -73,6 +76,20 @@ export default function ApprovalList({
                     ))}
                   </ul>
                 </div>
+              ) : qo && w.content.repairs && w.content.repairs.length >= 2 ? (
+                <div>
+                  <strong>
+                    {qo.outcome === 'declined' ? '✕ Declined' : '✍ Signed'} by {w.signed_name}
+                  </strong>{' '}
+                  – approved {w.content.repairs.filter((r) => qo.items[r.id] === 'approved').length} of {w.content.repairs.length} repairs (
+                  {money(Number(w.approved_total ?? 0))})
+                  <ul className="wa-decisions">
+                    {w.content.repairs.map((r) => (
+                      <li key={r.id} className={qo.items[r.id]}>{qo.items[r.id] === 'approved' ? '✓' : '✕'} {r.title} ({money(r.total)})</li>
+                    ))}
+                  </ul>
+                  {qo.reason && <div className="small muted">Reason: {qo.reason}</div>}
+                </div>
               ) : qo?.outcome === 'declined' ? (
                 <div>
                   <strong>✕ Declined by {w.signed_name}</strong>{qo.reason && ` – ${qo.reason}`}
@@ -97,7 +114,11 @@ export default function ApprovalList({
                   + Add approved work to job
                 </button>
               )}
-              {applied && <span className="small pill-ok">✓ Added to job</span>}
+              {onApplyQuote && w.kind === 'quote' && w.responded_at && !applied &&
+                (w.content.repairs?.length ?? 0) >= 2 && quoteOutcome(w.decisions)?.outcome !== 'approved' && (
+                  <button className="btn primary small" onClick={() => onApplyQuote(w)}>Update job to approved repairs</button>
+                )}
+              {applied && <span className="small pill-ok">✓ {w.kind === 'quote' ? 'Job updated' : 'Added to job'}</span>}
             </div>
           </div>
         );

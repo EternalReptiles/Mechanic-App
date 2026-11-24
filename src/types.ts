@@ -44,6 +44,8 @@ export interface LineItem {
   qty: number;
   /** Unit price excluding GST */
   unitPrice: number;
+  /** Repair this line belongs to (e.g. "Front brakes"), so customers can approve repairs separately */
+  repair?: string;
 }
 
 export type CheckResult = '' | 'ok' | 'attention' | 'urgent' | 'na';

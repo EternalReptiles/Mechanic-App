@@ -35,6 +35,18 @@ export interface SignLine {
   amount: number;
 }
 
+/** A repair on a quote that the customer can approve or decline on its own. */
+export interface SignRepair {
+  id: string;
+  title: string;
+  lines: SignLine[];
+  /** Job line ids, so the job can be updated to match the customer's choices */
+  lineIds: string[];
+  subtotal: number;
+  /** What the customer pays (inc GST when registered) */
+  total: number;
+}
+
 export interface WalkContent {
   business: { name: string; phone: string; email: string; logo: string; abn: string };
   customerName: string;
@@ -51,6 +63,8 @@ export interface WalkContent {
   description?: string;
   workNotes?: string;
   lines?: SignLine[];
+  /** Quotes only: when there are 2+ repairs the customer chooses per repair */
+  repairs?: SignRepair[];
   subtotal?: number;
   gstAmount?: number;
   total?: number;
@@ -120,19 +134,30 @@ export function termLines(terms: string): { heading: string; text: string }[] {
 
 export const DECLINE_REASONS = ['Too expensive', 'Getting another quote', 'Not needed right now', 'Other'];
 
-/** For quotes: whether the customer approved or declined, and why. */
-export function quoteOutcome(decisions: unknown): { outcome: 'approved' | 'declined'; reason: string } | null {
-  const d = decisions as { outcome?: string; reason?: string } | null;
-  if (!d || (d.outcome !== 'approved' && d.outcome !== 'declined')) return null;
-  return { outcome: d.outcome, reason: d.reason ?? '' };
+export interface QuoteOutcome {
+  outcome: 'approved' | 'declined' | 'partial';
+  reason: string;
+  /** Per-repair choices (quotes with 2+ repairs) */
+  items: Record<string, 'approved' | 'declined'>;
 }
+
+/** For quotes: whether the customer approved, declined, or approved some repairs – and why. */
+export function quoteOutcome(decisions: unknown): QuoteOutcome | null {
+  const d = decisions as { outcome?: string; reason?: string; items?: Record<string, 'approved' | 'declined'> } | null;
+  if (!d || !['approved', 'declined', 'partial'].includes(d.outcome ?? '')) return null;
+  return { outcome: d.outcome as QuoteOutcome['outcome'], reason: d.reason ?? '', items: d.items ?? {} };
+}
+
+export const partialStatement = (business: string, total: string) =>
+  `I authorise ${business} to carry out the repairs I have marked "Yes" and agree to pay ${total} for them, on the terms and conditions below. I understand the repairs I marked "No" were recommended to me, and I accept responsibility for not having them done at this time.`;
 
 export const declineStatement = (business: string) =>
   `I have reviewed the quote above and decline the work. I understand ${business} recommended this work and I accept responsibility for not having it done.`;
 
 /** What the customer is agreeing to when they sign. */
-export function signStatement(kind: RequestKind, business: string, total: string, due?: string, declined = false): string {
+export function signStatement(kind: RequestKind, business: string, total: string, due?: string, declined = false, partial = false): string {
   if (declined) return declineStatement(business);
+  if (partial) return partialStatement(business, total);
   if (kind === 'quote')
     return `I authorise ${business} to carry out the work above and agree to pay ${total} for it, on the terms and conditions below.`;
   if (kind === 'completion')

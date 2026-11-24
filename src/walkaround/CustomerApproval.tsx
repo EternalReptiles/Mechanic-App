@@ -33,6 +33,7 @@ export default function CustomerApproval() {
   const [choice, setChoice] = useState<'approved' | 'declined' | null>(null);
   const [reason, setReason] = useState('');
   const [reasonNote, setReasonNote] = useState('');
+  const [repairChoices, setRepairChoices] = useState<Record<string, 'approved' | 'declined'>>({});
 
   async function load() {
     const { data, error } = await supabase.rpc('get_walkaround', { p_token: token });
@@ -53,18 +54,42 @@ export default function CustomerApproval() {
   const isWalk = kind === 'walkaround';
   const done = !!w.responded_at;
   const shown = done ? w.decisions ?? {} : decisions;
-  const approvedTotal = isWalk ? c.items.filter((i) => shown[i.id] === 'approved').reduce((s, i) => s + i.total, 0) : c.total ?? 0;
-  const allDecided = !isWalk || c.items.every((i) => shown[i.id]);
   const isQuote = kind === 'quote';
   const outcome = quoteOutcome(w.decisions);
-  const declined = isQuote && (done ? outcome?.outcome === 'declined' : choice === 'declined');
+  // Quotes with 2+ repairs: the customer chooses per repair.
+  const repairs = isQuote && (c.repairs?.length ?? 0) >= 2 ? c.repairs! : null;
+  const repairShown: Record<string, string> = done ? outcome?.items ?? {} : repairChoices;
+  const repairsDecided = !repairs || repairs.every((r) => repairShown[r.id]);
+  const nYes = repairs ? repairs.filter((r) => repairShown[r.id] === 'approved').length : 0;
+  const quoteChoice = repairs
+    ? repairsDecided ? (nYes === repairs.length ? 'approved' : nYes === 0 ? 'declined' : 'partial') : null
+    : choice;
+  const approvedTotal = isWalk
+    ? c.items.filter((i) => shown[i.id] === 'approved').reduce((s, i) => s + i.total, 0)
+    : repairs
+      ? repairs.filter((r) => repairShown[r.id] === 'approved').reduce((s, r) => s + r.total, 0)
+      : c.total ?? 0;
+  const allDecided = (!isWalk || c.items.every((i) => shown[i.id])) && repairsDecided;
+  const declined = isQuote && (done ? outcome?.outcome === 'declined' : quoteChoice === 'declined');
+  const partial = isQuote && (done ? outcome?.outcome === 'partial' : quoteChoice === 'partial');
   const hasTerms = !!c.terms?.trim() && !declined;
-  const statement = signStatement(kind, c.business.name, `${money(declined ? 0 : approvedTotal)}${c.gst ? ' (inc GST)' : ''}`, c.dueDate ? fmtDay(c.dueDate) : undefined, declined);
+  const statement = signStatement(
+    kind,
+    c.business.name,
+    `${money(declined ? 0 : approvedTotal)}${c.gst ? ' (inc GST)' : ''}`,
+    c.dueDate ? fmtDay(c.dueDate) : undefined,
+    declined,
+    partial,
+  );
+  const setAll = (d: 'approved' | 'declined') => {
+    setRepairChoices(Object.fromEntries(repairs!.map((r) => [r.id, d])));
+    setErr('');
+  };
 
   async function submit() {
     setErr('');
-    if (!allDecided) return setErr('Please choose Yes or No for every item.');
-    if (isQuote && !choice) return setErr('Please choose Approve or Decline.');
+    if (!allDecided) return setErr(repairs ? 'Please choose Yes or No for every repair.' : 'Please choose Yes or No for every item.');
+    if (isQuote && !quoteChoice) return setErr('Please choose Approve or Decline.');
     if (!name.trim()) return setErr('Please type your name.');
     if (!signature) return setErr('Please sign in the box.');
     if (hasTerms && !agree) return setErr('Please tick the box to agree to the terms and conditions.');
@@ -72,7 +97,9 @@ export default function CustomerApproval() {
     const { error } = await supabase.rpc('respond_walkaround', {
       p_token: token,
       p_decisions: isQuote
-        ? { outcome: choice, reason: [reason, reasonNote.trim()].filter(Boolean).join(' – ') }
+        ? repairs
+          ? { items: repairChoices, reason: [reason, reasonNote.trim()].filter(Boolean).join(' – ') }
+          : { outcome: choice, reason: [reason, reasonNote.trim()].filter(Boolean).join(' – ') }
         : decisions,
       p_name: name.trim(),
       p_signature: signature,
@@ -105,7 +132,9 @@ export default function CustomerApproval() {
               : kind === 'quote'
                 ? declined
                   ? ' You declined this quote.'
-                  : ` You approved the quote for ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}.`
+                  : partial
+                    ? ` You approved ${nYes} of ${repairs?.length} repairs: ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}.`
+                    : ` You approved the quote for ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}.`
                 : ` You signed off the work: ${money(approvedTotal)}${c.gst ? ' inc GST' : ''}${c.dueDate ? `, due ${fmtDay(c.dueDate)}` : ''}.`}
           </p>
           <button className="btn" onClick={() => window.print()}>Save a copy (PDF)</button>
@@ -130,24 +159,84 @@ export default function CustomerApproval() {
           <h2>{kind === 'quote' ? 'Quote' : 'Work completed'}{c.jobNumber ? ` · #${c.jobNumber}` : ''}</h2>
           {c.title && <p><strong>{c.title}</strong></p>}
           {c.description && <p className="small pre">{c.description}</p>}
-          <table className="cust-lines">
-            <tbody>
-              {(c.lines ?? []).map((l, n) => (
-                <tr key={n}>
-                  <td>{l.description}{l.qty !== 1 && <span className="muted"> × {l.qty}</span>}</td>
-                  <td>{money(l.amount)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="cust-sums">
-            {c.gst && <div><span>Subtotal (ex GST)</span><span>{money(c.subtotal ?? 0)}</span></div>}
-            {c.gst && <div><span>GST</span><span>{money(c.gstAmount ?? 0)}</span></div>}
-          </div>
-          <div className="cust-total">
-            <span>Total{c.gst ? ' (inc GST)' : ''}</span>
-            <strong>{money(c.total ?? 0)}</strong>
-          </div>
+          {repairs ? (
+            <>
+              <p className="small">
+                There are {repairs.length} repairs. Choose the ones you'd like done now – you can leave the others for later.
+              </p>
+              {!done && !w.expired && (
+                <div className="row wrap all-btns">
+                  <button className="btn small" onClick={() => setAll('approved')}>✓ Approve all</button>
+                  <button className="btn small" onClick={() => setAll('declined')}>✕ Decline all</button>
+                </div>
+              )}
+              {repairs.map((r) => {
+                const d = repairShown[r.id];
+                return (
+                  <div key={r.id} className={`cust-item ${d ?? ''}`}>
+                    <div className="row between">
+                      <strong>{r.title}</strong>
+                      <span className="cust-price">{money(r.total)}</span>
+                    </div>
+                    <ul className="repair-lines">
+                      {r.lines.map((l, n) => (
+                        <li key={n}>{l.description}{l.qty !== 1 && ` × ${l.qty}`}</li>
+                      ))}
+                    </ul>
+                    {done ? (
+                      <div className={`decision ${d}`}>{d === 'approved' ? '✓ Yes – go ahead' : '✕ No – not now'}</div>
+                    ) : (
+                      !w.expired && (
+                        <div className="yn">
+                          <button className={d === 'approved' ? 'yes on' : 'yes'} onClick={() => { setRepairChoices({ ...repairChoices, [r.id]: 'approved' }); setErr(''); }}>✓ Yes, do it</button>
+                          <button className={d === 'declined' ? 'no on' : 'no'} onClick={() => { setRepairChoices({ ...repairChoices, [r.id]: 'declined' }); setErr(''); }}>✕ Not now</button>
+                        </div>
+                      )
+                    )}
+                  </div>
+                );
+              })}
+              <div className="cust-sums">
+                <div><span>All repairs{c.gst ? ' (inc GST)' : ''}</span><span>{money(c.total ?? 0)}</span></div>
+              </div>
+              <div className="cust-total">
+                <span>Approved{done ? '' : ' so far'}{c.gst ? ' (inc GST)' : ''}</span>
+                <strong>{money(approvedTotal)}</strong>
+              </div>
+              {!done && !w.expired && (quoteChoice === 'partial' || quoteChoice === 'declined') && (
+                <div className="decline-reason">
+                  <span className="small">Why are you leaving some work for now? (optional)</span>
+                  <div className="chips wrap">
+                    {DECLINE_REASONS.map((x) => (
+                      <button key={x} className={`chip${reason === x ? ' active' : ''}`} onClick={() => setReason(reason === x ? '' : x)}>{x}</button>
+                    ))}
+                  </div>
+                  <input placeholder="Anything else you'd like to tell us?" value={reasonNote} onChange={(e) => setReasonNote(e.target.value)} />
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <table className="cust-lines">
+                <tbody>
+                  {(c.lines ?? []).map((l, n) => (
+                    <tr key={n}>
+                      <td>{l.description}{l.qty !== 1 && <span className="muted"> × {l.qty}</span>}</td>
+                      <td>{money(l.amount)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="cust-sums">
+                {c.gst && <div><span>Subtotal (ex GST)</span><span>{money(c.subtotal ?? 0)}</span></div>}
+                {c.gst && <div><span>GST</span><span>{money(c.gstAmount ?? 0)}</span></div>}
+              </div>
+              <div className="cust-total">
+                <span>Total{c.gst ? ' (inc GST)' : ''}</span>
+                <strong>{money(c.total ?? 0)}</strong>
+              </div>
+            </>
+          )}
           {c.dueDate && <p className="due">Payment due by <strong>{fmtDay(c.dueDate)}</strong></p>}
           {c.workNotes && (<><h3>Work carried out</h3><p className="small pre">{c.workNotes}</p></>)}
         </section>
@@ -186,7 +275,7 @@ export default function CustomerApproval() {
         </section>
       )}
 
-      {isQuote && !done && !w.expired && (
+      {isQuote && !repairs && !done && !w.expired && (
         <section className="cust-choice">
           <h2>Your decision</h2>
           <div className="yn big">
@@ -210,8 +299,11 @@ export default function CustomerApproval() {
       {isQuote && done && outcome?.outcome === 'declined' && (
         <p className="declined-note">✕ Quote declined{outcome.reason ? ` – ${outcome.reason}` : ''}</p>
       )}
+      {isQuote && done && outcome?.outcome === 'partial' && outcome.reason && (
+        <p className="declined-note">Reason for leaving some work: {outcome.reason}</p>
+      )}
 
-      {!done && !w.expired && (!isQuote || choice) && (
+      {!done && !w.expired && (!isQuote || quoteChoice) && (
         <section className="cust-sign">
           <h2>Confirm &amp; sign</h2>
           <label className="field">
@@ -238,7 +330,15 @@ export default function CustomerApproval() {
           )}
           {err && <p className="error">{err}</p>}
           <button className="btn primary block big" disabled={busy} onClick={submit}>
-            {busy ? 'Sending…' : isQuote ? (declined ? 'Submit – decline quote' : 'Submit – approve quote') : 'Submit my response'}
+            {busy
+              ? 'Sending…'
+              : isQuote
+                ? declined
+                  ? 'Submit – decline quote'
+                  : partial
+                    ? `Submit – approve ${nYes} of ${repairs?.length} repairs`
+                    : 'Submit – approve quote'
+                : 'Submit my response'}
           </button>
         </section>
       )}

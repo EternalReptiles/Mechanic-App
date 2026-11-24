@@ -20,7 +20,16 @@ export default function Record() {
   const kind = w.kind ?? 'walkaround';
   const qo = kind === 'quote' ? quoteOutcome(w.decisions) : null;
   const declined = qo?.outcome === 'declined';
-  const statement = signStatement(kind, c.business.name, `${money(Number(c.total ?? w.approved_total ?? 0))}${c.gst ? ' (inc GST)' : ''}`, c.dueDate ? fmtDay(c.dueDate) : undefined, declined);
+  const partial = qo?.outcome === 'partial';
+  const statement = signStatement(
+    kind,
+    c.business.name,
+    `${money(Number(partial ? w.approved_total ?? 0 : c.total ?? w.approved_total ?? 0))}${c.gst ? ' (inc GST)' : ''}`,
+    c.dueDate ? fmtDay(c.dueDate) : undefined,
+    declined,
+    partial,
+  );
+  const repairs = (c.repairs?.length ?? 0) >= 2 ? c.repairs! : null;
 
   return (
     <div className="doc-page">
@@ -38,7 +47,7 @@ export default function Record() {
           <div className="doc-meta">
             <h1>{kind === 'walkaround' ? 'Customer approval record' : `${KIND_LABEL[kind]} record`}</h1>
             {c.jobNumber && <div>Job #{c.jobNumber}</div>}
-            <div>{w.responded_at ? (declined ? 'DECLINED – SIGNED' : qo ? 'APPROVED – SIGNED' : 'SIGNED') : 'NOT YET SIGNED'}</div>
+            <div>{w.responded_at ? (declined ? 'DECLINED – SIGNED' : partial ? 'PARTLY APPROVED – SIGNED' : qo ? 'APPROVED – SIGNED' : 'SIGNED') : 'NOT YET SIGNED'}</div>
           </div>
         </header>
 
@@ -63,6 +72,26 @@ export default function Record() {
           <>
             {c.title && <h3>{c.title}</h3>}
             {c.description && <p className="pre small">{c.description}</p>}
+            {repairs && (
+              <div className="table-wrap">
+                <table className="doc-table">
+                  <thead><tr><th>Repair</th><th>Price{c.gst ? ' (inc GST)' : ''}</th><th>Customer decision</th></tr></thead>
+                  <tbody>
+                    {repairs.map((r) => {
+                      const d = qo?.items[r.id];
+                      return (
+                        <tr key={r.id}>
+                          <td>{r.title}<div className="small muted">{r.lines.map((l) => l.description).join(', ')}</div></td>
+                          <td>{money(r.total)}</td>
+                          <td><strong className={d === 'approved' ? 'ok-text' : d === 'declined' ? 'danger-text' : ''}>{d === 'approved' ? 'APPROVED' : d === 'declined' ? 'DECLINED' : '—'}</strong></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {repairs && <h3>All lines quoted</h3>}
             <div className="table-wrap">
               <table className="doc-table">
                 <thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Amount</th></tr></thead>
@@ -81,8 +110,9 @@ export default function Record() {
             {c.dueDate && <p><strong>Payment due: {fmtDay(c.dueDate)}</strong></p>}
             {qo && (
               <p className={declined ? 'outcome declined' : 'outcome approved'}>
-                Customer decision: <strong>{declined ? 'DECLINED' : 'APPROVED'}</strong>
-                {declined && qo.reason && <> – reason given: “{qo.reason}”</>}
+                Customer decision: <strong>{declined ? 'DECLINED' : partial ? 'PARTLY APPROVED' : 'APPROVED'}</strong>
+                {(partial || (repairs && !declined)) && <> – approved total {money(Number(w.approved_total ?? 0))}{c.gst ? ' inc GST' : ''}</>}
+                {qo.reason && <> – reason given: “{qo.reason}”</>}
               </p>
             )}
             {c.workNotes && (<><h3>Work carried out</h3><p className="pre small">{c.workNotes}</p></>)}

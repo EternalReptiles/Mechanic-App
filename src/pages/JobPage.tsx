@@ -10,6 +10,7 @@ import { Field, PageHeader, StatusBadge } from '../components/ui';
 import { useCloud } from '../cloud/CloudProvider';
 import ApprovalList, { WalkaroundSection } from '../walkaround/WalkaroundList';
 import SendSignoff from '../walkaround/SendSignoff';
+import { quoteOutcome } from '../walkaround/model';
 import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
 import type { Job, JobStatus, PaymentMethod, Vehicle } from '../types';
@@ -337,7 +338,25 @@ export default function JobPage() {
             <Link className="btn grow" to={`/jobs/${job.id}/invoice`}>🧾 Invoice</Link>
           </div>
           <SendSignoff job={job} customer={customer} vehicle={vehicle} onSent={() => setSentCount((n) => n + 1)} />
-          <ApprovalList job={job} kinds={['quote', 'completion']} refreshKey={sentCount} />
+          <ApprovalList
+            job={job}
+            kinds={['quote', 'completion']}
+            refreshKey={sentCount}
+            onApplyQuote={(w) => {
+              // Keep only the repairs the customer approved, and note the declined ones on the job.
+              const qo = quoteOutcome(w.decisions);
+              const declinedRepairs = (w.content.repairs ?? []).filter((r) => qo?.items[r.id] === 'declined');
+              const dropIds = new Set(declinedRepairs.flatMap((r) => r.lineIds));
+              const when = new Date(w.responded_at!).toLocaleDateString('en-AU');
+              const note = `Recommended but declined by customer on ${when}: ${declinedRepairs.map((r) => r.title).join(', ')}.`;
+              update({
+                lineItems: job.lineItems.filter((l) => !dropIds.has(l.id)),
+                workNotes: [job.workNotes.trim(), note].filter(Boolean).join('\n'),
+                appliedWalkarounds: [...(job.appliedWalkarounds ?? []), w.id],
+                status: job.status === 'quote' && qo?.outcome !== 'declined' ? 'scheduled' : job.status,
+              });
+            }}
+          />
           {job.status === 'paid' && (
             <Field label="Payment method">
               <select value={job.paymentMethod ?? ''} onChange={(e) => update({ paymentMethod: e.target.value as PaymentMethod })}>

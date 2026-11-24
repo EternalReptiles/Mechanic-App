@@ -1,5 +1,14 @@
 import type { JobStatus, LineItem, Vehicle } from './types';
 
+export interface RepairGroup {
+  id: string;
+  title: string;
+  lines: LineItem[];
+  subtotal: number;
+  /** What the customer pays (inc GST when registered) */
+  total: number;
+}
+
 export function uid(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -166,4 +175,28 @@ export function personName(email: string, name?: string): string {
     .filter(Boolean)
     .map((w) => w[0].toUpperCase() + w.slice(1))
     .join(' ');
+}
+
+/**
+ * Groups job lines into repairs the customer can approve separately.
+ * Lines share a repair when they have the same repair name; a line with no repair name stands alone.
+ */
+export function groupRepairs(lines: LineItem[], gstRegistered: boolean): RepairGroup[] {
+  const groups: RepairGroup[] = [];
+  const byName = new Map<string, RepairGroup>();
+  for (const l of lines) {
+    const name = l.repair?.trim();
+    let g = name ? byName.get(name.toLowerCase()) : undefined;
+    if (!g) {
+      g = { id: name ? `r:${name.toLowerCase()}` : `l:${l.id}`, title: name || l.description || 'Item', lines: [], subtotal: 0, total: 0 };
+      groups.push(g);
+      if (name) byName.set(name.toLowerCase(), g);
+    }
+    g.lines.push(l);
+  }
+  for (const g of groups) {
+    g.subtotal = round2(g.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.unitPrice) || 0), 0));
+    g.total = round2(gstRegistered ? g.subtotal * 1.1 : g.subtotal);
+  }
+  return groups;
 }

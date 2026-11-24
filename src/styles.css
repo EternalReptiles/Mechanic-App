@@ -445,3 +445,8 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .outcome { padding: 8px 10px; border-radius: 8px; }
 .outcome.approved { background: #f0fdf4; color: #166534; }
 .outcome.declined { background: #fef2f2; color: #991b1b; }
+.repair-tag { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); }
+.repair-tag span { white-space: nowrap; }
+.repair-tag input { min-height: 34px; padding: 4px 8px; font-size: 0.82rem; }
+.repair-lines { margin: 0; padding-left: 18px; font-size: 0.85rem; color: #475569; }
+.all-btns { margin: 4px 0 10px; }
