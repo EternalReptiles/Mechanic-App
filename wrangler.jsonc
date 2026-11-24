@@ -1,8 +1,8 @@
-// Cloudflare deployment settings for Spannr.
+// Cloudflare deployment settings for Spannr. "name" must match the Worker name in the Cloudflare dashboard.
 // The app is a static single-page app: Cloudflare serves the built files in ./dist
 // and sends any unknown path (e.g. /jobs/123, /v/<token>) to index.html.
 {
-  "name": "spannr",
+  "name": "mechanic-app",
   "compatibility_date": "2025-06-01",
   "assets": {
     "directory": "./dist",
