@@ -14,7 +14,10 @@ import PriceList from './pages/PriceList';
 import Team from './pages/Team';
 import CardPayments from './payments/CardPayments';
 import Billing from './pages/Billing';
-import CloudProvider from './cloud/CloudProvider';
+import CloudProvider, { useCloud } from './cloud/CloudProvider';
+import TechApp from './tech/TechApp';
+import { isTechPreview } from './tech/preview';
+import JobTemplates from './pages/JobTemplates';
 import Compose from './walkaround/Compose';
 import CustomerApproval from './walkaround/CustomerApproval';
 import WalkRecord from './walkaround/Record';
@@ -34,6 +37,7 @@ function BottomNav() {
   ];
   return (
     <nav className="bottom-nav">
+      <div className="side-brand"><SpannrSymbol size={22} color="#f59e0b" /> <span>Spannr</span></div>
       {nav.map((n) => (
         <NavLink key={n.to} to={n.to} end={n.end}>
           <span className="nav-icon">{n.icon}</span>
@@ -44,9 +48,8 @@ function BottomNav() {
   );
 }
 
-function StaffApp() {
+function OwnerApp() {
   return (
-    <CloudProvider>
       <Routes>
         <Route path="/jobs/:id/video" element={<Compose />} />
         <Route path="/jobs/:id/:docType" element={<DocumentView />} />
@@ -69,6 +72,7 @@ function StaffApp() {
                   <Route path="/settings/team" element={<Team />} />
                   <Route path="/settings/payments" element={<CardPayments />} />
                   <Route path="/settings/billing" element={<Billing />} />
+                  <Route path="/settings/checklists" element={<JobTemplates />} />
                 </Routes>
               </main>
               <BottomNav />
@@ -76,6 +80,19 @@ function StaffApp() {
           }
         />
       </Routes>
+  );
+}
+
+/** Technicians get their own simplified app; owners and admins get the full one. */
+function RoleSwitch() {
+  const { role } = useCloud();
+  return role === 'tech' || isTechPreview() ? <TechApp /> : <OwnerApp />;
+}
+
+function StaffApp() {
+  return (
+    <CloudProvider>
+      <RoleSwitch />
     </CloudProvider>
   );
 }

@@ -54,6 +54,7 @@ export default function Schedule() {
         <button className="btn" onClick={() => setWeekStart(addDays(weekStart, 7))}>Next ›</button>
       </div>
 
+      <div className="week">
       {days.map((d) => {
         const key = dayKey(d);
         const dayJobs = visible
@@ -81,6 +82,8 @@ export default function Schedule() {
           </section>
         );
       })}
+
+      </div>
 
       <h2>Unscheduled</h2>
       {unscheduled.length ? (

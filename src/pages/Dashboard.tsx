@@ -65,6 +65,9 @@ export default function Dashboard() {
     .sort((a, b) => a.promisedAt!.localeCompare(b.promisedAt!));
   const workingOn = onSite.filter((j) => j.status === 'in_progress').length;
   const onHold = onSite.filter((j) => j.status === 'waiting').length;
+  const finishedByTech = jobs
+    .filter((j) => j.finishedAt && j.status === 'completed')
+    .sort((a, b) => b.finishedAt!.localeCompare(a.finishedAt!));
   const card = (j: (typeof jobs)[number]) => (
     <JobCard key={j.id} job={j} customer={customerMap.get(j.customerId)} vehicle={vehicleMap.get(j.vehicleId)} gst={settings.gstRegistered} />
   );
@@ -135,6 +138,13 @@ export default function Dashboard() {
         <span>›</span>
       </Link>
 
+      {finishedByTech.length > 0 && (
+        <>
+          <h2>✓ Finished by technicians – ready to invoice</h2>
+          {finishedByTech.map(card)}
+        </>
+      )}
+
       {hasWorkshop && (
         <>
           <h2>In the workshop</h2>
@@ -168,11 +178,17 @@ export default function Dashboard() {
         ))}
       </div>
 
+      <div className="two-col">
+      <div>
       <h2>{workshopOnly ? 'Booked in today' : 'Today'}</h2>
       {todays.length ? todays.map(card) : <Empty>Nothing booked today.</Empty>}
 
+      </div>
+      <div>
       <h2>{workshopOnly ? 'Booked in tomorrow' : 'Tomorrow'}</h2>
       {tomorrows.length ? tomorrows.map(card) : <Empty>Nothing booked tomorrow.</Empty>}
+      </div>
+      </div>
     </>
   );
 }

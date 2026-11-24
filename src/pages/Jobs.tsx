@@ -5,7 +5,8 @@ import JobCard from '../components/JobCard';
 import { Empty, PageHeader } from '../components/ui';
 import { useCloud } from '../cloud/CloudProvider';
 import { createJob, db } from '../db';
-import { useLookups, useSettings } from '../hooks';
+import { useLookups, useSettings, useWide } from '../hooks';
+import JobsTable from '../components/JobsTable';
 import type { JobStatus } from '../types';
 import { STATUS, STATUS_ORDER } from '../utils';
 
@@ -17,6 +18,7 @@ export default function Jobs() {
   const { userId, team, plan } = useCloud();
   const [q, setQ] = useState('');
   const settings = useSettings();
+  const wide = useWide();
   const { customerMap, vehicleMap } = useLookups();
   const jobs = useLiveQuery(() => db.jobs.reverse().sortBy('number'), []) ?? [];
 
@@ -71,7 +73,9 @@ export default function Jobs() {
           </button>
         ))}
       </div>
-      {filtered.length ? (
+      {wide && filtered.length ? (
+        <JobsTable jobs={filtered} />
+      ) : filtered.length ? (
         filtered.map((j) => (
           <JobCard key={j.id} job={j} customer={customerMap.get(j.customerId)} vehicle={vehicleMap.get(j.vehicleId)} gst={settings.gstRegistered} />
         ))

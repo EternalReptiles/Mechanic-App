@@ -12,6 +12,8 @@ import ApprovalList, { WalkaroundSection } from '../walkaround/WalkaroundList';
 import SendSignoff from '../walkaround/SendSignoff';
 import JobMessages from '../components/JobMessages';
 import Upgrade from '../components/Upgrade';
+import TaskChecklist from '../components/TaskChecklist';
+import { finishJobPatch, missingRequired, tasksFromTemplate, templatesFor } from '../jobTemplates';
 import JobCardPayment from '../payments/JobCardPayment';
 import { quoteOutcome } from '../walkaround/model';
 import { db, deleteJob } from '../db';
@@ -58,7 +60,7 @@ export default function JobPage() {
   const [params, setParams] = useSearchParams();
   const tab = (params.get('tab') as Tab) || 'details';
   const settings = useSettings();
-  const { team, can } = useCloud();
+  const { team, can, userId, memberName } = useCloud();
   const [job, setJob] = useState<Job | null | undefined>(undefined);
   const [signing, setSigning] = useState(false);
   const [sentCount, setSentCount] = useState(0);
@@ -205,7 +207,7 @@ export default function JobPage() {
       </div>
 
       {tab === 'details' && (
-        <>
+        <div className="tab-body">
           <section className="card">
             <h2>Customer &amp; vehicle</h2>
             <CustomerVehiclePicker
@@ -309,11 +311,42 @@ export default function JobPage() {
             </Field>
           </section>
           <button className="btn danger block" onClick={remove}>Delete job</button>
-        </>
+        </div>
       )}
 
       {tab === 'inspection' && (
         <>
+        <section className="card">
+          <h2>☑ Job checklist</h2>
+          {job.tasks?.length ? (
+            <>
+              <p className="small muted" style={{ marginTop: 0 }}>
+                {job.tasksTemplate}
+                {job.finishedAt && ` · finished ${fmtDateTime(job.finishedAt)}${job.finishedBy ? ` by ${memberName(job.finishedBy)}` : ''}`}
+              </p>
+              <TaskChecklist tasks={job.tasks} onChange={(tasks) => update({ tasks })} />
+              {!job.finishedAt && (
+                <button className="btn primary block" onClick={() => {
+                  const miss = missingRequired(job.tasks);
+                  if (miss.length) return alert(`Still to do: ${miss.map((t) => t.label).join(', ')}`);
+                  const { patch, odometer } = finishJobPatch(job, userId);
+                  update(patch);
+                  if (odometer && vehicle) void db.vehicles.update(vehicle.id, { odometer });
+                }}>✓ Mark job finished</button>
+              )}
+              <button className="btn ghost small" onClick={() => confirm('Remove this checklist from the job?') && update({ tasks: undefined, tasksTemplate: undefined })}>Remove checklist</button>
+            </>
+          ) : (
+            <>
+              <p className="small muted" style={{ marginTop: 0 }}>Give the technician a checklist to fill in (with measurements like oil litres).</p>
+              <div className="row wrap">
+                {templatesFor(settings.jobTemplates).map((t) => (
+                  <button key={t.id} className="btn" onClick={() => update({ tasks: tasksFromTemplate(t), tasksTemplate: t.name })}>{t.name}</button>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
         <section className="card">
           <h2>Vehicle inspection</h2>
           <Checklist items={job.checklist ?? []} template={settings.checklistTemplate} onChange={(checklist) => update({ checklist })} />

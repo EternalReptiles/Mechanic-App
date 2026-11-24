@@ -67,3 +67,16 @@ export function useAutosave<T>(value: T | null | undefined, save: (v: T) => unkn
 
   return saved;
 }
+
+/** True when the screen is at least `min` pixels wide (desktop layout). */
+export function useWide(min = 1024): boolean {
+  const q = `(min-width: ${min}px)`;
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches);
+  useEffect(() => {
+    const m = window.matchMedia(q);
+    const on = () => setWide(m.matches);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, [q]);
+  return wide;
+}

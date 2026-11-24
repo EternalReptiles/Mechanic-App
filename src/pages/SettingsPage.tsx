@@ -5,6 +5,7 @@ import SyncBadge from '../cloud/SyncBadge';
 import AutoMessages from '../components/AutoMessages';
 import Upgrade from '../components/Upgrade';
 import { planLabel } from '../plans';
+import { startTechPreview } from '../tech/preview';
 import { brandColor, onBrand } from '../brand';
 import { Field, PageHeader } from '../components/ui';
 import { useAutosave } from '../hooks';
@@ -72,6 +73,8 @@ export default function SettingsPage() {
           <Link to="/settings/team" className="btn">👥 Team</Link>
           <Link to="/settings/payments" className="btn">💳 Card payments</Link>
           <Link to="/settings/billing" className="btn">⭐ Plan: {planLabel(cloud.plan)}</Link>
+          {cloud.isAdmin && <Link to="/settings/checklists" className="btn">☑ Job checklists</Link>}
+          {cloud.isAdmin && <button className="btn ghost" onClick={startTechPreview}>👁 Preview technician app</button>}
           <button className="btn ghost" onClick={() => void cloud.signOut()}>Sign out</button>
         </div>
       </section>

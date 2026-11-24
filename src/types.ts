@@ -95,9 +95,46 @@ export interface Job {
   collectedAt?: string;
   /** Walk-around ids whose approved work has already been added to this job */
   appliedWalkarounds?: string[];
+  /** Technician's job checklist (from a template) */
+  tasks?: JobTask[];
+  tasksTemplate?: string;
+  /** Set when a technician marks the job finished */
+  finishedAt?: string;
+  finishedBy?: string;
+  /** Checklist amounts (e.g. oil litres) already added to the invoice lines */
+  taskLinesAdded?: boolean;
 }
 
 export type JobLocation = 'onsite' | 'workshop';
+
+/** Field types for job checklists filled in by technicians. */
+export type TaskFieldType = 'check' | 'yesno' | 'number' | 'text' | 'choice';
+
+export interface TaskTemplateItem {
+  id: string;
+  label: string;
+  type: TaskFieldType;
+  /** e.g. "L", "mm", "km" for number fields */
+  unit?: string;
+  /** Options for choice fields */
+  options?: string[];
+  required?: boolean;
+  /** Number fields: add the amount to the invoice as a part (qty = value) when the job is finished */
+  invoice?: { description: string; unitPrice: number };
+  /** Number fields: copy the value to the job/vehicle odometer */
+  mapsTo?: 'odometer';
+}
+
+export interface JobTemplate {
+  id: string;
+  name: string;
+  items: TaskTemplateItem[];
+}
+
+export interface JobTask extends TaskTemplateItem {
+  value: string | number | boolean | null;
+  note?: string;
+}
 export type BusinessType = 'mobile' | 'workshop' | 'both';
 
 /** A saved price-list entry: a single item, or a package of several lines (e.g. "Logbook service – 4cyl"). */
@@ -147,6 +184,8 @@ export interface Settings {
   terms: string;
   /** Brand colour (hex) for documents, customer pages and Stripe invoices */
   brandColor?: string;
+  /** Job checklist templates for technicians (defaults used when missing) */
+  jobTemplates?: JobTemplate[];
   /** IANA time zone used for message times and quiet hours, e.g. "Australia/Sydney" */
   timezone?: string;
   /** Automatic booking confirmations and reminders (sent by the server) */
