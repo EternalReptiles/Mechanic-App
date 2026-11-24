@@ -19,7 +19,7 @@ for an Australian SaaS platform for mobile mechanics and workshops. Test environ
 
 ### 2. Billing – Spannr's own subscription
 - **Checkout:** Stripe-hosted Checkout in subscription mode (redirect). https://docs.stripe.com/billing/subscriptions/build-subscriptions?payment-ui=checkout&ui=stripe-hosted
-- **Pricing:** flat rate per business (e.g. monthly / annual).
+- **Pricing:** one flat price per business (monthly / annual). **No per-staff-member pricing** – a business can add any number of team members at no extra cost (decided by the owner).
 - **Trial:** free access first, no card at sign-up; upgrade to paid later.
 - **Self-service:** Stripe **Customer Portal** (upgrade/downgrade, update card, cancel).
 - **Failed payments:** **Smart Retries + automated emails** (Dashboard settings, no code).
