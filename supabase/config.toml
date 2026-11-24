@@ -7,7 +7,3 @@ verify_jwt = true
 # Stripe calls this directly; requests are verified by fetching each event back from Stripe.
 [functions.stripe-webhook]
 verify_jwt = false
-
-# One-off setup tool (protected by SPANNR_SETUP_TOKEN); removed after use.
-[functions.stripe-live-setup]
-verify_jwt = false
