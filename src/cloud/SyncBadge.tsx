@@ -29,7 +29,10 @@ export default function SyncBadge({ detailed }: { detailed?: boolean }) {
             : ['✓', s.lastSyncedAt ? `Synced ${ago(s.lastSyncedAt)}` : 'Synced', 'sync-ok'];
 
   return (
-    <button className={`sync-badge ${cls}`} onClick={() => void syncNow()} title={s.error ?? 'Tap to sync now'}>
+    <button className={`sync-badge ${cls}`} onClick={() => {
+      if (s.state === 'error' && s.error) alert(`Sync problem: ${s.error}\n\nSpannr will keep trying. Your changes are saved on this device.`);
+      void syncNow();
+    }} title={s.error ?? 'Tap to sync now'}>
       <span>{icon}</span> {detailed || s.state !== 'idle' || s.pending ? text : ''}
       {detailed && s.state === 'error' && s.error && <span className="small"> – {s.error}</span>}
     </button>
