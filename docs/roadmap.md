@@ -32,7 +32,7 @@
 ## Next to build
 - [x] Google review requests after paid jobs
 - [x] Reports (takings, owing, jobs, average job value, top customers, technicians)
-- [ ] Import from MechanicDesk / ServiceM8 exports
+- [x] Import customers from ServiceM8 (Client List .csv/.xlsx) or any spreadsheet – next: ServiceM8 Job List (job history), MechanicDesk
 - [x] Stock & purchase orders
 - [x] Technician timesheets (clock on/off per job)
 - [x] AI assistant (voice notes → job notes, inspection → quote, draft text replies) – needs ANTHROPIC_API_KEY in Supabase secrets

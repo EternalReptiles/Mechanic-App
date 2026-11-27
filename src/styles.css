@@ -757,3 +757,12 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 .text-usage.low .usage-bar span { background: #f97316; }
 .text-usage.out { border-color: var(--danger); }
 .text-usage.out .usage-bar span { background: var(--danger); }
+
+/* Import customers */
+.steps { padding-left: 20px; margin: 0 0 8px; }
+.steps li { margin: 2px 0; }
+.file-btn { cursor: pointer; }
+.import-list { border: 1px solid var(--border); border-radius: var(--radius); }
+.import-row { display: flex; flex-direction: column; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.import-row:last-child { border-bottom: 0; }
+.banner-ok { border-color: #16a34a; }
