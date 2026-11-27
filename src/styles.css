@@ -610,3 +610,21 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .inbox-row.unread { border-color: var(--primary); }
 .inbox-preview { color: var(--muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dot-unread { display: inline-block; width: 8px; height: 8px; border-radius: 99px; background: var(--primary); margin-right: 4px; }
+
+/* iPhone zooms into any field with text under 16px – keep every field at least 16px on touch screens. */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: 16px !important; }
+  .task-number input { font-size: 1.1rem !important; }
+}
+.nav-icon { position: relative; }
+.nav-badge { position: absolute; top: -6px; right: -10px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px; background: #dc2626; color: #fff; font-size: .68rem; font-style: normal; font-weight: 800; line-height: 18px; text-align: center; }
+@media (max-width: 1023px) {
+  .bottom-nav a { min-width: 0; flex: 1; padding: 4px 2px; font-size: 0.68rem; }
+}
+.reply-pill { display: inline-block; font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin: 4px 0; }
+.reply-pill.confirmed { background: rgba(22, 163, 74, .14); color: #15803d; }
+.reply-pill.cancel { background: rgba(220, 38, 38, .12); color: #b91c1c; }
+@media (max-width: 420px) {
+  .bottom-nav a { font-size: 0.56rem; letter-spacing: -0.02em; overflow: hidden; padding: 4px 0; }
+  .bottom-nav a span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}

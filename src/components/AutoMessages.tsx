@@ -110,6 +110,10 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
             <textarea rows={3} value={n.reminderTemplate} onChange={(e) => set({ reminderTemplate: e.target.value })} />
           </Field>
           <p className="wide small preview">Preview: {preview(n.reminderTemplate, s)}</p>
+          <p className="wide small muted" style={{ margin: 0 }}>
+            Texts automatically end with <em>"Reply Y to confirm or C to cancel."</em> and <em>"Powered by Spannr"</em>. When a customer replies Y,
+            the job shows ✓ Customer confirmed and they get a thank-you text; if they reply C, you'll get an alert to rebook them.
+          </p>
           <p className="wide muted small" style={{ margin: 0 }}>
             Placeholders: {'{name} {business} {day} {date} {time} {where} {vehicle} {phone}'} ·{' '}
             <button className="link" onClick={() => set({ confirmTemplate: DEFAULT_CONFIRM, reminderTemplate: DEFAULT_REMINDER })}>Reset wording</button>

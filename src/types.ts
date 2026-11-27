@@ -120,6 +120,8 @@ export interface Job {
   droppedOffAt?: string;
   promisedAt?: string;
   collectedAt?: string;
+  /** Customer's reply to the booking confirmation/reminder text (Y = confirmed, C = cancel) */
+  customerReply?: { answer: 'confirmed' | 'cancel'; at: string };
   /** Walk-around ids whose approved work has already been added to this job */
   appliedWalkarounds?: string[];
   /** Technician's job checklist (from a template) */

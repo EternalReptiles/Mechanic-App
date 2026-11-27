@@ -28,6 +28,11 @@ export default function JobCard({
         </strong>
         <StatusBadge status={job.status} />
       </div>
+      {job.customerReply && ['scheduled', 'quote', 'in_progress', 'waiting'].includes(job.status) && (
+        <div className={`reply-pill ${job.customerReply.answer}`}>
+          {job.customerReply.answer === 'confirmed' ? '✓ Customer confirmed' : '⚠ Customer asked to cancel / change'}
+        </div>
+      )}
       {job.title && <div>{job.title}</div>}
       {vehicle && <div className="muted">{vehicleLabel(vehicle)}</div>}
       {(job.location === 'workshop' || tech) && (

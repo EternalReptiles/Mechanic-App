@@ -207,6 +207,18 @@ export default function JobPage() {
         ))}
       </div>
 
+      {job.customerReply && (
+        <div className={`banner ${job.customerReply.answer === 'cancel' ? 'attention' : ''}`}>
+          <span>
+            {job.customerReply.answer === 'confirmed'
+              ? `✓ ${customer?.name?.split(' ')[0] || 'The customer'} confirmed this booking by text`
+              : `⚠ ${customer?.name?.split(' ')[0] || 'The customer'} replied C – they want to cancel or change this booking`}
+            <span className="small muted"> · {new Date(job.customerReply.at).toLocaleString('en-AU', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</span>
+          </span>
+          <button className="link small" onClick={() => update({ customerReply: undefined })}>Clear</button>
+        </div>
+      )}
+
       {tab === 'details' && (
         <div className="tab-body">
           <TextThread customer={customer} jobId={job.id} />

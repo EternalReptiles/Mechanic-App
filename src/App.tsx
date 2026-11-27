@@ -1,7 +1,9 @@
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { useSettings } from './hooks';
 import { SpannrSymbol } from './components/Logo';
-import { CalendarDays, Car, Settings as SettingsIcon, Users, Wrench } from 'lucide-react';
+import { CalendarDays, Car, MessageCircle, Settings as SettingsIcon, Users, Wrench } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from './cloud/supabase';
 import Dashboard from './pages/Dashboard';
 import Jobs from './pages/Jobs';
 import JobPage from './pages/JobPage';
@@ -28,8 +30,24 @@ import ClosedBusiness from './pages/ClosedBusiness';
 import Admin from './pages/Admin';
 import Messages from './messages/Messages';
 
+/** Unread customer texts, refreshed every 30 seconds while the app is open. */
+function useUnreadTexts() {
+  const { businessId } = useCloud();
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    if (!businessId) return;
+    const load = () => navigator.onLine && void supabase.rpc('unread_replies', { bid: businessId }).then(({ data }) => setN(Number(data) || 0));
+    load();
+    const t = window.setInterval(() => document.visibilityState === 'visible' && load(), 30000);
+    document.addEventListener('visibilitychange', load);
+    return () => { window.clearInterval(t); document.removeEventListener('visibilitychange', load); };
+  }, [businessId]);
+  return n;
+}
+
 function BottomNav() {
   const { businessType } = useSettings();
+  const unread = useUnreadTexts();
   const icon = { size: 22, strokeWidth: 2 };
   const nav = [
     { to: '/', label: 'Home', icon: <SpannrSymbol size={20} />, end: true },
@@ -38,6 +56,7 @@ function BottomNav() {
       ? { to: '/schedule', label: 'Workshop', icon: <Car {...icon} /> }
       : { to: '/schedule', label: 'Schedule', icon: <CalendarDays {...icon} /> },
     { to: '/customers', label: 'Customers', icon: <Users {...icon} /> },
+    { to: '/messages', label: 'Messages', icon: <MessageCircle {...icon} />, badge: unread },
     { to: '/settings', label: 'Settings', icon: <SettingsIcon {...icon} /> },
   ];
   return (
@@ -45,7 +64,7 @@ function BottomNav() {
       <div className="side-brand"><SpannrSymbol size={22} color="#f59e0b" /> <span>Spannr</span></div>
       {nav.map((n) => (
         <NavLink key={n.to} to={n.to} end={n.end}>
-          <span className="nav-icon">{n.icon}</span>
+          <span className="nav-icon">{n.icon}{'badge' in n && n.badge ? <em className="nav-badge">{n.badge > 9 ? '9+' : n.badge}</em> : null}</span>
           <span>{n.label}</span>
         </NavLink>
       ))}
