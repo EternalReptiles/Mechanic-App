@@ -665,3 +665,9 @@ html, body { overflow-x: clip; max-width: 100%; }
 .book-submit { background: var(--brand) !important; border-color: var(--brand) !important; }
 .book-foot { text-align: center; margin-top: 18px; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.side-install { display: none; }
+@media (min-width: 1024px) {
+  .side-install { display: block; order: 99; margin-top: auto; padding: 8px 4px; }
+  .side-install .btn { width: 100%; background: rgba(245, 158, 11, .14); color: #fbbf24; border-color: transparent; }
+  .side-install p { color: #94a3b8; }
+}

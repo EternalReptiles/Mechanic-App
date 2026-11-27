@@ -19,6 +19,7 @@ import TapToPaySettings from './payments/TapToPaySettings';
 import TapToPayWarmup from './payments/TapToPayWarmup';
 import TapToPayIntro from './payments/TapToPayIntro';
 import PushSetup from './PushSetup';
+import InstallApp from './components/InstallApp';
 import Billing from './pages/Billing';
 import CloudProvider, { useCloud } from './cloud/CloudProvider';
 import TechApp from './tech/TechApp';
@@ -66,6 +67,7 @@ function BottomNav() {
   return (
     <nav className="bottom-nav">
       <div className="side-brand"><SpannrSymbol size={22} color="#f59e0b" /> <span>Spannr</span></div>
+      <div className="side-install"><InstallApp compact /></div>
       {nav.map((n) => (
         <NavLink key={n.to} to={n.to} end={n.end}>
           <span className="nav-icon">{n.icon}{'badge' in n && n.badge ? <em className="nav-badge">{n.badge > 9 ? '9+' : n.badge}</em> : null}</span>

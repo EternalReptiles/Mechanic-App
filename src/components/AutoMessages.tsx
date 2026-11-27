@@ -56,6 +56,7 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
     });
   };
   const on = n.confirmEnabled || n.reminderEnabled;
+  const pr = { enabled: false, firstDays: 3, secondDays: 7, ...n.payReminders };
 
   return (
     <section className="card grid">
@@ -67,6 +68,32 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
         <input type="checkbox" checked={n.receiptEnabled !== false} onChange={(e) => set({ receiptEnabled: e.target.checked })} />
         <span>Send a receipt with the paid invoice when a customer pays by card</span>
       </label>
+      <label className="field checkbox wide">
+        <input type="checkbox" checked={!!pr.enabled} onChange={(e) => set({ payReminders: { ...pr, enabled: e.target.checked, enabledAt: e.target.checked ? Date.now() : pr.enabledAt } })} />
+        <span>Remind customers about unpaid invoices</span>
+      </label>
+      {pr.enabled && (
+        <>
+          <Field label="First reminder">
+            <select value={pr.firstDays} onChange={(e) => set({ payReminders: { ...pr, firstDays: Number(e.target.value) } })}>
+              {[1, 2, 3, 5, 7].map((d) => <option key={d} value={d}>{d} day{d > 1 ? 's' : ''} after the invoice</option>)}
+            </select>
+          </Field>
+          <Field label="Second reminder">
+            <select value={pr.secondDays} onChange={(e) => set({ payReminders: { ...pr, secondDays: Number(e.target.value) } })}>
+              <option value={0}>Don't send</option>
+              {[5, 7, 10, 14, 21, 30].map((d) => <option key={d} value={d}>{d} days after the invoice</option>)}
+            </select>
+          </Field>
+          <p className="wide small muted" style={{ margin: 0 }}>
+            Counts from the invoice date (or when a technician finished the job). Sent Monday–Saturday, 9am–6pm, until the job is marked paid –
+            with your card pay link if you've sent one, otherwise your bank details. Only invoices from now on are chased.
+          </p>
+          <p className="wide small preview" style={{ margin: 0 }}>
+            Preview: Hi Sam, a friendly reminder from {s.businessName || 'your business'} that invoice #1042 for $385.00 is now due. Pay by card here: https://… Thanks!
+          </p>
+        </>
+      )}
       <label className="field checkbox wide">
         <input type="checkbox" checked={n.confirmEnabled} onChange={(e) => set({ confirmEnabled: e.target.checked })} />
         <span>Send a booking confirmation when a job is booked in</span>

@@ -264,4 +264,6 @@ export interface NotifySettings {
   reminderTemplate: string;
   /** Text/email a paid-invoice receipt when a customer pays by card (default on) */
   receiptEnabled?: boolean;
+  /** Automatic reminders for unpaid invoices */
+  payReminders?: { enabled: boolean; firstDays: number; secondDays: number; enabledAt?: number };
 }
