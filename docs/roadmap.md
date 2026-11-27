@@ -22,6 +22,20 @@
 - [ ] App Store listing: screenshots, description, privacy answers; set iPhone-only
 - [ ] Marketing: Instagram, mechanic Facebook groups, Google, word of mouth
 
+## Built recently
+- [x] Two-way texts, Messages inbox, reply Y/C to booking texts
+- [x] Push notifications (customer texts, failed payments, new online bookings)
+- [x] Online booking page (app.spannr.au/book/<slug>)
+- [x] Apple Tap to Pay review: requirements built, videos + checklist sent (waiting on Apple)
+
+## Next to build
+- [ ] Google review requests after paid jobs
+- [ ] Reports dashboard (revenue, owing, jobs, average job value, technician productivity)
+- [ ] Import from MechanicDesk / ServiceM8 exports
+- [ ] Stock & purchase orders
+- [ ] Technician timesheets (clock on/off per job)
+- [ ] AI assistant (voice notes → job notes, inspection → quote)
+
 ## Integrations (need partner/developer accounts first)
 - [ ] **Xero** (paid developer tiers – no free tier): when ready, create the app at developer.xero.com (redirect `https://app.spannr.au/settings/accounting/xero`) → Client ID + XERO_CLIENT_SECRET; build connect + sync of invoices, payments and customers
 - [ ] **MYOB** (Developer Access $110 is enough; Developer Partner $220 includes a live MYOB Business Pro subscription): register at developer.myob.com (redirect `https://app.spannr.au/settings/accounting/myob`) → API key + MYOB_CLIENT_SECRET; then the same sync
