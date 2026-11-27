@@ -28,6 +28,8 @@ declare
   rs_key text := public.notify_secret('resend_api_key');
 begin
   if coalesce(rs_key, '') = '' or coalesce(to_address, '') = '' then return; end if;
+  -- Never email placeholder/test addresses.
+  if lower(to_address) ~ '@(example\.(com|org|net)|[a-z0-9.-]+\.(test|invalid|localhost))$' then return; end if;
   perform net.http_post(
     url := 'https://api.resend.com/emails',
     headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || rs_key),

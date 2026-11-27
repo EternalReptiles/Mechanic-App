@@ -15,6 +15,7 @@ import Upgrade from '../components/Upgrade';
 import TaskChecklist from '../components/TaskChecklist';
 import { finishJobPatch, missingRequired, tasksFromTemplate, templatesFor } from '../jobTemplates';
 import JobCardPayment from '../payments/JobCardPayment';
+import { QuickText } from '../components/SendMessage';
 import { quoteOutcome } from '../walkaround/model';
 import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
@@ -186,13 +187,12 @@ export default function JobPage() {
       <div className="row wrap quick-actions">
         {customer?.phone && <a className="btn" href={telUrl(customer.phone)}>📞 Call</a>}
         {customer?.phone && !inWorkshop && (
-          <a className="btn" href={smsUrl(customer.phone, `Hi ${firstName(customer.name)}, it's ${settings.businessName}. I'm on my way and should be with you shortly.`)}>
-            💬 On my way
-          </a>
+          <QuickText customer={customer} jobId={job.id} label="💬 On my way"
+            text={`Hi ${firstName(customer.name)}, it's ${settings.businessName}. I'm on my way and should be with you shortly.`} />
         )}
         {address && !inWorkshop && <a className="btn" href={mapsUrl(address)} target="_blank" rel="noreferrer">🧭 Navigate</a>}
         {customer?.phone && inWorkshop && (
-          <a className="btn" href={smsUrl(customer.phone, readyText)}>💬 Car's ready</a>
+          <QuickText customer={customer} jobId={job.id} label="💬 Car's ready" text={readyText} />
         )}
       </div>
 

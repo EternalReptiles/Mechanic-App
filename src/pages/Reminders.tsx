@@ -6,6 +6,7 @@ import { createJob, db } from '../db';
 import { useSettings } from '../hooks';
 import type { Customer, Vehicle } from '../types';
 import { daysUntil, fillTemplate, firstName, fmtDay, smsUrl, telUrl, vehicleLabel } from '../utils';
+import { QuickText } from '../components/SendMessage';
 
 type Due = { vehicle: Vehicle; customer?: Customer; kind: 'Service' | 'Rego'; date: string; days: number };
 
@@ -72,7 +73,7 @@ export default function Reminders() {
               {d.kind === 'Service' && d.vehicle.nextServiceKm && ` or ${d.vehicle.nextServiceKm} km`}
             </div>
             <div className="row wrap">
-              {d.customer?.phone && <a className="btn" href={smsUrl(d.customer.phone, message(d))}>💬 Text reminder</a>}
+              {d.customer?.phone && <QuickText customer={d.customer} jobId={`vehicle:${d.vehicle.id}`} label="💬 Text reminder" text={message(d)} />}
               {d.customer?.phone && <a className="btn" href={telUrl(d.customer.phone)}>📞 Call</a>}
               <button className="btn primary" onClick={() => book(d)}>Book job</button>
             </div>

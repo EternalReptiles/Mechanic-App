@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Checklist from '../components/Checklist';
+import { QuickText } from '../components/SendMessage';
 import Photos from '../components/Photos';
 import TaskChecklist from '../components/TaskChecklist';
 import { Field, PageHeader, StatusBadge } from '../components/ui';
@@ -75,7 +76,8 @@ export default function TechJob() {
             <span className="small">👤 {customer.name}</span>
             {customer.phone && <a className="btn small" href={telUrl(customer.phone)}>📞 Call</a>}
             {customer.phone && !inWorkshop && (
-              <a className="btn small" href={smsUrl(customer.phone, `Hi ${firstName(customer.name)}, it's ${memberName(userId) || 'your mechanic'} from ${settings.businessName}. I'm on my way.`)}>💬 On my way</a>
+              <QuickText className="btn small" customer={customer} jobId={job.id} label="💬 On my way"
+                text={`Hi ${firstName(customer.name)}, it's ${memberName(userId) || 'your mechanic'} from ${settings.businessName}. I'm on my way.`} />
             )}
             {address && !inWorkshop && <a className="btn small" href={mapsUrl(address)} target="_blank" rel="noreferrer">🧭 Navigate</a>}
           </div>

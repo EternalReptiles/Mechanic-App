@@ -1,10 +1,11 @@
 import type { Customer } from '../types';
-import { smsUrl } from '../utils';
+import SendMessage from '../components/SendMessage';
 import { shareLink } from './model';
 
 /** After creating a request: text / email / copy the customer's link. */
 export default function ShareSent({
   token,
+  jobId = '',
   link: fullLink,
   customer,
   message,
@@ -13,6 +14,8 @@ export default function ShareSent({
   doneLabel = 'Done',
 }: {
   token: string;
+  /** Job the message is about (for the message log) */
+  jobId?: string;
   /** Use this URL instead of a Spannr link built from the token */
   link?: string;
   customer?: Customer;
@@ -27,13 +30,8 @@ export default function ShareSent({
     <div className="card share-sent">
       <p style={{ marginTop: 0 }}>✓ Ready. Send this link to {customer?.name || 'the customer'}:</p>
       <p className="link-box">{link}</p>
-      <div className="row wrap">
-        {customer?.phone && <a className="btn primary grow" href={smsUrl(customer.phone, text)}>💬 Text it</a>}
-        {customer?.email && (
-          <a className="btn grow" href={`mailto:${customer.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`}>✉ Email it</a>
-        )}
-        <button className="btn grow" onClick={() => navigator.clipboard?.writeText(link).then(() => alert('Link copied'))}>📋 Copy link</button>
-      </div>
+      <SendMessage customer={customer} jobId={jobId} text={text} subject={subject} />
+      <button className="btn ghost small" style={{ marginTop: 8 }} onClick={() => navigator.clipboard?.writeText(link).then(() => alert('Link copied'))}>📋 Copy link</button>
       <p className="muted small">You'll see when they open it and when they sign.</p>
       <button className="btn ghost block" onClick={onDone}>{doneLabel}</button>
     </div>

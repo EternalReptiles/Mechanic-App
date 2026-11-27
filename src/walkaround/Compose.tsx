@@ -23,6 +23,7 @@ import {
 } from './model';
 import VideoRecorder from './VideoRecorder';
 import NumberInput from '../components/NumberInput';
+import SendMessage from '../components/SendMessage';
 
 export default function Compose() {
   const { id = '' } = useParams();
@@ -142,15 +143,9 @@ export default function Compose() {
         <div className="card">
           <p>Your walk-around is saved. Send this link to {customer?.name || 'the customer'}:</p>
           <p className="link-box">{link}</p>
-          <div className="row wrap">
-            {customer?.phone && <a className="btn primary grow" href={smsUrl(customer.phone, text)}>💬 Text it</a>}
-            {customer?.email && (
-              <a className="btn grow" href={`mailto:${customer.email}?subject=${encodeURIComponent(`Your ${vehicleLabel(vehicle) || 'vehicle'} – video & quote from ${settings.businessName}`)}&body=${encodeURIComponent(text)}`}>
-                ✉ Email it
-              </a>
-            )}
-            <button className="btn grow" onClick={() => navigator.clipboard?.writeText(link).then(() => alert('Link copied'))}>📋 Copy link</button>
-          </div>
+          <SendMessage customer={customer} jobId={job.id} text={text}
+            subject={`Your ${vehicleLabel(vehicle) || 'vehicle'} – video & quote from ${settings.businessName}`} />
+          <button className="btn ghost small" style={{ marginTop: 8 }} onClick={() => navigator.clipboard?.writeText(link).then(() => alert('Link copied'))}>📋 Copy link</button>
           <p className="muted small">You'll see when they open it and when they sign, on the job's Inspection tab.</p>
         </div>
         <Link className="btn block" to={`/jobs/${job.id}?tab=inspection`}>Back to job</Link>

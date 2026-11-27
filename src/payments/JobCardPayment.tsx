@@ -59,6 +59,7 @@ export default function JobCardPayment({ job, customer, businessName, onInvoiced
     return (
       <ShareSent
         token=""
+        jobId={job.id}
         link={sent.url}
         customer={customer}
         message={

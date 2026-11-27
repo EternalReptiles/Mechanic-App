@@ -575,3 +575,5 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .tap-to-pay .btn svg, .ttp-setup .btn svg { vertical-align: -4px; margin-right: 4px; }
 .ttp-hero { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 12px; color: var(--primary); }
 .ttp-hero h2 { color: var(--text); font-size: 1.1rem; }
+.send-message .link { margin-top: 8px; }
+.sent-pill { flex: 1; display: inline-flex; align-items: center; justify-content: center; padding: 10px 12px; border-radius: 10px; background: rgba(22, 163, 74, .12); color: #15803d; font-weight: 700; font-size: .9rem; }
