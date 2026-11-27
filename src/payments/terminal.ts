@@ -16,24 +16,28 @@ const Education = registerPlugin<{
   showHowToTap(): Promise<{ shown: boolean }>;
 }>('TapToPayEducation');
 
-/** Shows Apple's "How to Tap" guide (iPhone, iOS 18+). Returns false where it isn't available. */
-export async function showHowToTap(): Promise<boolean> {
+/** Shows Apple's "How to Tap" guide (iPhone, iOS 18+). Returns false where it isn't available; throws with the reason if it fails. */
+export async function showHowToTap(opts: { quiet?: boolean } = {}): Promise<boolean> {
   if (platform !== 'ios') return false;
   try {
     return (await Education.showHowToTap()).shown;
   } catch (e) {
     console.error('How to Tap guide unavailable', e);
-    return false;
+    if (opts.quiet) return false;
+    const msg = String((e as Error)?.message ?? e);
+    throw new Error(/not implemented|UNIMPLEMENTED|not available/i.test(msg)
+      ? "This version of the Spannr app doesn't include Apple's How to Tap guide yet – update the app from the Mac."
+      : `Apple's How to Tap guide couldn't open: ${msg}`);
   }
 }
 
-export async function deviceSupport(): Promise<{ supported: boolean; education: boolean }> {
-  if (platform !== 'ios') return { supported: platform === 'android', education: false };
+export async function deviceSupport(): Promise<{ supported: boolean; education: boolean; native: boolean }> {
+  if (platform !== 'ios') return { supported: platform === 'android', education: false, native: false };
   try {
-    return await Education.status();
+    return { ...(await Education.status()), native: true };
   } catch {
-    // Older app build without the native helper: assume supported and let Stripe decide.
-    return { supported: true, education: false };
+    // App build without Spannr's native helper: assume supported and let Stripe decide.
+    return { supported: true, education: true, native: false };
   }
 }
 
@@ -115,7 +119,7 @@ export async function isAccountLinked(businessId: string): Promise<boolean | nul
 export async function enableTapToPay(businessId: string, businessName: string) {
   await prepareTapToPay(businessId, businessName);
   markEnabled(businessId);
-  await showHowToTap();
+  await showHowToTap({ quiet: true });
 }
 
 /** Connects quietly in the background (app start / back to the app) so the first tap is instant. */

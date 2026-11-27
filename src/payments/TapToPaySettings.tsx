@@ -22,7 +22,7 @@ export default function TapToPaySettings() {
   const { businessId, can } = useCloud();
   const settings = useSettings();
   const [cardsActive, setCardsActive] = useState<boolean | null>(null);
-  const [support, setSupport] = useState<{ supported: boolean; education: boolean } | null>(null);
+  const [support, setSupport] = useState<{ supported: boolean; education: boolean; native: boolean } | null>(null);
   const [linked, setLinked] = useState<boolean | null>(null);
   const [enabled, setEnabled] = useState(() => isEnabledHere(businessId));
   const [busy, setBusy] = useState(false);
@@ -101,11 +101,17 @@ export default function TapToPaySettings() {
                 </button>
               )}
               {platform === 'ios' && support?.education && (
-                <button className="btn grow" disabled={busy} onClick={() => void showHowToTap()}>How to Tap</button>
+                <button className="btn grow" disabled={busy} onClick={() => {
+                  setErr('');
+                  showHowToTap().catch((e) => setErr((e as Error).message));
+                }}>How to Tap</button>
               )}
             </div>
           )}
           {msg && <p className="paid-note">{msg}</p>}
+          {support && !support.native && platform === 'ios' && (
+            <p className="small muted">Note: this copy of the app is missing Spannr's iPhone add-on (Apple's How to Tap guide). Update the app from the Mac.</p>
+          )}
           {err && <p className="error">{err}</p>}
           <p className="muted small" style={{ marginBottom: 0 }}>
             Payments go to your Stripe account. Stripe's card fees apply, plus a 0.5% Spannr fee.
