@@ -773,3 +773,7 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 .import-row { display: flex; flex-direction: column; padding: 8px 12px; border-bottom: 1px solid var(--border); }
 .import-row:last-child { border-bottom: 0; }
 .banner-ok { border-color: #16a34a; }
+
+/* Install Spannr (desktop app) */
+.install-app.card { margin-top: 12px; }
+.install-app h2 { font-size: 1rem; }

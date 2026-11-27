@@ -1,3 +1,4 @@
+import InstallApp from '../components/InstallApp';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCloud } from '../cloud/CloudProvider';
@@ -130,6 +131,9 @@ export default function SettingsPage() {
           {isAdminOfSpannr && <Row to="/admin" icon="🛠" label="Spannr admin" />}
           <Row to="?s=account" icon="⚙️" label="Account" hint="Sign out, close account" />
         </div>
+
+        {/* Only shows in a browser where Spannr isn't installed yet (never inside the iPhone app). */}
+        <InstallApp />
       </>
     );
 

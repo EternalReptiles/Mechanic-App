@@ -1,3 +1,5 @@
+// Listen for the browser's install offer from the start (it only fires once, early).
+import './components/InstallApp';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { useSettings } from './hooks';
 import { SpannrSymbol } from './components/Logo';
