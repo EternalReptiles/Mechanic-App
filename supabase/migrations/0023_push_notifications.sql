@@ -43,7 +43,7 @@ begin
     url := 'https://lmtmsnkjowgeturblzzj.supabase.co/functions/v1/push-send',
     headers := jsonb_build_object('Content-Type', 'application/json', 'x-push-token', public.notify_secret('push_token')),
     body := jsonb_build_object('business_id', bid, 'title', p_title, 'body', p_body, 'url', p_url, 'admins_only', p_admins_only),
-    timeout_milliseconds := 15000);
+    timeout_milliseconds := 45000);
 end $$;
 revoke execute on function public.push_to_business(uuid, text, text, text, boolean) from public, anon, authenticated;
 grant execute on function public.push_to_business(uuid, text, text, text, boolean) to service_role;
