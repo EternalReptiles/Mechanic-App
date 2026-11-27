@@ -8,6 +8,7 @@
 
 ## Before selling to other mechanics
 - [ ] Company: accountant chat → ASIC registration → company ABN/TFN/GST, bank account
+- [ ] **Put the company name and ABN into spannr.au/terms and spannr.au/privacy** (replace "[legal name of the business or company]" and "[ABN]" – send them to Claude once the company is registered)
 - [ ] Move Spannr's Stripe account and Apple developer account to the company (convert the Apple account, don't open a new one)
 - [ ] Lawyer review of spannr.au/terms and spannr.au/privacy → fill in the legal name/ABN/state → remove the "Draft" notes
 - [ ] Proper mailbox for @spannr.au (replace Cloudflare forwarding)
