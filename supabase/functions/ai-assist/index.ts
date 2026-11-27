@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
   } catch (e) {
     console.error(e);
     if (e instanceof Anthropic.RateLimitError || e instanceof Anthropic.InternalServerError) return json({ error: 'The AI is busy right now – try again in a minute.' }, 503);
-    if (e instanceof Anthropic.APIError) return json({ error: 'The AI assistant had a problem. Try again.', debug: `${e.status} ${e.message}`.slice(0, 400) }, 502);
+    if (e instanceof Anthropic.APIError) return json({ error: 'The AI assistant had a problem. Try again.' }, 502);
     return json({ error: (e as Error).message || 'Something went wrong' }, 400);
   }
 });
