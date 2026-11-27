@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
         return json(await terminalComplete(ctx, String(body.paymentIntentId ?? '')));
       case 'subscribe':
         if (!ctx.isAdmin) return json({ error: 'Only the owner or an admin can change the plan.' }, 403);
-        return json(await subscribe(ctx, String(body.plan ?? ''), String(body.interval ?? 'month')));
+        return json(await subscribe(ctx, String(body.plan ?? ''), String(body.interval ?? 'month'), String(body.promo ?? '')));
       case 'portal':
         if (!ctx.isAdmin) return json({ error: 'Only the owner or an admin can manage billing.' }, 403);
         return json(await portal(ctx));
@@ -232,7 +232,7 @@ async function createInvoice(ctx: Ctx, jobId: string) {
 const PLANS = ['solo', 'pro', 'team', 'business'];
 
 /** Stripe Checkout for a Spannr subscription, billed to the business's own Stripe account. */
-async function subscribe(ctx: Ctx, plan: string, interval: string) {
+async function subscribe(ctx: Ctx, plan: string, interval: string, promo = '') {
   if (!PLANS.includes(plan)) throw new Error('Unknown plan.');
   const lookup = `spannr_${plan}_${interval === 'year' ? 'yearly' : 'monthly'}`;
   const { data: biz } = await admin.from('businesses').select('plan, plan_status').eq('id', ctx.businessId).maybeSingle();
@@ -244,8 +244,17 @@ async function subscribe(ctx: Ctx, plan: string, interval: string) {
   const price = (await stripe.prices.list({ lookup_keys: [lookup], active: true, limit: 1 })).data[0];
   if (!price) throw new Error('That plan is not available.');
   const gst = (await stripe.taxRates.list({ active: true, limit: 100 })).data.find((r) => r.metadata?.spannr === 'gst');
+  // A promo code from a link (e.g. ?promo=BUSINESS3) is applied for them; otherwise they can type one at checkout.
+  let discounts: { promotion_code: string }[] | undefined;
+  const code = promo.trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
+  if (code) {
+    const found = (await stripe.promotionCodes.list({ code, active: true, limit: 1 })).data[0];
+    if (!found) throw new Error(`The promo code ${code.toUpperCase()} isn't valid or has expired.`);
+    discounts = [{ promotion_code: found.id }];
+  }
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
+    ...(discounts ? { discounts } : { allow_promotion_codes: true }),
     customer_account: row.account_id,
     managed_payments: { enabled: false }, // Spannr is the seller and charges its own GST
     line_items: [{ price: price.id, quantity: 1 }],

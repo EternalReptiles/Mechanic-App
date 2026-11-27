@@ -36,7 +36,7 @@ export default function Billing() {
     setErr('');
     setBusy(planKey ?? action);
     try {
-      const { url } = await stripeApi<{ url: string }>(action, businessId, { plan: planKey, interval });
+      const { url } = await stripeApi<{ url: string }>(action, businessId, { plan: planKey, interval, promo: params.get('promo') ?? '' });
       window.location.href = url;
     } catch (e) {
       setErr((e as Error).message);
@@ -48,6 +48,9 @@ export default function Billing() {
     <>
       <PageHeader back title="Plan & billing" />
       {params.get('done') && !subscribed && <p className="notice">Thanks! Confirming your subscription with Stripe…</p>}
+      {params.get('promo') && !subscribed && !VIEW_ONLY && (
+        <p className="notice">🎁 Promo code <strong>{params.get('promo')!.toUpperCase()}</strong> will be applied when you choose your plan.</p>
+      )}
 
       <section className={`card plan-now ${plan.effective === 'expired' || plan.status === 'past_due' ? 'warn' : ''}`}>
         <div className="row between">
