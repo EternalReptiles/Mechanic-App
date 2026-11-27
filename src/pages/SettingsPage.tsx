@@ -13,7 +13,6 @@ import { db, DEFAULT_TERMS, exportBackup, getSettings, importBackup, WORKSHOP_TE
 import type { Settings } from '../types';
 import NumberInput from '../components/NumberInput';
 import CloseAccount from './CloseAccount';
-import InstallApp from '../components/InstallApp';
 import { supabase } from '../cloud/supabase';
 import { TAP_TO_PAY_NAME, tapToPayAvailable } from '../payments/terminal';
 
@@ -128,8 +127,6 @@ export default function SettingsPage() {
           {isAdminOfSpannr && <Row to="/admin" icon="🛠" label="Spannr admin" />}
           <Row to="?s=account" icon="⚙️" label="Account" hint="Sign out, close account" />
         </div>
-
-        <InstallApp />
       </>
     );
 
