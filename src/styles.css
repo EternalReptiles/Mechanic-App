@@ -749,3 +749,11 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 .ai-line { padding: 6px 0; border-bottom: 1px solid var(--border); gap: 10px; }
 .ai-line input[type=checkbox] { width: auto; margin-right: 8px; }
 .ai-draft { display: block; margin-top: 6px; }
+
+/* Text allowance meter */
+.text-usage { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; }
+.usage-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+.usage-bar span { display: block; height: 100%; background: var(--primary); }
+.text-usage.low .usage-bar span { background: #f97316; }
+.text-usage.out { border-color: var(--danger); }
+.text-usage.out .usage-bar span { background: var(--danger); }

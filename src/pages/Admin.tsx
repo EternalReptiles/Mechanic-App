@@ -1,3 +1,4 @@
+import { money } from '../utils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../cloud/supabase';
 import { PageHeader } from '../components/ui';
@@ -7,7 +8,7 @@ type Row = {
   id: string; name: string; created_at: string; trial_ends_at: string | null; plan: PlanKey | null; plan_status: string | null;
   plan_interval: 'month' | 'year' | null; current_period_end: string | null; cancel_at_period_end: boolean; complimentary: boolean;
   closed_at: string | null; effective: string; owner_email: string | null; users: number; jobs: number; customers: number;
-  last_activity: string | null; sms_used: number; sms_allowance: number; emails_month: number; card_payments: string | null;
+  last_activity: string | null; sms_used: number; sms_allowance: number; sms_parts: number; sms_cost: number; emails_month: number; card_payments: string | null;
   business_type: string | null;
 };
 
@@ -59,6 +60,7 @@ export default function Admin() {
     { v: `$${Math.round(mrr).toLocaleString('en-AU')}`, l: 'Monthly revenue (ex GST)' },
     { v: all.filter((r) => r.effective === 'expired').length, l: 'Trial ended, not paying' },
     { v: all.reduce((s, r) => s + r.sms_used, 0), l: 'Texts this month' },
+    { v: money(all.reduce((s, r) => s + Number(r.sms_cost || 0), 0)), l: 'Text costs this month' },
   ];
 
   return (
@@ -113,7 +115,7 @@ export default function Admin() {
             <span>👥 {r.users} users</span>
             <span>🔧 {r.jobs} jobs</span>
             <span>🙋 {r.customers} customers</span>
-            <span>💬 {r.sms_used}/{r.sms_allowance} texts</span>
+            <span>💬 {r.sms_used}/{r.sms_allowance} texts{Number(r.sms_cost) ? ` · ${money(Number(r.sms_cost))} ClickSend` : ''}</span>
             <span>✉ {r.emails_month} emails</span>
             <span>💳 {r.card_payments === 'active' ? 'Card payments on' : r.card_payments ? `Card payments ${r.card_payments}` : 'No card payments'}</span>
             <span>Last active {ago(r.last_activity)}</span>

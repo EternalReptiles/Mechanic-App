@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../cloud/supabase';
 import type { NotifySettings, Settings } from '../types';
 import { Field } from './ui';
+import TextUsage from './TextUsage';
 
 export const DEFAULT_CONFIRM =
   "Hi {name}, you're booked in with {business} {day} at {time}{where}. Reply or call {phone} if you need to change it.";
@@ -62,6 +63,7 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
   return (
     <section className="card grid">
       <h2 className="wide">Automatic customer messages</h2>
+      <TextUsage />
       <p className="wide muted small" style={{ margin: 0 }}>
         Spannr texts and emails your customers for you – even when your phone is off. Nothing is sent between 9pm and 7:30am.
       </p>
