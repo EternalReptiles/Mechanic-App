@@ -34,7 +34,7 @@
 - [ ] Import from MechanicDesk / ServiceM8 exports
 - [x] Stock & purchase orders
 - [x] Technician timesheets (clock on/off per job)
-- [ ] AI assistant (voice notes → job notes, inspection → quote)
+- [x] AI assistant (voice notes → job notes, inspection → quote, draft text replies) – needs ANTHROPIC_API_KEY in Supabase secrets
 
 ## Integrations (need partner/developer accounts first)
 - [ ] **Xero** (paid developer tiers – no free tier): when ready, create the app at developer.xero.com (redirect `https://app.spannr.au/settings/accounting/xero`) → Client ID + XERO_CLIENT_SECRET; build connect + sync of invoices, payments and customers

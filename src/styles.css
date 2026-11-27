@@ -739,3 +739,13 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 .timesheet th:first-child, .timesheet td:first-child { text-align: left; }
 .entry-row { padding: 8px 0; border-bottom: 1px solid var(--border); color: inherit; text-decoration: none; }
 .entry-row:last-child { border-bottom: 0; }
+
+/* AI assistant */
+.ai-box { margin-top: 6px; }
+.ai-btn { background: linear-gradient(135deg, #7c3aed, #db2777); color: #fff; border-color: transparent; }
+.ai-btn:disabled { opacity: .6; }
+.ai-result { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin-top: 6px; background: var(--bg); }
+.ai-result h3, .ai-repair h3 { font-size: .85rem; margin: 6px 0 2px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.ai-line { padding: 6px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+.ai-line input[type=checkbox] { width: auto; margin-right: 8px; }
+.ai-draft { display: block; margin-top: 6px; }

@@ -24,6 +24,8 @@ import { useAutosave, useSettings } from '../hooks';
 import type { Job, JobStatus, PaymentMethod, Vehicle } from '../types';
 import { deductStockIfDone } from '../stock';
 import JobTimer from '../time/JobTimer';
+import AiNotes from '../ai/AiNotes';
+import AiQuote from '../ai/AiQuote';
 import { billableHours, clockOnPatch, stopAllPatch } from '../time/timer';
 import {
   fillTemplate,
@@ -340,6 +342,7 @@ export default function JobPage() {
             </Field>
             <Field label="Work done & recommendations (on invoice)" wide>
               <textarea rows={3} value={job.workNotes} onChange={(e) => update({ workNotes: e.target.value })} />
+              <AiNotes job={job} vehicle={vehicle} customer={customer} update={update} />
             </Field>
           </section>
           <button className="btn ghost danger small delete-job" onClick={remove}>Delete job</button>
@@ -386,6 +389,7 @@ export default function JobPage() {
             <Link className="btn block" to={`/jobs/${job.id}/report`}>📋 View inspection report</Link>
           )}
         </section>
+        <AiQuote job={job} vehicle={vehicle} labourRate={settings.labourRate} update={update} />
         {!can('walkarounds') ? <Upgrade feature="walkarounds" what="Video walk-arounds" /> : <WalkaroundSection
           job={job}
           onAddLines={(lines, walkId) =>

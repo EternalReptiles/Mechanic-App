@@ -15,6 +15,7 @@ import type { Job } from '../types';
 import { firstName, fmtDateTime, mapsUrl, smsUrl, telUrl } from '../utils';
 import { deductStockIfDone } from '../stock';
 import JobTimer from '../time/JobTimer';
+import AiNotes from '../ai/AiNotes';
 import { clockOnPatch, stopAllPatch } from '../time/timer';
 
 /** Technician's job screen: what to do, the checklist, photos, and "Mark finished". No prices. */
@@ -124,6 +125,7 @@ export default function TechJob() {
         <Field label="Work done / notes for the office">
           <textarea rows={4} value={job.workNotes} onChange={(e) => update({ workNotes: e.target.value })} placeholder="What you did, parts used, anything the customer should know…" />
         </Field>
+        <AiNotes job={job} vehicle={vehicle ?? undefined} customer={customer ?? undefined} update={update} />
       </section>
 
       <section className="card">

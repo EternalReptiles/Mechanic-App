@@ -19,3 +19,6 @@ verify_jwt = false
 # Push notifications via APNs (called by the database with PUSH_TOKEN).
 [functions.push-send]
 verify_jwt = false
+
+[functions.ai-assist]
+verify_jwt = true

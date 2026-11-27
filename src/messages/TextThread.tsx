@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCloud } from '../cloud/CloudProvider';
 import { supabase } from '../cloud/supabase';
+import { aiAssist } from '../ai/ai';
 import { sendFromSpannr } from '../components/SendMessage';
 import type { Customer } from '../types';
 
@@ -16,7 +17,7 @@ const LABEL: Record<string, string> = { confirmation: 'Booking confirmation', re
 
 /** The text conversation with a customer: Spannr's texts and their replies, with a reply box. */
 export default function TextThread({ customer, jobId = '' }: { customer?: Customer; jobId?: string }) {
-  const { businessId } = useCloud();
+  const { businessId, businessName } = useCloud();
   const [items, setItems] = useState<Item[] | null>(null);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -89,6 +90,16 @@ export default function TextThread({ customer, jobId = '' }: { customer?: Custom
           onChange={(e) => setText(e.target.value)} />
         <button className="btn primary" disabled={busy || !text.trim()} onClick={send}>{busy ? 'Sending…' : 'Send'}</button>
       </div>
+      {items?.some((i) => i.dir === 'in') && (
+        <button className="link small ai-draft" disabled={busy} onClick={async () => {
+          setErr(''); setBusy(true);
+          try {
+            const thread = items.slice(-12).map((i) => `${i.dir === 'in' ? 'Customer' : 'Business'}: ${i.body}`).join('\n');
+            const r = await aiAssist<{ reply: string }>('reply', businessId, { thread, hint: text, customerName: first, businessName, job: '' });
+            setText(r.reply);
+          } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+        }}>✨ {text.trim() ? 'Write it for me (using your words as instructions)' : 'Draft a reply'}</button>
+      )}
       {err && <p className="error">{err}</p>}
     </section>
   );
