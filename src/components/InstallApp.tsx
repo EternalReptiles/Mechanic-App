@@ -12,11 +12,22 @@ if (typeof window !== 'undefined') {
   });
   window.addEventListener('appinstalled', () => {
     deferred = null;
+    remember();
     listeners.forEach((f) => f());
   });
 }
 
-const installed = () => window.matchMedia?.('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
+const KEY = 'spannr-installed';
+function remember() {
+  try { localStorage.setItem(KEY, '1'); } catch { /* private mode */ }
+}
+/** Running as the installed app (any app-style window), or already installed from this browser. */
+const installed = () => {
+  const appWindow = ['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay'].some((m) => window.matchMedia?.(`(display-mode: ${m})`).matches)
+    || (navigator as { standalone?: boolean }).standalone === true;
+  if (appWindow) remember();
+  try { return appWindow || localStorage.getItem(KEY) === '1'; } catch { return appWindow; }
+};
 const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 const isIOS = /iPhone|iPad|iPod/.test(ua);
 const isMacSafari = /Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|Edg|Firefox/.test(ua);

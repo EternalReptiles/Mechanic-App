@@ -777,3 +777,4 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 /* Install Spannr (desktop app) */
 .install-app.card { margin-top: 12px; }
 .install-app h2 { font-size: 1rem; }
+.reminder-remove { margin-left: auto; }

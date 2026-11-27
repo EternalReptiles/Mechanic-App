@@ -39,6 +39,12 @@ export default function Reminders() {
       : base;
   }
 
+  /** Take a reminder off the list (clears the car's due date, so no automatic reminder goes out either). */
+  async function remove(d: Due) {
+    if (!confirm(`Remove the ${d.kind.toLowerCase()} reminder for ${d.vehicle.rego || 'this car'}? You can set a new date on the car any time.`)) return;
+    await db.vehicles.update(d.vehicle.id, d.kind === 'Service' ? { nextServiceDate: '', nextServiceKm: '' } : { regoExpiry: '' });
+  }
+
   async function book(d: Due) {
     const job = await createJob({
       customerId: d.vehicle.customerId,
@@ -76,6 +82,7 @@ export default function Reminders() {
               {d.customer?.phone && <QuickText customer={d.customer} jobId={`vehicle:${d.vehicle.id}`} label="💬 Text reminder" text={message(d)} />}
               {d.customer?.phone && <a className="btn" href={telUrl(d.customer.phone)}>📞 Call</a>}
               <button className="btn primary" onClick={() => book(d)}>Book job</button>
+              <button className="btn ghost small reminder-remove" onClick={() => void remove(d)} aria-label="Remove reminder">✕ Remove</button>
             </div>
           </div>
         ))
