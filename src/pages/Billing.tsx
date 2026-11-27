@@ -74,7 +74,9 @@ export default function Billing() {
         )}
       </section>
 
-      {VIEW_ONLY ? (
+      {plan.complimentary ? (
+        <p className="paid-note">✓ This business has complimentary access to every Spannr feature – there's nothing to pay.</p>
+      ) : VIEW_ONLY ? (
         <p className="muted small">Plan changes aren't available in the iPhone app.</p>
       ) : (
       <>

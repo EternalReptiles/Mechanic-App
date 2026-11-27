@@ -40,6 +40,8 @@ export interface PlanInfo {
   trialEndsAt: string | null;
   periodEnd: string | null;
   cancelAtPeriodEnd: boolean;
+  /** Free, permanent access (e.g. Spannr's founding business) */
+  complimentary?: boolean;
 }
 
 export const EMPTY_PLAN: PlanInfo = {
@@ -52,6 +54,7 @@ export function daysLeft(iso: string | null): number {
 }
 
 export function planLabel(p: PlanInfo): string {
+  if (p.complimentary) return `${PLANS.business.name} (complimentary)`;
   if (p.effective === 'trial') return `Free trial – ${daysLeft(p.trialEndsAt)} days left`;
   if (p.effective === 'expired') return 'Trial ended';
   return PLANS[p.effective].name;

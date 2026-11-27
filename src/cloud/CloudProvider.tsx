@@ -142,7 +142,7 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
     if (!ready) return;
     const [{ data: b }, { data: eff }] = await Promise.all([
       supabase.from('businesses')
-        .select('plan, plan_status, plan_interval, trial_ends_at, current_period_end, cancel_at_period_end')
+        .select('plan, plan_status, plan_interval, trial_ends_at, current_period_end, cancel_at_period_end, complimentary')
         .eq('id', ready.businessId).maybeSingle(),
       supabase.rpc('business_plan', { bid: ready.businessId }),
     ]);
@@ -155,6 +155,7 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
       trialEndsAt: b.trial_ends_at,
       periodEnd: b.current_period_end,
       cancelAtPeriodEnd: !!b.cancel_at_period_end,
+      complimentary: !!b.complimentary,
     };
     setPlan(p);
     void setMeta('plan', p);
