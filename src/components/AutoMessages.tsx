@@ -59,6 +59,9 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
   const on = n.confirmEnabled || n.reminderEnabled;
   const pr = { enabled: false, firstDays: 3, secondDays: 7, ...n.payReminders };
   const rv = { enabled: false, url: '', delayHours: 2, ...n.reviews };
+  const sv = { enabled: false, daysBefore: 14, ...n.serviceReminders };
+  const svPreview = `Hi Sam, your Mazda CX5 (ABC123) is due for a service Thu 4 Dec. ${
+    s.booking?.enabled ? `Book online: https://app.spannr.au/book/… or call ${s.phone || 'us'}.` : s.phone ? `Call ${s.phone} to book.` : 'Reply to this message to book.'}`;
 
   return (
     <section className="card grid">
@@ -71,6 +74,24 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
         <input type="checkbox" checked={n.receiptEnabled !== false} onChange={(e) => set({ receiptEnabled: e.target.checked })} />
         <span>Send a receipt with the paid invoice when a customer pays by card</span>
       </label>
+      <label className="field checkbox wide">
+        <input type="checkbox" checked={!!sv.enabled} onChange={(e) => set({ serviceReminders: { ...sv, enabled: e.target.checked } })} />
+        <span>Remind customers when their car is due for a service</span>
+      </label>
+      {sv.enabled && (
+        <>
+          <Field label="Send it">
+            <select value={sv.daysBefore} onChange={(e) => set({ serviceReminders: { ...sv, daysBefore: Number(e.target.value) } })}>
+              {[7, 14, 21, 30].map((d) => <option key={d} value={d}>{d} days before it's due</option>)}
+            </select>
+          </Field>
+          <p className="wide small preview" style={{ margin: 0 }}>Preview: {svPreview}</p>
+          <p className="wide small muted" style={{ margin: 0 }}>
+            The due date is set automatically when you finish a service job ({s.serviceIntervalMonths || 6} months / {(s.serviceIntervalKm || 10000).toLocaleString('en-AU')} km later – change that under
+            Inspections &amp; service reminders), or type it on the car. {s.booking?.enabled ? 'Includes your online booking link.' : 'Turn on Online booking to add a booking link.'} Sent once per service, 9am–6pm.
+          </p>
+        </>
+      )}
       <label className="field checkbox wide">
         <input type="checkbox" checked={!!rv.enabled} onChange={(e) => set({ reviews: { ...rv, enabled: e.target.checked, enabledAt: e.target.checked ? Date.now() : rv.enabledAt } })} />
         <span>Ask for a Google review after a job is paid</span>

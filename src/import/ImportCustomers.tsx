@@ -41,6 +41,7 @@ export default function ImportCustomers() {
         setJobs(mapSm8Jobs(sheet, {
           customers: await db.customers.toArray(), vehicles: await db.vehicles.toArray(), jobs: await db.jobs.toArray(),
           gst: settings.gstRegistered, labourRate: settings.labourRate,
+          serviceMonths: settings.serviceIntervalMonths, serviceKm: settings.serviceIntervalKm,
         }));
         return;
       }

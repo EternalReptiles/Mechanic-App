@@ -136,6 +136,8 @@ export interface Job {
   timeEntries?: TimeEntry[];
   /** Stock has been deducted for this job's parts */
   stockDeducted?: boolean;
+  /** The car's next service date was set from this (service) job */
+  serviceDueSet?: boolean;
   /** Booked by the customer on the online booking page */
   bookedOnline?: boolean;
   /** Customer's reply to the booking confirmation/reminder text (Y = confirmed, C = cancel) */
@@ -327,4 +329,6 @@ export interface NotifySettings {
   payReminders?: { enabled: boolean; firstDays: number; secondDays: number; enabledAt?: number };
   /** Google review request after a paid job */
   reviews?: { enabled: boolean; url: string; delayHours: number; enabledAt?: number };
+  /** Automatic "your car is due for a service" texts */
+  serviceReminders?: { enabled: boolean; daysBefore: number };
 }

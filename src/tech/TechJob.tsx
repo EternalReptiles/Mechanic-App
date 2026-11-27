@@ -13,7 +13,7 @@ import { useAutosave, useSettings } from '../hooks';
 import { finishJobPatch, missingRequired, tasksFromTemplate, templatesFor } from '../jobTemplates';
 import type { Job } from '../types';
 import { firstName, fmtDateTime, mapsUrl, smsUrl, telUrl } from '../utils';
-import { deductStockIfDone } from '../stock';
+import { whenJobDone } from '../stock';
 import JobTimer from '../time/JobTimer';
 import AiNotes from '../ai/AiNotes';
 import { clockOnPatch, stopAllPatch } from '../time/timer';
@@ -39,13 +39,13 @@ export default function TechJob() {
   // Parts from stock come off the shelf once the job is done.
   const stockBusy = useRef(false);
   useEffect(() => {
-    if (!job || job.stockDeducted || stockBusy.current) return;
+    if (!job || (job.stockDeducted && job.serviceDueSet) || stockBusy.current) return;
     stockBusy.current = true;
-    void deductStockIfDone(job).then((patch) => {
+    void whenJobDone(job).then((patch) => {
       stockBusy.current = false;
       if (patch) setJob((j) => (j ? { ...j, ...patch } : j));
     });
-  }, [job?.status, job?.stockDeducted]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [job?.status, job?.stockDeducted, job?.serviceDueSet, job?.vehicleId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (job === undefined) return null;
   if (job === null) return (<><PageHeader back title="Job not found" /><Link className="btn" to="/">Back to my jobs</Link></>);

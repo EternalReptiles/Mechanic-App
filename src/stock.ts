@@ -1,5 +1,6 @@
 import { db } from './db';
 import type { Job, PurchaseOrder } from './types';
+import { addMonthsISO } from './utils';
 
 const DONE = ['completed', 'invoiced', 'paid'];
 
@@ -17,6 +18,38 @@ export async function deductStockIfDone(job: Job): Promise<Partial<Job> | null> 
     }
   });
   return { stockDeducted: true };
+}
+
+/** Is this a service (logbook/minor/major/km service), not just e.g. "service the brakes"? */
+export const isServiceJob = (j: Pick<Job, 'title' | 'description' | 'workNotes'>) =>
+  /\b(servic(e|ed|ing)|logbook)\b/i.test(`${j.title}\n${j.description}\n${j.workNotes}`)
+  && !/\b(brakes?|aircon|air con|transmission|gearbox)\s+servic/i.test(j.title);
+
+/**
+ * When a service job is finished: the car's next service is due one service interval later
+ * (e.g. 6 months / 10,000 km), so it shows in reminders and the automatic service reminder goes out.
+ */
+export async function setNextServiceIfDone(job: Job): Promise<Partial<Job> | null> {
+  if (job.serviceDueSet || job.imported || !DONE.includes(job.status) || !job.vehicleId || !isServiceJob(job)) return null;
+  const [vehicle, settings] = await Promise.all([db.vehicles.get(job.vehicleId), db.settings.get('settings')]);
+  if (!vehicle) return null;
+  const months = settings?.serviceIntervalMonths || 6;
+  const kmStep = settings?.serviceIntervalKm || 10000;
+  const from = new Date(job.finishedAt || job.paidAt || Date.now());
+  const date = addMonthsISO(months, from);
+  const km = Number(String(job.odometer || vehicle.odometer || '').replace(/\D/g, ''));
+  // Don't pull an existing later date forward (e.g. one typed in by hand).
+  if (!vehicle.nextServiceDate || vehicle.nextServiceDate < date) {
+    await db.vehicles.put({ ...vehicle, nextServiceDate: date, nextServiceKm: km ? String(km + kmStep) : vehicle.nextServiceKm ?? '' });
+  }
+  return { serviceDueSet: true };
+}
+
+/** Everything that happens once when a job is finished: stock comes off the shelf, the next service is booked in. */
+export async function whenJobDone(job: Job): Promise<Partial<Job> | null> {
+  const a = await deductStockIfDone(job);
+  const b = await setNextServiceIfDone(job);
+  return a || b ? { ...a, ...b } : null;
 }
 
 /** Booking in a delivery: adds the ordered quantities to stock (and updates cost prices). */

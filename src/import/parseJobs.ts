@@ -1,5 +1,6 @@
 import type { Customer, Job, JobStatus, PaymentMethod, Vehicle } from '../types';
-import { uid } from '../utils';
+import { addMonthsISO, uid } from '../utils';
+import { isServiceJob } from '../stock';
 import { auPhone, type Cell, type Sheet } from './parseCustomers';
 
 const clean = (v: Cell) => (v == null ? '' : String(v)).replace(/\r\n?/g, '\n').trim();
@@ -56,7 +57,7 @@ export const isSm8JobList = (sheet: Sheet) => {
 };
 
 /** ServiceM8 Job List → Spannr jobs (with customers and vehicles matched or created). */
-export function mapSm8Jobs(sheet: Sheet, opts: { customers: Customer[]; vehicles: Vehicle[]; jobs: Job[]; gst: boolean; labourRate: number }): JobImport {
+export function mapSm8Jobs(sheet: Sheet, opts: { customers: Customer[]; vehicles: Vehicle[]; jobs: Job[]; gst: boolean; labourRate: number; serviceMonths?: number; serviceKm?: number }): JobImport {
   const head = sheet[0].map((h) => clean(h).toLowerCase());
   const col = (n: string) => head.indexOf(n);
   const get = (r: Cell[], n: string) => r[col(n)];
@@ -66,6 +67,7 @@ export function mapSm8Jobs(sheet: Sheet, opts: { customers: Customer[]; vehicles
   const newCustomers: Customer[] = [];
   const newVehicles: Vehicle[] = [];
   const jobs: Job[] = [];
+  const lastService = new Map<string, { when: string; km: number }>();
   const skipped: JobImport['skipped'] = [];
   const done = new Set(opts.jobs.map((j) => j.importKey).filter(Boolean));
   let matchedCustomers = 0;
@@ -162,6 +164,23 @@ export function mapSm8Jobs(sheet: Sheet, opts: { customers: Customer[]; vehicles
       importKey: key,
     });
     done.add(key);
+    // Remember each car's latest service, to work out when the next one is due.
+    const j = jobs[jobs.length - 1];
+    if (veh && ['paid', 'completed', 'invoiced'].includes(j.status) && isServiceJob(j)) {
+      const when = j.paidAt || j.createdAt;
+      const prev = lastService.get(veh.id);
+      if (!prev || prev.when < when) lastService.set(veh.id, { when, km: Number(j.odometer) || 0 });
+    }
+  }
+
+  for (const [vid, ls] of lastService) {
+    const v = vehicles.find((x) => x.id === vid)!;
+    const date = addMonthsISO(opts.serviceMonths || 6, new Date(ls.when));
+    if (!v.nextServiceDate || v.nextServiceDate < date) {
+      v.nextServiceDate = date;
+      if (ls.km) v.nextServiceKm = String(ls.km + (opts.serviceKm || 10000));
+      if (!newVehicles.includes(v)) newVehicles.push(v);
+    }
   }
 
   return {
