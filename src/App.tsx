@@ -1,5 +1,4 @@
-// Listen for the browser's install offer from the start (it only fires once, early).
-import './components/InstallApp';
+import InstallApp from './components/InstallApp';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { useSettings } from './hooks';
 import { SpannrSymbol } from './components/Logo';
@@ -73,6 +72,8 @@ function BottomNav() {
   return (
     <nav className="bottom-nav">
       <div className="side-brand"><SpannrSymbol size={22} color="#f59e0b" /> <span>Spannr</span></div>
+      {/* Computers only (hidden on phones and once installed): pinned to the bottom of the sidebar. */}
+      <div className="side-install"><InstallApp compact /></div>
       {nav.map((n) => (
         <NavLink key={n.to} to={n.to} end={n.end}>
           <span className="nav-icon">{n.icon}{'badge' in n && n.badge ? <em className="nav-badge">{n.badge > 9 ? '9+' : n.badge}</em> : null}</span>
