@@ -442,7 +442,7 @@ async function paymentFees(ctx: Ctx, jobId: string) {
 
 // ---------- Connect an existing Stripe account (Stripe Connect OAuth) ----------
 
-const OAUTH_CLIENT_ID = Deno.env.get('STRIPE_CONNECT_CLIENT_ID') ?? '';
+const OAUTH_CLIENT_ID = (Deno.env.get('STRIPE_CONNECT_CLIENT_ID') ?? '').trim();
 const oauthRedirect = () => `${Deno.env.get('SPANNR_APP_URL') ?? 'https://app.spannr.au'}/settings/payments`;
 
 /** Anything cached against the old payments account no longer applies to the new one. */
