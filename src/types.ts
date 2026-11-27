@@ -266,4 +266,6 @@ export interface NotifySettings {
   receiptEnabled?: boolean;
   /** Automatic reminders for unpaid invoices */
   payReminders?: { enabled: boolean; firstDays: number; secondDays: number; enabledAt?: number };
+  /** Google review request after a paid job */
+  reviews?: { enabled: boolean; url: string; delayHours: number; enabledAt?: number };
 }

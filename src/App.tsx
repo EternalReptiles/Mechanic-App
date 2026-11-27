@@ -32,6 +32,7 @@ import Reminders from './pages/Reminders';
 import ClosedBusiness from './pages/ClosedBusiness';
 import Admin from './pages/Admin';
 import Messages from './messages/Messages';
+import Reports from './pages/Reports';
 import BookingPage from './booking/BookingPage';
 import OnlineBookingSettings from './booking/OnlineBookingSettings';
 
@@ -104,6 +105,7 @@ function OwnerApp() {
                   <Route path="/settings/tap-to-pay" element={<TapToPaySettings />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/messages" element={<Messages />} />
+                  <Route path="/reports" element={<Reports />} />
                   <Route path="/settings/booking" element={<OnlineBookingSettings />} />
                   <Route path="/settings/billing" element={<Billing />} />
                   <Route path="/settings/checklists" element={<JobTemplates />} />

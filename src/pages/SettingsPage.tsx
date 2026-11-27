@@ -96,6 +96,7 @@ export default function SettingsPage() {
             <Row to="?s=pricing" icon="🧾" label="Pricing & invoicing" hint="Labour rate, GST, terms" />
             <Row to="/settings/price-list" icon="📋" label="Price list" />
             <Row to="?s=bank" icon="🏦" label="Bank details" />
+            <Row to="/reports" icon="📊" label="Reports" hint="Takings, money owed, top customers" />
           </div>
         )}
         {!cloud.isAdmin && (

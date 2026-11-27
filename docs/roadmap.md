@@ -29,8 +29,8 @@
 - [x] Apple Tap to Pay review: requirements built, videos + checklist sent (waiting on Apple)
 
 ## Next to build
-- [ ] Google review requests after paid jobs
-- [ ] Reports dashboard (revenue, owing, jobs, average job value, technician productivity)
+- [x] Google review requests after paid jobs
+- [x] Reports (takings, owing, jobs, average job value, top customers, technicians)
 - [ ] Import from MechanicDesk / ServiceM8 exports
 - [ ] Stock & purchase orders
 - [ ] Technician timesheets (clock on/off per job)

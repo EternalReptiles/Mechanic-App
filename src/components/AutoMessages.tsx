@@ -57,6 +57,7 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
   };
   const on = n.confirmEnabled || n.reminderEnabled;
   const pr = { enabled: false, firstDays: 3, secondDays: 7, ...n.payReminders };
+  const rv = { enabled: false, url: '', delayHours: 2, ...n.reviews };
 
   return (
     <section className="card grid">
@@ -68,6 +69,27 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
         <input type="checkbox" checked={n.receiptEnabled !== false} onChange={(e) => set({ receiptEnabled: e.target.checked })} />
         <span>Send a receipt with the paid invoice when a customer pays by card</span>
       </label>
+      <label className="field checkbox wide">
+        <input type="checkbox" checked={!!rv.enabled} onChange={(e) => set({ reviews: { ...rv, enabled: e.target.checked, enabledAt: e.target.checked ? Date.now() : rv.enabledAt } })} />
+        <span>Ask for a Google review after a job is paid</span>
+      </label>
+      {rv.enabled && (
+        <>
+          <Field label="Your Google review link" wide>
+            <input type="url" inputMode="url" placeholder="https://g.page/r/…/review" value={rv.url} onChange={(e) => set({ reviews: { ...rv, url: e.target.value.trim() } })} />
+          </Field>
+          <Field label="Send it">
+            <select value={rv.delayHours} onChange={(e) => set({ reviews: { ...rv, delayHours: Number(e.target.value) } })}>
+              {[1, 2, 4, 24].map((h) => <option key={h} value={h}>{h < 24 ? `${h} hour${h > 1 ? 's' : ''}` : 'Next day'} after payment</option>)}
+            </select>
+          </Field>
+          <p className="wide small muted" style={{ margin: 0 }}>
+            Get your link from Google: search your business on Google → <strong>Ask for reviews</strong> (or in your Google Business Profile → Read reviews →
+            Get more reviews) and copy it here. Sent once per job, never more than once every 4 months to the same customer, 9am–7pm.
+          </p>
+          {rv.url && !/^https?:\/\//.test(rv.url) && <p className="wide error" style={{ margin: 0 }}>The link should start with https://</p>}
+        </>
+      )}
       <label className="field checkbox wide">
         <input type="checkbox" checked={!!pr.enabled} onChange={(e) => set({ payReminders: { ...pr, enabled: e.target.checked, enabledAt: e.target.checked ? Date.now() : pr.enabledAt } })} />
         <span>Remind customers about unpaid invoices</span>

@@ -142,10 +142,10 @@ export default function Dashboard() {
           <span className="stat-value">{overdue.length}</span>
           <span className="stat-label">Overdue invoices</span>
         </Link>
-        <div className="stat">
+        <Link to="/reports" className="stat">
           <span className="stat-value">{money(paidThisMonth)}</span>
-          <span className="stat-label">Paid this month</span>
-        </div>
+          <span className="stat-label">Paid this month · Reports ›</span>
+        </Link>
       </div>}
 
       <Link to="/reminders" className={`banner${remindersDue ? ' attention' : ''}`}>
