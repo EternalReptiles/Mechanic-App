@@ -13,6 +13,8 @@ import DocumentView from './pages/DocumentView';
 import PriceList from './pages/PriceList';
 import Team from './pages/Team';
 import CardPayments from './payments/CardPayments';
+import TapToPaySettings from './payments/TapToPaySettings';
+import TapToPayWarmup from './payments/TapToPayWarmup';
 import Billing from './pages/Billing';
 import CloudProvider, { useCloud } from './cloud/CloudProvider';
 import TechApp from './tech/TechApp';
@@ -71,11 +73,13 @@ function OwnerApp() {
                   <Route path="/reminders" element={<Reminders />} />
                   <Route path="/settings/team" element={<Team />} />
                   <Route path="/settings/payments" element={<CardPayments />} />
+                  <Route path="/settings/tap-to-pay" element={<TapToPaySettings />} />
                   <Route path="/settings/billing" element={<Billing />} />
                   <Route path="/settings/checklists" element={<JobTemplates />} />
                 </Routes>
               </main>
               <BottomNav />
+              <TapToPayWarmup />
             </div>
           }
         />

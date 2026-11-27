@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useCloud } from '../cloud/CloudProvider';
 import Upgrade from '../components/Upgrade';
 import { useSettings } from '../hooks';
 import type { Job } from '../types';
 import { money, totals } from '../utils';
-import { cancelTap, tapToPayAvailable, tapToPayForJob } from './terminal';
+import ContactlessIcon from './ContactlessIcon';
+import { cancelTap, isEnabledHere, TAP_TO_PAY_NAME, tapToPayAvailable, tapToPayForJob } from './terminal';
 
 /** "Tap to Pay" on the job: the customer taps their card, phone or watch on the mechanic's phone. */
 export default function TapToPay({ job, businessName, onPaid }: { job: Job; businessName: string; onPaid: (paidAt: string) => void }) {
@@ -14,7 +16,7 @@ export default function TapToPay({ job, businessName, onPaid }: { job: Job; busi
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   if (!tapToPayAvailable) return null;
-  if (!can('tapToPay')) return <Upgrade feature="tapToPay" what="Tap to Pay" />;
+  if (!can('tapToPay')) return <Upgrade feature="tapToPay" what={TAP_TO_PAY_NAME} />;
   const total = totals(job.lineItems, settings.gstRegistered).total;
 
   async function tap() {
@@ -35,10 +37,18 @@ export default function TapToPay({ job, businessName, onPaid }: { job: Job; busi
   }
 
   if (state === 'done') return <p className="paid-note">{msg}</p>;
+  // Apple: merchants turn Tap to Pay on (and accept its terms) before their first customer, not mid-checkout.
+  if (!isEnabledHere(businessId))
+    return (
+      <div className="tap-to-pay">
+        <Link className="btn block" to="/settings/tap-to-pay"><ContactlessIcon /> Set up {TAP_TO_PAY_NAME}</Link>
+        <p className="muted small">Take contactless payments on this phone. One-time setup, about a minute.</p>
+      </div>
+    );
   return (
     <div className="tap-to-pay">
       <button className="btn primary block big" disabled={state === 'busy' || !job.lineItems.length || total <= 0} onClick={tap}>
-        {state === 'busy' ? 'Waiting for the customer to tap…' : `📲 Tap to Pay – ${money(total)}`}
+        {state === 'busy' ? 'Waiting for the customer to tap…' : <><ContactlessIcon /> {TAP_TO_PAY_NAME} · {money(total)}</>}
       </button>
       {state === 'busy' && (
         <button className="btn ghost block" onClick={() => void cancelTap()}>Cancel</button>

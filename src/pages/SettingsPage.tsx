@@ -12,6 +12,7 @@ import { useAutosave } from '../hooks';
 import { db, DEFAULT_TERMS, exportBackup, getSettings, importBackup, WORKSHOP_TERMS_EXTRA } from '../db';
 import type { Settings } from '../types';
 import NumberInput from '../components/NumberInput';
+import { TAP_TO_PAY_NAME, tapToPayAvailable } from '../payments/terminal';
 
 export default function SettingsPage() {
   const [s, setS] = useState<Settings | null>(null);
@@ -72,6 +73,7 @@ export default function SettingsPage() {
         <div className="row wrap" style={{ marginTop: 10 }}>
           <Link to="/settings/team" className="btn">👥 Team</Link>
           <Link to="/settings/payments" className="btn">💳 Card payments</Link>
+          {tapToPayAvailable && <Link to="/settings/tap-to-pay" className="btn">📲 {TAP_TO_PAY_NAME}</Link>}
           <Link to="/settings/billing" className="btn">⭐ Plan: {planLabel(cloud.plan)}</Link>
           {cloud.isAdmin && <Link to="/settings/checklists" className="btn">☑ Job checklists</Link>}
           {cloud.isAdmin && <button className="btn ghost" onClick={startTechPreview}>👁 Preview technician app</button>}
