@@ -150,6 +150,10 @@ export interface Job {
   finishedBy?: string;
   /** Checklist amounts (e.g. oil litres) already added to the invoice lines */
   taskLinesAdded?: boolean;
+  /** Brought in from another system (e.g. 'ServiceM8'); automatic messages ignore these jobs */
+  imported?: string;
+  /** Source system's id, so the same job is never imported twice */
+  importKey?: string;
 }
 
 export type JobLocation = 'onsite' | 'workshop';
