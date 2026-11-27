@@ -99,11 +99,22 @@ export async function syncNow(): Promise<void> {
   running = true;
   setStatus({ state: 'syncing' });
   try {
-    await push(businessId);
-    await pull(businessId);
+    try {
+      await push(businessId);
+      await pull(businessId);
+    } catch (e) {
+      // The saved login went stale (e.g. the computer slept through a refresh): get a fresh one and try once more.
+      if (!isAuthError(e)) throw e;
+      const { error } = await supabase.auth.refreshSession();
+      if (error) throw new Error('Your login has expired – sign out and sign in again (your changes are kept until they upload).');
+      await push(businessId);
+      await pull(businessId);
+    }
     setStatus({ state: 'idle', lastSyncedAt: Date.now(), error: undefined });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e);
+    const msg = isAuthError(e)
+      ? 'Your login has expired – sign out and sign in again (your changes are kept until they upload).'
+      : e instanceof Error ? e.message : String((e as { message?: string })?.message ?? e);
     setStatus({ state: navigator.onLine ? 'error' : 'offline', error: msg });
   } finally {
     running = false;
@@ -121,6 +132,11 @@ function payload(r: Rec) {
   const { _dirty: _d, blob: _b, ...data } = r;
   return data;
 }
+
+const isAuthError = (e: unknown) => {
+  const x = e as { code?: string; message?: string; status?: number };
+  return x?.status === 401 || x?.code === 'PGRST301' || x?.code === 'PGRST303' || /jwt|expired|invalid.*token|unauthori[sz]ed/i.test(x?.message ?? '');
+};
 
 const isPermissionError = (e: { code?: string; message?: string }) =>
   e.code === '42501' || /row-level security/i.test(e.message ?? '');
