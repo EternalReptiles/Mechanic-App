@@ -97,10 +97,11 @@ export default function SettingsPage() {
             <Row to="?s=bank" icon="🏦" label="Bank details" />
             <Row to="/stock" icon="📦" label="Stock & orders" hint="Parts on hand, purchase orders" />
             <Row to="/reports" icon="📊" label="Reports" hint="Takings, money owed, top customers" />
+            <Row to="/timesheets" icon="⏱" label="Timesheets" hint="Hours clocked on jobs" />
           </div>
         )}
         {!cloud.isAdmin && (
-          <div className="set-group"><Row to="/settings/price-list" icon="📋" label="Price list" /></div>
+          <div className="set-group"><Row to="/settings/price-list" icon="📋" label="Price list" /><Row to="/timesheets" icon="⏱" label="My hours" /></div>
         )}
 
         {cloud.isAdmin && (

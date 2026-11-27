@@ -23,6 +23,8 @@ import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
 import type { Job, JobStatus, PaymentMethod, Vehicle } from '../types';
 import { deductStockIfDone } from '../stock';
+import JobTimer from '../time/JobTimer';
+import { billableHours, clockOnPatch, stopAllPatch } from '../time/timer';
 import {
   fillTemplate,
   addMonthsISO,
@@ -40,6 +42,7 @@ import {
   telUrl,
   toLocalInput,
   totals,
+  uid,
 } from '../utils';
 
 const NEXT_STEP: Partial<Record<JobStatus, { label: string; to: JobStatus }>> = {
@@ -107,7 +110,7 @@ export default function JobPage() {
   const setTab = (t: Tab) => setParams({ tab: t }, { replace: true });
 
   function setStatus(to: JobStatus, paymentMethod?: PaymentMethod) {
-    const patch: Partial<Job> = { status: to };
+    const patch: Partial<Job> = { status: to, ...(['completed', 'invoiced', 'paid', 'cancelled', 'waiting'].includes(to) ? stopAllPatch(job!) : {}) };
     const now = new Date().toISOString();
     if ((to === 'invoiced' || to === 'paid') && !job!.invoicedAt) patch.invoicedAt = now;
     if (to === 'paid') {
@@ -162,13 +165,16 @@ export default function JobPage() {
       />
 
       {next && (
-        <button className="btn primary block big" onClick={() => setStatus(next.to)}>
+        <button className="btn primary block big" onClick={() => next.to === 'in_progress'
+          ? void clockOnPatch(job, userId).then((p) => { setStatus('in_progress'); update(p); })
+          : setStatus(next.to)}>
           {next.label}
         </button>
       )}
       {job.status === 'in_progress' && (
         <button className="btn block" onClick={() => setStatus('waiting')}>⏸ On hold – waiting on parts / approval</button>
       )}
+      {(['scheduled', 'in_progress', 'waiting'].includes(job.status) || (job.timeEntries?.length ?? 0) > 0) && <JobTimer job={job} update={update} />}
       {job.status === 'invoiced' && (
         <div className="pay-row">
           <span className="small muted">Payment received ({money(t.total)}):</span>
@@ -397,6 +403,11 @@ export default function JobPage() {
           )}
           <section className="card">
             <h2>Labour &amp; parts</h2>
+            {billableHours(job) > 0 && !job.lineItems.some((l) => l.timeLine) && (
+              <button className="btn small" style={{ marginBottom: 8 }} onClick={() => update({ lineItems: [...job.lineItems, {
+                id: uid(), type: 'labour', description: 'Labour', qty: billableHours(job), unitPrice: settings.labourRate, timeLine: true,
+              }] })}>⏱ Add labour from clocked time ({billableHours(job)} h)</button>
+            )}
             <LineItems items={job.lineItems} onChange={(lineItems) => update({ lineItems })}
               labourRate={settings.labourRate} gst={settings.gstRegistered} />
           </section>

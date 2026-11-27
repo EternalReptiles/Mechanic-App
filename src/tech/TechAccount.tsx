@@ -1,5 +1,6 @@
 import { useCloud } from '../cloud/CloudProvider';
 import SyncBadge from '../cloud/SyncBadge';
+import { Link } from 'react-router-dom';
 import { PageHeader } from '../components/ui';
 import { exitTechPreview, isTechPreview } from './preview';
 
@@ -15,6 +16,7 @@ export default function TechAccount() {
         </p>
         <SyncBadge detailed />
         <div className="row wrap" style={{ marginTop: 12 }}>
+          <Link className="btn" to="/timesheets">⏱ My hours</Link>
           {isTechPreview() ? (
             <button className="btn primary" onClick={exitTechPreview}>Exit technician preview</button>
           ) : (

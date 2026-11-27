@@ -32,8 +32,8 @@
 - [x] Google review requests after paid jobs
 - [x] Reports (takings, owing, jobs, average job value, top customers, technicians)
 - [ ] Import from MechanicDesk / ServiceM8 exports
-- [ ] Stock & purchase orders
-- [ ] Technician timesheets (clock on/off per job)
+- [x] Stock & purchase orders
+- [x] Technician timesheets (clock on/off per job)
 - [ ] AI assistant (voice notes → job notes, inspection → quote)
 
 ## Integrations (need partner/developer accounts first)

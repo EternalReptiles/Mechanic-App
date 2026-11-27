@@ -14,6 +14,8 @@ import { finishJobPatch, missingRequired, tasksFromTemplate, templatesFor } from
 import type { Job } from '../types';
 import { firstName, fmtDateTime, mapsUrl, smsUrl, telUrl } from '../utils';
 import { deductStockIfDone } from '../stock';
+import JobTimer from '../time/JobTimer';
+import { clockOnPatch, stopAllPatch } from '../time/timer';
 
 /** Technician's job screen: what to do, the checklist, photos, and "Mark finished". No prices. */
 export default function TechJob() {
@@ -95,8 +97,9 @@ export default function TechJob() {
         )}
       </section>
 
-      {job.status === 'scheduled' && <button className="btn primary block big" onClick={() => update({ status: 'in_progress' })}>▶ Start job</button>}
-      {job.status === 'waiting' && <button className="btn primary block big" onClick={() => update({ status: 'in_progress' })}>▶ Resume job</button>}
+      {job.status === 'scheduled' && <button className="btn primary block big" onClick={() => void clockOnPatch(job, userId).then((p) => update({ ...p, status: 'in_progress' }))}>▶ Start job</button>}
+      {job.status === 'waiting' && <button className="btn primary block big" onClick={() => void clockOnPatch(job, userId).then((p) => update({ ...p, status: 'in_progress' }))}>▶ Resume job</button>}
+      {!['scheduled', 'waiting'].includes(job.status) && <JobTimer job={job} update={update} />}
 
       <section className="card">
         <h2>☑ Job checklist</h2>
@@ -148,7 +151,7 @@ export default function TechJob() {
       ) : (
         ['scheduled', 'in_progress', 'waiting'].includes(job.status) && (
           <>
-            {job.status === 'in_progress' && <button className="btn block" onClick={() => update({ status: 'waiting' })}>⏸ On hold – waiting on parts</button>}
+            {job.status === 'in_progress' && <button className="btn block" onClick={() => update({ status: 'waiting', ...stopAllPatch(job) })}>⏸ On hold – waiting on parts</button>}
             <button className="btn primary block big" onClick={finish}>✓ Mark job finished</button>
           </>
         )

@@ -50,6 +50,8 @@ export interface LineItem {
   stockId?: string;
   /** Repair this line belongs to (e.g. "Front brakes"), so customers can approve repairs separately */
   repair?: string;
+  /** Added from clocked time */
+  timeLine?: boolean;
 }
 
 export type CheckResult = '' | 'ok' | 'attention' | 'urgent' | 'na';
@@ -90,6 +92,14 @@ export interface CheckItem {
 
 export type PaymentMethod = '' | 'cash' | 'card' | 'transfer' | 'other';
 
+export interface TimeEntry {
+  id: string;
+  userId: string;
+  start: string;
+  /** Missing while the clock is running */
+  end?: string;
+}
+
 export interface Job {
   id: string;
   number: number;
@@ -122,6 +132,8 @@ export interface Job {
   droppedOffAt?: string;
   promisedAt?: string;
   collectedAt?: string;
+  /** Time clocked on this job (technician timesheets) */
+  timeEntries?: TimeEntry[];
   /** Stock has been deducted for this job's parts */
   stockDeducted?: boolean;
   /** Booked by the customer on the online booking page */

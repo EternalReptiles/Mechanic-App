@@ -1,3 +1,4 @@
+import { stopAllPatch } from './time/timer';
 import type { JobTask, JobTemplate, TaskTemplateItem } from './types';
 import { uid } from './utils';
 
@@ -78,7 +79,7 @@ export function displayValue(t: JobTask): string {
  * and invoice lines for measured amounts (e.g. 4.5 L of oil) – added once.
  */
 export function finishJobPatch(
-  job: { lineItems: import('./types').LineItem[]; tasks?: JobTask[]; taskLinesAdded?: boolean; odometer: string; status: string },
+  job: { lineItems: import('./types').LineItem[]; tasks?: JobTask[]; taskLinesAdded?: boolean; odometer: string; status: string; timeEntries?: import('./types').TimeEntry[] },
   userId: string,
 ): { patch: Partial<import('./types').Job>; odometer?: string } {
   const tasks = job.tasks ?? [];
@@ -103,6 +104,7 @@ export function finishJobPatch(
       status: ['quote', 'scheduled', 'in_progress', 'waiting'].includes(job.status) ? 'completed' : (job.status as never),
       finishedAt: now,
       finishedBy: userId,
+      ...stopAllPatch(job),
       taskLinesAdded: job.taskLinesAdded || lines.length > 0 || undefined,
       lineItems: lines.length ? [...job.lineItems, ...lines] : job.lineItems,
       ...(odo ? { odometer: String(odo.value) } : {}),
