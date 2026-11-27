@@ -16,7 +16,11 @@ export function fixMojibake(s: string) {
 
 /** ServiceM8 writes "0000-00-00 00:00:00" for "never". */
 function isoDate(v: Cell): string {
-  if (v instanceof Date) return Number.isNaN(v.getTime()) ? '' : v.toISOString();
+  // ServiceM8 times are local (e.g. Brisbane) wall-clock times; spreadsheets hand them over as if they were UTC.
+  if (v instanceof Date) {
+    if (Number.isNaN(v.getTime())) return '';
+    return new Date(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate(), v.getUTCHours(), v.getUTCMinutes(), v.getUTCSeconds()).toISOString();
+  }
   const s = clean(v);
   if (!s || s.startsWith('0000')) return '';
   const d = new Date(s.replace(' ', 'T'));

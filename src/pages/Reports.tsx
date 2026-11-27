@@ -41,6 +41,8 @@ export default function Reports() {
     const gst = paid.reduce((s, j) => s + total(j).gst, 0);
     const labour = paid.reduce((s, j) => s + j.lineItems.filter((l) => l.type === 'labour').reduce((t, l) => t + l.qty * l.unitPrice, 0), 0);
     const parts = paid.reduce((s, j) => s + j.lineItems.filter((l) => l.type === 'part').reduce((t, l) => t + l.qty * l.unitPrice, 0), 0);
+    // Everything else (imported jobs' totals, "other" lines), so the breakdown adds up to the total.
+    const other = Math.max(0, paidTotal - gst - labour - parts);
     const invoiced = live.filter((j) => inRange(j.invoicedAt || j.paidAt, rg));
     const owing = live.filter((j) => j.status === 'invoiced');
     const owingTotal = owing.reduce((s, j) => s + total(j).total, 0);
@@ -69,7 +71,7 @@ export default function Reports() {
       });
     }
     return {
-      paid, paidTotal, gst, labour, parts, invoiced, owing, owingTotal, overdue, quotes, booked, online, months,
+      paid, paidTotal, gst, labour, parts, other, invoiced, owing, owingTotal, overdue, quotes, booked, online, months,
       avg: paid.length ? paidTotal / paid.length : 0,
       byMethod: [...byMethod].sort((a, b) => b[1] - a[1]),
       byCustomer: [...byCustomer].sort((a, b) => b[1] - a[1]).slice(0, 5),
@@ -119,6 +121,7 @@ export default function Reports() {
           <table className="report-table"><tbody>
             <tr><td>Labour (ex GST)</td><td>{money(r.labour)}</td></tr>
             <tr><td>Parts (ex GST)</td><td>{money(r.parts)}</td></tr>
+            {r.other >= 0.01 && <tr><td>Other &amp; imported jobs (ex GST)</td><td>{money(r.other)}</td></tr>}
             <tr><td>GST collected</td><td>{money(r.gst)}</td></tr>
             <tr className="total"><td>Total paid</td><td>{money(r.paidTotal)}</td></tr>
           </tbody></table>
