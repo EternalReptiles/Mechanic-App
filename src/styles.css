@@ -577,3 +577,21 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .ttp-hero h2 { color: var(--text); font-size: 1.1rem; }
 .send-message .link { margin-top: 8px; }
 .sent-pill { flex: 1; display: inline-flex; align-items: center; justify-content: center; padding: 10px 12px; border-radius: 10px; background: rgba(22, 163, 74, .12); color: #15803d; font-weight: 700; font-size: .9rem; }
+
+/* Fee breakdown */
+.fee-breakdown table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: .9rem; }
+.fee-breakdown th { text-align: left; font-weight: 700; padding: 4px 0; }
+.fee-breakdown td { padding: 3px 0; color: var(--muted); }
+.fee-breakdown td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.fee-breakdown tr.net td { color: var(--text); font-weight: 800; border-top: 1px solid var(--border); padding-top: 6px; }
+
+/* Close account / admin */
+.danger-zone { border-color: rgba(220, 38, 38, .35); }
+.admin-stats { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.admin-biz.closed { opacity: .6; }
+.admin-facts { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 10px 0; color: var(--muted); }
+.plan-pill { font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: var(--border); white-space: nowrap; }
+.plan-pill.p-trial { background: rgba(14, 165, 233, .15); color: #0369a1; }
+.plan-pill.p-expired, .plan-pill.p-closed { background: rgba(220, 38, 38, .12); color: #b91c1c; }
+.plan-pill.p-comp { background: rgba(245, 158, 11, .18); color: #b45309; }
+.plan-pill.p-solo, .plan-pill.p-pro, .plan-pill.p-team, .plan-pill.p-business { background: rgba(22, 163, 74, .14); color: #15803d; }

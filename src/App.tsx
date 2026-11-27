@@ -24,6 +24,8 @@ import Compose from './walkaround/Compose';
 import CustomerApproval from './walkaround/CustomerApproval';
 import WalkRecord from './walkaround/Record';
 import Reminders from './pages/Reminders';
+import ClosedBusiness from './pages/ClosedBusiness';
+import Admin from './pages/Admin';
 
 function BottomNav() {
   const { businessType } = useSettings();
@@ -74,6 +76,7 @@ function OwnerApp() {
                   <Route path="/settings/team" element={<Team />} />
                   <Route path="/settings/payments" element={<CardPayments />} />
                   <Route path="/settings/tap-to-pay" element={<TapToPaySettings />} />
+                  <Route path="/admin" element={<Admin />} />
                   <Route path="/settings/billing" element={<Billing />} />
                   <Route path="/settings/checklists" element={<JobTemplates />} />
                 </Routes>
@@ -89,7 +92,8 @@ function OwnerApp() {
 
 /** Technicians get their own simplified app; owners and admins get the full one. */
 function RoleSwitch() {
-  const { role } = useCloud();
+  const { role, plan } = useCloud();
+  if (plan.closedAt) return <ClosedBusiness />;
   return role === 'tech' || isTechPreview() ? <TechApp /> : <OwnerApp />;
 }
 

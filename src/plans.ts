@@ -42,6 +42,8 @@ export interface PlanInfo {
   cancelAtPeriodEnd: boolean;
   /** Free, permanent access (e.g. Spannr's founding business) */
   complimentary?: boolean;
+  /** Closed by the owner: kept 90 days, then deleted */
+  closedAt?: string | null;
 }
 
 export const EMPTY_PLAN: PlanInfo = {

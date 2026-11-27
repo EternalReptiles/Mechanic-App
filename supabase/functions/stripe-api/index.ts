@@ -36,6 +36,8 @@ Deno.serve(async (req) => {
         return json(await terminalPayment(ctx, String(body.jobId ?? '')));
       case 'terminal_complete':
         return json(await terminalComplete(ctx, String(body.paymentIntentId ?? '')));
+      case 'payment_fees':
+        return json(await paymentFees(ctx, String(body.jobId ?? '')));
       case 'subscribe':
         if (!ctx.isAdmin) return json({ error: 'Only the owner or an admin can change the plan.' }, 403);
         return json(await subscribe(ctx, String(body.plan ?? ''), String(body.interval ?? 'month'), String(body.promo ?? '')));
@@ -376,4 +378,49 @@ async function terminalComplete(ctx: Ctx, paymentIntentId: string) {
   const { data: rec } = await admin.from('stripe_terminal_payments').select('*').eq('id', paymentIntentId).eq('business_id', ctx.businessId).maybeSingle();
   if (!rec) throw new Error('Payment not found.');
   return settleTerminalPayment(rec.account_id, paymentIntentId);
+}
+
+// ---------- Fee breakdown for a job's card payments ----------
+
+type Fees = { stripe_fee: number; application_fee: number; net: number };
+
+async function feesForPaymentIntent(accountId: string, piId: string): Promise<Fees | null> {
+  const pi = (await stripe.paymentIntents.retrieve(piId, { expand: ['latest_charge.balance_transaction'] }, { stripeAccount: accountId })) as any;
+  const bt = pi?.latest_charge?.balance_transaction;
+  if (!bt || typeof bt !== 'object') return null;
+  const sum = (t: string) => (bt.fee_details ?? []).filter((f: any) => f.type === t).reduce((a: number, f: any) => a + f.amount, 0);
+  return { stripe_fee: sum('stripe_fee') + sum('tax'), application_fee: sum('application_fee'), net: bt.net };
+}
+
+/** Card payments on a job, with Stripe's fee, Spannr's fee and what the business receives (fetched once, then stored). */
+async function paymentFees(ctx: Ctx, jobId: string) {
+  const out: { kind: string; amount: number; stripe_fee: number | null; application_fee: number | null; net: number | null; paid_at: string | null }[] = [];
+  const { data: taps } = await admin.from('stripe_terminal_payments').select('*')
+    .eq('business_id', ctx.businessId).eq('job_id', jobId).eq('status', 'succeeded');
+  for (const t of taps ?? []) {
+    let f: Fees | null = t.stripe_fee == null ? null : { stripe_fee: t.stripe_fee, application_fee: t.application_fee, net: t.net };
+    if (!f) {
+      try {
+        f = await feesForPaymentIntent(t.account_id, t.id);
+        if (f) await admin.from('stripe_terminal_payments').update({ stripe_fee: f.stripe_fee, application_fee: f.application_fee, net: f.net }).eq('id', t.id);
+      } catch (e) { console.error('fees (tap)', e); }
+    }
+    out.push({ kind: 'Tap to Pay', amount: t.amount, stripe_fee: f?.stripe_fee ?? null, application_fee: f?.application_fee ?? t.application_fee, net: f?.net ?? null, paid_at: t.paid_at });
+  }
+  const { data: invs } = await admin.from('stripe_invoices').select('*')
+    .eq('business_id', ctx.businessId).eq('job_id', jobId).eq('status', 'paid');
+  for (const i of invs ?? []) {
+    let f: Fees | null = i.stripe_fee == null ? null : { stripe_fee: i.stripe_fee, application_fee: i.application_fee, net: i.net };
+    if (!f) {
+      try {
+        const inv = (await stripe.invoices.retrieve(i.id, { expand: ['payments'] } as any, { stripeAccount: i.account_id })) as any;
+        const p = inv?.payments?.data?.[0]?.payment?.payment_intent ?? inv?.payment_intent;
+        const piId = typeof p === 'string' ? p : p?.id;
+        if (piId) f = await feesForPaymentIntent(i.account_id, piId);
+        if (f) await admin.from('stripe_invoices').update({ stripe_fee: f.stripe_fee, application_fee: f.application_fee, net: f.net }).eq('id', i.id);
+      } catch (e) { console.error('fees (invoice)', e); }
+    }
+    out.push({ kind: `Invoice ${i.number ?? ''}`.trim(), amount: i.total, stripe_fee: f?.stripe_fee ?? null, application_fee: f?.application_fee ?? i.application_fee, net: f?.net ?? null, paid_at: i.paid_at });
+  }
+  return { payments: out };
 }

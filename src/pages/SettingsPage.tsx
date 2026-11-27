@@ -12,12 +12,18 @@ import { useAutosave } from '../hooks';
 import { db, DEFAULT_TERMS, exportBackup, getSettings, importBackup, WORKSHOP_TERMS_EXTRA } from '../db';
 import type { Settings } from '../types';
 import NumberInput from '../components/NumberInput';
+import CloseAccount from './CloseAccount';
+import { supabase } from '../cloud/supabase';
 import { TAP_TO_PAY_NAME, tapToPayAvailable } from '../payments/terminal';
 
 export default function SettingsPage() {
   const [s, setS] = useState<Settings | null>(null);
   const [msg, setMsg] = useState('');
   const cloud = useCloud();
+  const [isAdminOfSpannr, setIsAdminOfSpannr] = useState(false);
+  useEffect(() => {
+    if (navigator.onLine) void supabase.rpc('is_spannr_admin').then(({ data }) => setIsAdminOfSpannr(data === true));
+  }, []);
 
   useEffect(() => {
     getSettings().then(setS);
@@ -73,6 +79,7 @@ export default function SettingsPage() {
         <div className="row wrap" style={{ marginTop: 10 }}>
           <Link to="/settings/team" className="btn">👥 Team</Link>
           <Link to="/settings/payments" className="btn">💳 Card payments</Link>
+          {isAdminOfSpannr && <Link to="/admin" className="btn">🛠 Spannr admin</Link>}
           {tapToPayAvailable && <Link to="/settings/tap-to-pay" className="btn">📲 {TAP_TO_PAY_NAME}</Link>}
           <Link to="/settings/billing" className="btn">⭐ Plan: {planLabel(cloud.plan)}</Link>
           {cloud.isAdmin && <Link to="/settings/checklists" className="btn">☑ Job checklists</Link>}
@@ -187,7 +194,7 @@ export default function SettingsPage() {
       <section className="card">
         <h2>Backup</h2>
         <p className="muted small">
-          Your data is stored on this device. Download a backup regularly, and use it to move your data to a new phone.
+          Your data is saved to the cloud automatically and syncs to every device you sign in on. You can also download a copy at any time.
         </p>
         <div className="row wrap">
           <button className="btn primary" onClick={backup}>Download backup</button>
@@ -198,6 +205,8 @@ export default function SettingsPage() {
         </div>
         {msg && <p className="small">{msg}</p>}
       </section>
+
+      <CloseAccount />
     </>
   );
 }

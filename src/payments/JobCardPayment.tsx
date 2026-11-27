@@ -7,6 +7,7 @@ import { firstName, fmtDateTime, money } from '../utils';
 import ShareSent from '../walkaround/ShareSent';
 import { STRIPE_PUBLISHABLE_KEY, stripeApi, type PaymentsStatus, type StripeInvoiceRow } from './api';
 import TapToPay from './TapToPay';
+import PaymentFees from './PaymentFees';
 
 const LABEL: Record<string, string> = { open: 'Waiting for payment', paid: '✓ Paid by card', void: 'Cancelled', uncollectible: 'Marked uncollectible', draft: 'Draft' };
 
@@ -77,7 +78,10 @@ export default function JobCardPayment({ job, customer, businessName, onInvoiced
     <section className="card">
       <h2>💳 Card payment</h2>
       {job.status === 'paid' && !invoices.some((i) => i.status === 'open') ? (
-        <p className="small muted" style={{ margin: 0 }}>This job is marked as paid, so there's nothing to send.</p>
+        <>
+          <p className="small muted" style={{ margin: 0 }}>This job is marked as paid, so there's nothing to send.</p>
+          <PaymentFees jobId={job.id} />
+        </>
       ) : !active ? (
         <p className="small muted" style={{ margin: 0 }}>
           Let customers pay this invoice by card. <Link to="/settings/payments">Set up card payments</Link>
