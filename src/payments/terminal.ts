@@ -62,6 +62,31 @@ let business = '';
 let started: Promise<void> | null = null;
 let connectedFor = '';
 
+/** Apple's Tap to Pay configuration progress (0–1), or null when it isn't configuring. */
+type ProgressFn = (p: number | null) => void;
+const progressFns = new Set<ProgressFn>();
+let lastProgress: number | null = null;
+const emitProgress = (p: number | null) => {
+  lastProgress = p;
+  progressFns.forEach((f) => f(p));
+};
+export function onTapToPayProgress(fn: ProgressFn): () => void {
+  progressFns.add(fn);
+  fn(lastProgress);
+  return () => progressFns.delete(fn);
+}
+
+/** Turns Stripe/Apple errors into plain English (incl. Apple's required "update iOS" message). */
+export function friendlyTapError(e: unknown): string {
+  const msg = String((e as Error)?.message ?? e ?? '');
+  if (/osVersionNotSupported|os version|update.*ios|ios.*(too old|not supported)/i.test(msg))
+    return 'Tap to Pay on iPhone needs a newer version of iOS. Update your iPhone in Settings → General → Software Update, then try again.';
+  if (/cancel/i.test(msg)) return 'Payment cancelled – nothing was charged.';
+  if (/declin/i.test(msg)) return 'The card was declined – no money was taken. Ask the customer to try another card.';
+  if (/timed? ?out/i.test(msg)) return 'The payment timed out – nothing was charged. Try again.';
+  return msg || 'The payment did not go through.';
+}
+
 /** Starts Stripe Terminal once; it asks Spannr's server for a fresh one-time token whenever it needs one. */
 function start(): Promise<void> {
   if (!started) {
@@ -74,6 +99,9 @@ function start(): Promise<void> {
           console.error('Tap to Pay: could not get a connection token', e);
         }
       });
+      await StripeTerminal.addListener(TerminalEventsEnum.StartInstallingUpdate, () => emitProgress(0));
+      await StripeTerminal.addListener(TerminalEventsEnum.ReaderSoftwareUpdateProgress, ({ progress }) => emitProgress(progress));
+      await StripeTerminal.addListener(TerminalEventsEnum.FinishInstallingUpdate, () => emitProgress(null));
       await StripeTerminal.initialize({ isTest: STRIPE_PUBLISHABLE_KEY.startsWith('pk_test') });
     })().catch((e) => {
       started = null;
@@ -97,6 +125,7 @@ export async function prepareTapToPay(businessId: string, businessName: string) 
     merchantDisplayName: businessName || 'Spannr',
     autoReconnectOnUnexpectedDisconnect: true,
   });
+  emitProgress(null);
   connectedFor = businessId;
 }
 
@@ -134,19 +163,26 @@ export async function warmTapToPay(businessId: string, businessName: string) {
 
 export type TapResult = { status: string; amount?: number; receiptUrl?: string | null; paidAt?: string | null };
 
-/** Takes the job's total by tap: card, phone or watch. Resolves once Stripe has confirmed it. */
-export async function tapToPayForJob(businessId: string, businessName: string, jobId: string): Promise<TapResult> {
+export type TapPhase = 'preparing' | 'tapping' | 'processing';
+
+/**
+ * Takes the job's total by tap: card, phone or watch. If Tap to Pay isn't set up on this phone yet, this first
+ * runs setup (Apple's terms, then How to Tap). Reports each phase so the screen can show what's happening.
+ */
+export async function tapToPayForJob(businessId: string, businessName: string, jobId: string, onPhase: (p: TapPhase) => void = () => {}): Promise<TapResult> {
+  onPhase('preparing');
+  const firstTime = !isEnabledHere(businessId);
   await prepareTapToPay(businessId, businessName);
   markEnabled(businessId);
+  if (firstTime) await showHowToTap({ quiet: true });
   const pi = await stripeApi<{ clientSecret: string; id: string; amount: number }>('terminal_payment', businessId, { jobId });
   try {
+    onPhase('tapping');
     await StripeTerminal.collectPaymentMethod({ paymentIntent: pi.clientSecret });
+    onPhase('processing');
     await StripeTerminal.confirmPaymentIntent();
   } catch (e) {
-    const msg = String((e as Error)?.message ?? e);
-    if (/cancel/i.test(msg)) throw new Error('Payment cancelled – nothing was charged.');
-    if (/declin/i.test(msg)) throw new Error('The card was declined – try another card.');
-    throw new Error(msg || 'The payment did not go through.');
+    throw new Error(friendlyTapError(e));
   }
   // Stripe is the record of truth: the server checks the payment, marks the job paid and sends the receipt.
   return stripeApi<TapResult>('terminal_complete', businessId, { paymentIntentId: pi.id });

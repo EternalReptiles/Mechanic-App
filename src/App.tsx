@@ -17,6 +17,7 @@ import Team from './pages/Team';
 import CardPayments from './payments/CardPayments';
 import TapToPaySettings from './payments/TapToPaySettings';
 import TapToPayWarmup from './payments/TapToPayWarmup';
+import TapToPayIntro from './payments/TapToPayIntro';
 import Billing from './pages/Billing';
 import CloudProvider, { useCloud } from './cloud/CloudProvider';
 import TechApp from './tech/TechApp';
@@ -104,6 +105,7 @@ function OwnerApp() {
               </main>
               <BottomNav />
               <TapToPayWarmup />
+              <TapToPayIntro />
             </div>
           }
         />

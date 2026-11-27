@@ -9,6 +9,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useCloud } from '../cloud/CloudProvider';
 import { PageHeader } from '../components/ui';
 import { STRIPE_PUBLISHABLE_KEY, stripeApi, type PaymentsStatus } from './api';
+import { Link } from 'react-router-dom';
+import { TAP_TO_PAY_NAME, tapToPayAvailable } from './terminal';
 
 /** Settings → Card payments: Stripe's embedded onboarding and payments, inside Spannr. */
 export default function CardPayments() {
@@ -77,6 +79,13 @@ export default function CardPayments() {
           )}
           {active && (
             <a className="btn block" href="https://dashboard.stripe.com" target="_blank" rel="noreferrer">Open Stripe Dashboard</a>
+          )}
+          {active && tapToPayAvailable && (
+            <div className="next-step">
+              <strong>Next: take payments on your iPhone</strong>
+              <p className="small muted" style={{ margin: '4px 0 8px' }}>Turn on {TAP_TO_PAY_NAME} so customers can tap their card, phone or watch on your iPhone.</p>
+              <Link className="btn primary block" to="/settings/tap-to-pay?enable=1">Enable {TAP_TO_PAY_NAME}</Link>
+            </div>
           )}
         </section>
       )}

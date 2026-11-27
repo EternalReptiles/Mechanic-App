@@ -17,6 +17,7 @@ import { finishJobPatch, missingRequired, tasksFromTemplate, templatesFor } from
 import JobCardPayment from '../payments/JobCardPayment';
 import { QuickText } from '../components/SendMessage';
 import TextThread from '../messages/TextThread';
+import TapToPay from '../payments/TapToPay';
 import { quoteOutcome } from '../walkaround/model';
 import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
@@ -379,6 +380,10 @@ export default function JobPage() {
 
       {tab === 'billing' && (
         <>
+          {job.status !== 'paid' && job.lineItems.length > 0 && (
+            <TapToPay job={job} customer={customer} businessName={settings.businessName}
+              onPaid={(paidAt) => update({ status: 'paid', paymentMethod: 'card', paidAt, invoicedAt: job.invoicedAt || paidAt })} />
+          )}
           <section className="card">
             <h2>Labour &amp; parts</h2>
             <LineItems items={job.lineItems} onChange={(lineItems) => update({ lineItems })}

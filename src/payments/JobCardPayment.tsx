@@ -6,7 +6,6 @@ import type { Customer, Job } from '../types';
 import { firstName, fmtDateTime, money } from '../utils';
 import ShareSent from '../walkaround/ShareSent';
 import { STRIPE_PUBLISHABLE_KEY, stripeApi, type PaymentsStatus, type StripeInvoiceRow } from './api';
-import TapToPay from './TapToPay';
 import PaymentFees from './PaymentFees';
 
 const LABEL: Record<string, string> = { open: 'Waiting for payment', paid: '✓ Paid by card', void: 'Cancelled', uncollectible: 'Marked uncollectible', draft: 'Draft' };
@@ -88,7 +87,6 @@ export default function JobCardPayment({ job, customer, businessName, onInvoiced
         </p>
       ) : (
         <>
-          {onPaid && <TapToPay job={job} businessName={businessName} onPaid={onPaid} />}
           <p className="muted small" style={{ marginTop: 0 }}>
             Sends a Stripe invoice with a pay link (card, Apple Pay, Google Pay). The job is marked paid automatically when they pay.
           </p>

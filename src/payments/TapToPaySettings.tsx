@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useCloud } from '../cloud/CloudProvider';
 import { supabase } from '../cloud/supabase';
 import Upgrade from '../components/Upgrade';
@@ -7,6 +7,7 @@ import { PageHeader } from '../components/ui';
 import { useSettings } from '../hooks';
 import { platform } from '../native';
 import ContactlessIcon from './ContactlessIcon';
+import { TapToPayProgress } from './TapToPay';
 import {
   deviceSupport,
   enableTapToPay,
@@ -15,11 +16,12 @@ import {
   showHowToTap,
   TAP_TO_PAY_NAME,
   tapToPayAvailable,
+  friendlyTapError,
 } from './terminal';
 
 /** Settings → Tap to Pay on iPhone: turn it on for this phone, accept Apple's terms, learn how to tap. */
 export default function TapToPaySettings() {
-  const { businessId, can } = useCloud();
+  const { businessId, can, isAdmin } = useCloud();
   const settings = useSettings();
   const [cardsActive, setCardsActive] = useState<boolean | null>(null);
   const [support, setSupport] = useState<{ supported: boolean; education: boolean; native: boolean } | null>(null);
@@ -29,6 +31,10 @@ export default function TapToPaySettings() {
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
 
+  const [params] = useSearchParams();
+  useEffect(() => {
+    if (params.get('enable') === '1' && !isEnabledHere(businessId) && isAdmin) void enable();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!tapToPayAvailable) return;
     void supabase.from('stripe_accounts').select('card_payments_status').eq('business_id', businessId).maybeSingle()
@@ -56,7 +62,7 @@ export default function TapToPaySettings() {
       setLinked(await isAccountLinked(businessId));
       setMsg(`✓ ${TAP_TO_PAY_NAME} is ready on this phone.`);
     } catch (e) {
-      setErr((e as Error).message || "Tap to Pay couldn't be set up.");
+      setErr(friendlyTapError(e) || "Tap to Pay couldn't be set up.");
     } finally {
       setBusy(false);
     }
@@ -93,7 +99,11 @@ export default function TapToPaySettings() {
             </p>
           )}
 
-          {cardsActive !== false && support?.supported !== false && (
+          {!isAdmin && !ready && (
+            <p className="notice small">Only the business owner or an admin can accept the {TAP_TO_PAY_NAME} terms. Ask them to turn it on in Settings.</p>
+          )}
+          {busy && <TapToPayProgress />}
+          {cardsActive !== false && support?.supported !== false && isAdmin && (
             <div className="row wrap">
               {!ready && (
                 <button className="btn primary grow" disabled={busy || cardsActive === null} onClick={enable}>

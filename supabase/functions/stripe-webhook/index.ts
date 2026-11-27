@@ -51,8 +51,14 @@ Deno.serve(async (req) => {
       }
     } else if (event.type.startsWith('payment_intent.') && event.account) {
       // Tap to Pay payments (backup for when the phone loses signal right after the tap).
-      const pi = event.data.object as { id: string; metadata?: Record<string, string> };
-      if (pi.metadata?.spannr_job_id) await settleTerminalPayment(event.account, pi.id);
+      const pi = event.data.object as { id: string; amount?: number; metadata?: Record<string, string>; last_payment_error?: { message?: string; decline_code?: string } };
+      if (pi.metadata?.spannr_job_id) {
+        await settleTerminalPayment(event.account, pi.id);
+        if (event.type === 'payment_intent.payment_failed' && pi.metadata.spannr_business_id) {
+          const reason = pi.last_payment_error?.decline_code?.replace(/_/g, ' ') || pi.last_payment_error?.message || null;
+          await admin.rpc('notify_tap_failed', { p_business: pi.metadata.spannr_business_id, p_job: pi.metadata.spannr_job_id, p_amount: pi.amount ?? 0, p_reason: reason });
+        }
+      }
     } else if (event.type === 'account.updated' && event.account) {
       const status = await cardPaymentsStatus(event.account);
       await admin.from('stripe_accounts').update({ card_payments_status: status, updated_at: new Date().toISOString() }).eq('account_id', event.account);
