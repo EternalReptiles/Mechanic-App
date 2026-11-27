@@ -8,6 +8,7 @@ import { useAutosave } from '../hooks';
 import { useSettings } from '../hooks';
 import type { Customer, Vehicle } from '../types';
 import { fmtDay, mapsUrl, telUrl, vehicleLabel } from '../utils';
+import TextThread from '../messages/TextThread';
 
 function VehicleEditor({ vehicle, onDone }: { vehicle: Vehicle; onDone: () => void }) {
   const [v, setV] = useState(vehicle);
@@ -78,6 +79,8 @@ export default function CustomerPage() {
         {c.email && <a className="btn" href={`mailto:${c.email}`}>✉ Email</a>}
         {c.address && <a className="btn" href={mapsUrl(c.address)} target="_blank" rel="noreferrer">🧭 Navigate</a>}
       </div>
+
+      <TextThread customer={c} />
 
       <section className="card grid">
         <Field label="Name" wide><input value={c.name} onChange={set('name')} /></Field>

@@ -28,6 +28,13 @@ export default function Dashboard() {
       .is('seen_by_business_at', null)
       .then(({ data }) => setResponses(data ?? []));
   }, [businessId]);
+  const [unreadTexts, setUnreadTexts] = useState(0);
+  useEffect(() => {
+    const load = () => navigator.onLine && void supabase.rpc('unread_replies', { bid: businessId }).then(({ data }) => setUnreadTexts(Number(data) || 0));
+    load();
+    const t = window.setInterval(() => document.visibilityState === 'visible' && load(), 30000);
+    return () => window.clearInterval(t);
+  }, [businessId]);
   const { customerMap, vehicleMap } = useLookups();
   const jobs = useLiveQuery(() => db.jobs.toArray(), []) ?? [];
   const vehicles = useLiveQuery(() => db.vehicles.toArray(), []) ?? [];
@@ -108,6 +115,13 @@ export default function Dashboard() {
             ✍ <strong>{responses.length === 1 ? `${responses[0].signed_name} signed` : `${responses.length} customers signed`}</strong> – tap to see
             {responses.length === 1 ? ' their response' : ' the first'}
           </span>
+          <span>›</span>
+        </Link>
+      )}
+
+      {unreadTexts > 0 && (
+        <Link to="/messages" className="banner attention">
+          <span>💬 <strong>{unreadTexts} new {unreadTexts === 1 ? 'text' : 'texts'}</strong> from customers – tap to read and reply</span>
           <span>›</span>
         </Link>
       )}

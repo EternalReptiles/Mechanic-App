@@ -26,6 +26,7 @@ import WalkRecord from './walkaround/Record';
 import Reminders from './pages/Reminders';
 import ClosedBusiness from './pages/ClosedBusiness';
 import Admin from './pages/Admin';
+import Messages from './messages/Messages';
 
 function BottomNav() {
   const { businessType } = useSettings();
@@ -77,6 +78,7 @@ function OwnerApp() {
                   <Route path="/settings/payments" element={<CardPayments />} />
                   <Route path="/settings/tap-to-pay" element={<TapToPaySettings />} />
                   <Route path="/admin" element={<Admin />} />
+                  <Route path="/messages" element={<Messages />} />
                   <Route path="/settings/billing" element={<Billing />} />
                   <Route path="/settings/checklists" element={<JobTemplates />} />
                 </Routes>

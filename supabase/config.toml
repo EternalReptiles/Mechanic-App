@@ -11,3 +11,7 @@ verify_jwt = false
 # Daily deletion of businesses closed 90+ days ago (called by pg_cron with PURGE_TOKEN).
 [functions.purge-closed]
 verify_jwt = false
+
+# ClickSend inbound SMS (customer replies); protected by ?token=SMS_INBOUND_TOKEN.
+[functions.sms-inbound]
+verify_jwt = false

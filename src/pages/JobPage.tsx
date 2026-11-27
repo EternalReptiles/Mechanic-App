@@ -16,6 +16,7 @@ import TaskChecklist from '../components/TaskChecklist';
 import { finishJobPatch, missingRequired, tasksFromTemplate, templatesFor } from '../jobTemplates';
 import JobCardPayment from '../payments/JobCardPayment';
 import { QuickText } from '../components/SendMessage';
+import TextThread from '../messages/TextThread';
 import { quoteOutcome } from '../walkaround/model';
 import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
@@ -208,6 +209,7 @@ export default function JobPage() {
 
       {tab === 'details' && (
         <div className="tab-body">
+          <TextThread customer={customer} jobId={job.id} />
           <section className="card">
             <h2>Customer &amp; vehicle</h2>
             <CustomerVehiclePicker

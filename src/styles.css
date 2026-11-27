@@ -595,3 +595,18 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
 .plan-pill.p-expired, .plan-pill.p-closed { background: rgba(220, 38, 38, .12); color: #b91c1c; }
 .plan-pill.p-comp { background: rgba(245, 158, 11, .18); color: #b45309; }
 .plan-pill.p-solo, .plan-pill.p-pro, .plan-pill.p-team, .plan-pill.p-business { background: rgba(22, 163, 74, .14); color: #15803d; }
+
+/* Two-way texts */
+.text-thread .thread { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; padding: 4px 0 8px; }
+.bubble { max-width: 82%; padding: 8px 12px; border-radius: 14px; font-size: .93rem; line-height: 1.4; white-space: pre-wrap; }
+.bubble.out { align-self: flex-end; background: var(--primary); color: #1c1917; border-bottom-right-radius: 4px; }
+.bubble.in { align-self: flex-start; background: var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+.bubble.in.unread { box-shadow: 0 0 0 2px var(--primary); }
+.bubble-tag { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+.bubble-meta { font-size: .7rem; opacity: .65; margin-top: 2px; text-align: right; }
+.reply-box { display: flex; gap: 8px; align-items: flex-end; }
+.reply-box textarea { flex: 1; resize: vertical; }
+.inbox-row { display: block; color: inherit; text-decoration: none; }
+.inbox-row.unread { border-color: var(--primary); }
+.inbox-preview { color: var(--muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dot-unread { display: inline-block; width: 8px; height: 8px; border-radius: 99px; background: var(--primary); margin-right: 4px; }
