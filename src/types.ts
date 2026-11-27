@@ -120,6 +120,8 @@ export interface Job {
   droppedOffAt?: string;
   promisedAt?: string;
   collectedAt?: string;
+  /** Booked by the customer on the online booking page */
+  bookedOnline?: boolean;
   /** Customer's reply to the booking confirmation/reminder text (Y = confirmed, C = cancel) */
   customerReply?: { answer: 'confirmed' | 'cancel'; at: string };
   /** Walk-around ids whose approved work has already been added to this job */
@@ -167,6 +169,31 @@ export interface JobTask extends TaskTemplateItem {
 export type BusinessType = 'mobile' | 'workshop' | 'both';
 
 /** A saved price-list entry: a single item, or a package of several lines (e.g. "Logbook service – 4cyl"). */
+export interface BookingService {
+  id: string;
+  name: string;
+  durationMins: number;
+  description?: string;
+  /** Price-list item whose lines are added to the job (and give the "from" price) */
+  catalogId?: string;
+  showPrice?: boolean;
+}
+
+export interface BookingSettings {
+  enabled: boolean;
+  intro?: string;
+  services: BookingService[];
+  /** 0 = Sunday … 6 = Saturday */
+  days: number[];
+  startTime: string;
+  endTime: string;
+  slotMins: number;
+  leadHours: number;
+  maxDaysAhead: number;
+  /** Jobs that can be booked at the same time */
+  capacity: number;
+}
+
 export interface CatalogItem {
   id: string;
   name: string;
@@ -218,6 +245,8 @@ export interface Settings {
   jobTemplates?: JobTemplate[];
   /** IANA time zone used for message times and quiet hours, e.g. "Australia/Sydney" */
   timezone?: string;
+  /** Online booking page (app.spannr.au/book/<slug>) */
+  booking?: BookingSettings;
   /** Automatic booking confirmations and reminders (sent by the server) */
   notify?: NotifySettings;
 }

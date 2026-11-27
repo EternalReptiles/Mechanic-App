@@ -33,6 +33,7 @@ export default function JobCard({
           {job.customerReply.answer === 'confirmed' ? '✓ Customer confirmed' : '⚠ Customer asked to cancel / change'}
         </div>
       )}
+      {job.bookedOnline && job.status === 'scheduled' && <div className="reply-pill online">🌐 Booked online</div>}
       {job.title && <div>{job.title}</div>}
       {vehicle && <div className="muted">{vehicleLabel(vehicle)}</div>}
       {(job.location === 'workshop' || tech) && (

@@ -79,6 +79,7 @@ export default function SettingsPage() {
         <div className="row wrap" style={{ marginTop: 10 }}>
           <Link to="/settings/team" className="btn">👥 Team</Link>
           <Link to="/settings/payments" className="btn">💳 Card payments</Link>
+          {cloud.isAdmin && <Link to="/settings/booking" className="btn">📅 Online booking</Link>}
           {isAdminOfSpannr && <Link to="/admin" className="btn">🛠 Spannr admin</Link>}
           {tapToPayAvailable && <Link to="/settings/tap-to-pay" className="btn">📲 {TAP_TO_PAY_NAME}</Link>}
           <Link to="/settings/billing" className="btn">⭐ Plan: {planLabel(cloud.plan)}</Link>

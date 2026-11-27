@@ -31,6 +31,8 @@ import Reminders from './pages/Reminders';
 import ClosedBusiness from './pages/ClosedBusiness';
 import Admin from './pages/Admin';
 import Messages from './messages/Messages';
+import BookingPage from './booking/BookingPage';
+import OnlineBookingSettings from './booking/OnlineBookingSettings';
 
 /** Unread customer texts, refreshed every 30 seconds while the app is open. */
 function useUnreadTexts() {
@@ -100,6 +102,7 @@ function OwnerApp() {
                   <Route path="/settings/tap-to-pay" element={<TapToPaySettings />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/messages" element={<Messages />} />
+                  <Route path="/settings/booking" element={<OnlineBookingSettings />} />
                   <Route path="/settings/billing" element={<Billing />} />
                   <Route path="/settings/checklists" element={<JobTemplates />} />
                 </Routes>
@@ -135,6 +138,7 @@ export default function App() {
     <Routes>
       {/* Customer-facing page: no login */}
       <Route path="/v/:token" element={<CustomerApproval />} />
+      <Route path="/book/:slug" element={<BookingPage />} />
       <Route path="*" element={<StaffApp />} />
     </Routes>
   );
