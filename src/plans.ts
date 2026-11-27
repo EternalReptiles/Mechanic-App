@@ -10,15 +10,15 @@ export const PLANS: Record<PlanKey, { name: string; monthly: number; users: numb
   },
   pro: {
     name: 'Pro', monthly: 65, users: 3, sms: 100, blurb: 'Win more work with customer approvals.',
-    features: ['Up to 3 users', 'Everything in Solo', 'Remote quote approval & sign-off', 'Video walk-arounds', 'Automatic booking messages', '100 texts / month'],
+    features: ['Up to 3 users', 'Everything in Solo', 'Remote quote approval & sign-off', 'Video walk-arounds', 'Automatic booking messages', '100 texts / month (160 characters each)'],
   },
   team: {
     name: 'Team', monthly: 95, users: 8, sms: 300, blurb: 'For workshops with a few technicians.',
-    features: ['Up to 8 users', 'Everything in Pro', 'Workshop board', 'Assign jobs to technicians', 'Tap to Pay on iPhone (coming soon)', '300 texts / month'],
+    features: ['Up to 8 users', 'Everything in Pro', 'Workshop board', 'Assign jobs to technicians', 'Tap to Pay on iPhone (coming soon)', '300 texts / month (160 characters each)'],
   },
   business: {
     name: 'Business', monthly: 149, users: null, sms: 1000, blurb: 'Unlimited team, priority support.',
-    features: ['Unlimited users', 'Everything in Team', '1,000 texts / month', 'Priority support'],
+    features: ['Unlimited users', 'Everything in Team', '1,000 texts / month (160 characters each)', 'Priority support'],
   },
 };
 

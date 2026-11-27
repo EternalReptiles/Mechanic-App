@@ -1,3 +1,4 @@
+import { textsFor } from '../smsParts';
 import { useEffect, useState } from 'react';
 import { useCloud } from '../cloud/CloudProvider';
 import { supabase } from '../cloud/supabase';
@@ -29,7 +30,8 @@ export default function SendMessage({ customer, jobId, text, subject, intro }: {
   subject: string;
   intro?: string;
 }) {
-  const { businessId } = useCloud();
+  const { businessId, businessName } = useCloud();
+  const parts = textsFor(businessName, 'message', text);
   const [busy, setBusy] = useState<Channel | ''>('');
   const [sent, setSent] = useState<Partial<Record<Channel, string>>>({});
   const [err, setErr] = useState('');
@@ -43,7 +45,7 @@ export default function SendMessage({ customer, jobId, text, subject, intro }: {
 
   if (!customer) return <p className="muted small">Add a customer to the job to send this.</p>;
   const textsLeft = allow ? Math.max(0, allow.sms_allowance - allow.sms_used) : null;
-  const canText = !!customer.phone && allow?.sms_ready !== false && textsLeft !== 0;
+  const canText = !!customer.phone && allow?.sms_ready !== false && (textsLeft === null || textsLeft >= parts);
   const canEmail = !!customer.email && allow?.email_ready !== false;
 
   async function send(channel: Channel) {
@@ -67,7 +69,7 @@ export default function SendMessage({ customer, jobId, text, subject, intro }: {
         {customer.phone && (
           sent.sms ? <span className="sent-pill">✓ Texted {sent.sms.replace(/^\+61/, '0')}</span> : (
             <button className="btn primary grow" disabled={!!busy || !canText} onClick={() => send('sms')}>
-              {busy === 'sms' ? 'Sending…' : '💬 Send by text'}
+              {busy === 'sms' ? 'Sending…' : `💬 Send by text${parts > 1 ? ` (uses ${parts})` : ''}`}
             </button>
           )
         )}
@@ -80,7 +82,7 @@ export default function SendMessage({ customer, jobId, text, subject, intro }: {
         )}
       </div>
       {!customer.phone && !customer.email && <p className="small muted">Add a mobile number or email to the customer to send this.</p>}
-      {customer.phone && textsLeft === 0 && (
+      {customer.phone && textsLeft !== null && textsLeft < parts && (
         <p className="small muted">{allow?.sms_allowance ? "You've used this month's texts for your plan." : 'Texts from Spannr are on the Pro plan and up.'} You can still send it from your own phone.</p>
       )}
       {customer.phone && textsLeft !== null && textsLeft > 0 && textsLeft <= 20 && <p className="small muted">{textsLeft} texts left this month.</p>}

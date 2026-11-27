@@ -3,6 +3,7 @@ import { supabase } from '../cloud/supabase';
 import type { NotifySettings, Settings } from '../types';
 import { Field } from './ui';
 import TextUsage from './TextUsage';
+import { textsFor } from '../smsParts';
 
 export const DEFAULT_CONFIRM =
   "Hi {name}, you're booked in with {business} {day} at {time}{where}. Reply or call {phone} if you need to change it.";
@@ -156,11 +157,11 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
           <Field label="Booking confirmation message" wide>
             <textarea rows={3} value={n.confirmTemplate} onChange={(e) => set({ confirmTemplate: e.target.value })} />
           </Field>
-          <p className="wide small preview">Preview: {preview(n.confirmTemplate, s)}</p>
+          <p className="wide small preview">Preview: {preview(n.confirmTemplate, s)}{n.sms && <span className="muted"> · ≈ {textsFor(s.businessName, 'confirmation', preview(n.confirmTemplate, s))} text{textsFor(s.businessName, 'confirmation', preview(n.confirmTemplate, s)) > 1 ? 's' : ''} each</span>}</p>
           <Field label="Reminder message" wide>
             <textarea rows={3} value={n.reminderTemplate} onChange={(e) => set({ reminderTemplate: e.target.value })} />
           </Field>
-          <p className="wide small preview">Preview: {preview(n.reminderTemplate, s)}</p>
+          <p className="wide small preview">Preview: {preview(n.reminderTemplate, s)}{n.sms && <span className="muted"> · ≈ {textsFor(s.businessName, 'reminder', preview(n.reminderTemplate, s))} text{textsFor(s.businessName, 'reminder', preview(n.reminderTemplate, s)) > 1 ? 's' : ''} each</span>}</p>
           <p className="wide small muted" style={{ margin: 0 }}>
             Texts automatically end with <em>"Reply Y to confirm or C to cancel."</em> and <em>"Powered by Spannr"</em>. When a customer replies Y,
             the job shows ✓ Customer confirmed and they get a thank-you text; if they reply C, you'll get an alert to rebook them.

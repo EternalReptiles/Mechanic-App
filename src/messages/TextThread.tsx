@@ -1,3 +1,4 @@
+import { textsFor } from '../smsParts';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCloud } from '../cloud/CloudProvider';
 import { supabase } from '../cloud/supabase';
@@ -90,6 +91,9 @@ export default function TextThread({ customer, jobId = '' }: { customer?: Custom
           onChange={(e) => setText(e.target.value)} />
         <button className="btn primary" disabled={busy || !text.trim()} onClick={send}>{busy ? 'Sending…' : 'Send'}</button>
       </div>
+      {text.trim() && textsFor(businessName, 'message', text) > 1 && (
+        <p className="small muted" style={{ margin: '4px 0 0' }}>Long message – uses {textsFor(businessName, 'message', text)} texts from your allowance.</p>
+      )}
       {items?.some((i) => i.dir === 'in') && (
         <button className="link small ai-draft" disabled={busy} onClick={async () => {
           setErr(''); setBusy(true);
