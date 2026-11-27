@@ -628,3 +628,5 @@ h3.sub { margin: 12px 0 6px; color: var(--muted); }
   .bottom-nav a { font-size: 0.56rem; letter-spacing: -0.02em; overflow: hidden; padding: 4px 0; }
   .bottom-nav a span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+/* Never let the page slide sideways (clip keeps sticky headers working). */
+html, body { overflow-x: clip; max-width: 100%; }
