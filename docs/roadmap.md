@@ -12,8 +12,8 @@
 - [ ] Lawyer review of spannr.au/terms and spannr.au/privacy → fill in the legal name/ABN/state → remove the "Draft" notes
 - [ ] Proper mailbox for @spannr.au (replace Cloudflare forwarding)
 - [ ] **"Connect your existing Stripe account"** option on Card payments (OAuth), alongside "Set up new"
-- [ ] Automatic deletion of closed business accounts after 90 days (promised in the Terms/Privacy)
-- [ ] Show the fee breakdown on paid jobs (Stripe fee, Spannr fee, you receive) – optional
+- [x] Automatic deletion of closed business accounts after 90 days (promised in the Terms/Privacy)
+- [x] Show the fee breakdown on paid jobs (Stripe fee, Spannr fee, you receive)
 - [ ] Each business's own text allowance tracked against ClickSend costs
 
 ## Launch
