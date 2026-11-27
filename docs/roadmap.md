@@ -23,8 +23,9 @@
 - [ ] Marketing: Instagram, mechanic Facebook groups, Google, word of mouth
 
 ## Integrations (need partner/developer accounts first)
-- [ ] **Xero**: sign up at developer.xero.com → create an app → send the Client ID; then build connect + sync of invoices, payments and customers (Xero certification needed past 25 connected businesses)
-- [ ] **MYOB**: register at developer.myob.com (AccountRight / MYOB Business API) → API key; then the same sync
+- [ ] **Xero** (paid developer tiers – no free tier): when ready, create the app at developer.xero.com (redirect `https://app.spannr.au/settings/accounting/xero`) → Client ID + XERO_CLIENT_SECRET; build connect + sync of invoices, payments and customers
+- [ ] **MYOB** (Developer Access $110 is enough; Developer Partner $220 includes a live MYOB Business Pro subscription): register at developer.myob.com (redirect `https://app.spannr.au/settings/accounting/myob`) → API key + MYOB_CLIENT_SECRET; then the same sync
+- [ ] Free stopgap: Settings → Accounting → export invoices & payments (CSV) for MYOB/Xero import or the bookkeeper
 - [ ] **Parts suppliers**: Burson **EzyParts** and Repco **Navigator Pro** – apply for their workshop-software integration programme; then a "Look up parts" button that brings chosen parts and prices back onto the job
 
 ## Later
