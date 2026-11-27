@@ -32,6 +32,8 @@ import ClosedBusiness from './pages/ClosedBusiness';
 import Admin from './pages/Admin';
 import Messages from './messages/Messages';
 import Reports from './pages/Reports';
+import StockPage from './stock/StockPage';
+import { OrderPage, OrdersList } from './stock/Orders';
 import BookingPage from './booking/BookingPage';
 import OnlineBookingSettings from './booking/OnlineBookingSettings';
 
@@ -104,6 +106,9 @@ function OwnerApp() {
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/messages" element={<Messages />} />
                   <Route path="/reports" element={<Reports />} />
+                  <Route path="/stock" element={<StockPage />} />
+                  <Route path="/orders" element={<OrdersList />} />
+                  <Route path="/orders/:id" element={<OrderPage />} />
                   <Route path="/settings/booking" element={<OnlineBookingSettings />} />
                   <Route path="/settings/billing" element={<Billing />} />
                   <Route path="/settings/checklists" element={<JobTemplates />} />

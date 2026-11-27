@@ -1,5 +1,5 @@
 import Dexie, { type DBCore, type DBCoreMutateRequest, type Table } from 'dexie';
-import type { CatalogItem, Customer, Job, Photo, Settings, Vehicle } from './types';
+import type { CatalogItem, Customer, Job, Photo, PurchaseOrder, Settings, StockItem, Vehicle } from './types';
 import { uid } from './utils';
 
 class MechanicDB extends Dexie {
@@ -9,6 +9,8 @@ class MechanicDB extends Dexie {
   photos!: Table<Photo, string>;
   settings!: Table<Settings, string>;
   catalog!: Table<CatalogItem, string>;
+  stock!: Table<StockItem, string>;
+  orders!: Table<PurchaseOrder, string>;
   tombstones!: Table<Tombstone, string>;
   meta!: Table<{ key: string; value: unknown }, string>;
 
@@ -34,6 +36,7 @@ class MechanicDB extends Dexie {
       tombstones: 'key',
       meta: 'key',
     });
+    this.version(4).stores({ stock: 'id, name, partNumber, _dirty', orders: 'id, number, status, _dirty' });
     this.on('populate', (tx) => {
       tx.table('catalog').bulkAdd(starterCatalog());
     });
@@ -43,7 +46,7 @@ class MechanicDB extends Dexie {
 // ---------- Change tracking for cloud sync ----------
 
 /** Tables whose records sync to the cloud. */
-export const SYNCED_TABLES = ['customers', 'vehicles', 'jobs', 'catalog', 'settings', 'photos'] as const;
+export const SYNCED_TABLES = ['customers', 'vehicles', 'jobs', 'catalog', 'settings', 'photos', 'stock', 'orders'] as const;
 export type SyncedTable = (typeof SYNCED_TABLES)[number];
 
 export interface Tombstone {
@@ -301,6 +304,8 @@ export async function exportBackup(): Promise<Blob> {
     exportedAt: new Date().toISOString(),
     settings: await db.settings.toArray(),
     catalog: await db.catalog.toArray(),
+    stock: await db.stock.toArray(),
+    orders: await db.orders.toArray(),
     customers: await db.customers.toArray(),
     vehicles: await db.vehicles.toArray(),
     jobs: await db.jobs.toArray(),
@@ -322,9 +327,11 @@ export async function importBackup(file: File) {
   );
   // Merge into existing data (records with the same id are replaced). Merging rather than wiping
   // means a restore can't silently delete records that other devices still have.
-  await db.transaction('rw', [db.settings, db.customers, db.vehicles, db.jobs, db.photos, db.catalog], async () => {
+  await db.transaction('rw', [db.settings, db.customers, db.vehicles, db.jobs, db.photos, db.catalog, db.stock, db.orders], async () => {
     await db.settings.bulkPut(data.settings ?? []);
     await db.catalog.bulkPut(data.catalog ?? []);
+    await db.stock.bulkPut(data.stock ?? []);
+    await db.orders.bulkPut(data.orders ?? []);
     await db.customers.bulkPut(data.customers ?? []);
     await db.vehicles.bulkPut(data.vehicles ?? []);
     await db.jobs.bulkPut(data.jobs ?? []);

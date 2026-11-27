@@ -46,6 +46,8 @@ export interface LineItem {
   qty: number;
   /** Unit price excluding GST */
   unitPrice: number;
+  /** Stock item this part came from (on-hand is reduced when the job is completed) */
+  stockId?: string;
   /** Repair this line belongs to (e.g. "Front brakes"), so customers can approve repairs separately */
   repair?: string;
 }
@@ -120,6 +122,8 @@ export interface Job {
   droppedOffAt?: string;
   promisedAt?: string;
   collectedAt?: string;
+  /** Stock has been deducted for this job's parts */
+  stockDeducted?: boolean;
   /** Booked by the customer on the online booking page */
   bookedOnline?: boolean;
   /** Customer's reply to the booking confirmation/reminder text (Y = confirmed, C = cancel) */
@@ -192,6 +196,45 @@ export interface BookingSettings {
   maxDaysAhead: number;
   /** Jobs that can be booked at the same time */
   capacity: number;
+}
+
+export interface StockItem {
+  id: string;
+  name: string;
+  partNumber: string;
+  supplier: string;
+  /** Cost price ex GST */
+  cost: number;
+  /** Sell price ex GST */
+  price: number;
+  onHand: number;
+  /** Warn when on hand drops to this or below */
+  reorderAt: number;
+  location?: string;
+  notes?: string;
+}
+
+export interface PurchaseOrderLine {
+  stockId?: string;
+  description: string;
+  partNumber?: string;
+  qty: number;
+  /** Cost ex GST */
+  cost: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  number: number;
+  supplier: string;
+  status: 'draft' | 'ordered' | 'received' | 'cancelled';
+  lines: PurchaseOrderLine[];
+  notes: string;
+  createdAt: string;
+  orderedAt?: string;
+  receivedAt?: string;
+  /** Job the parts are for (optional) */
+  jobId?: string;
 }
 
 export interface CatalogItem {

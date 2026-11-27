@@ -38,6 +38,7 @@ export default function Dashboard() {
   const { customerMap, vehicleMap } = useLookups();
   const jobs = useLiveQuery(() => db.jobs.toArray(), []) ?? [];
   const vehicles = useLiveQuery(() => db.vehicles.toArray(), []) ?? [];
+  const lowStock = (useLiveQuery(() => db.stock.toArray(), []) ?? []).filter((s) => s.reorderAt > 0 && s.onHand <= s.reorderAt).length;
   const remindersDue = vehicles.filter(
     (v) => (v.nextServiceDate && daysUntil(v.nextServiceDate) <= 30) || (v.regoExpiry && daysUntil(v.regoExpiry) <= 30),
   ).length;
@@ -147,6 +148,13 @@ export default function Dashboard() {
           <span className="stat-label">Paid this month · Reports ›</span>
         </Link>
       </div>}
+
+      {isAdmin && lowStock > 0 && (
+        <Link to="/stock" className="banner attention">
+          <span>📦 <strong>{lowStock}</strong> part{lowStock === 1 ? ' is' : 's are'} low on stock – tap to order</span>
+          <span>›</span>
+        </Link>
+      )}
 
       <Link to="/reminders" className={`banner${remindersDue ? ' attention' : ''}`}>
         <span>🔔 <strong>{remindersDue}</strong> service / rego reminder{remindersDue === 1 ? '' : 's'} due in the next 30 days</span>

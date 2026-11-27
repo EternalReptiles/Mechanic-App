@@ -1,3 +1,4 @@
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { db } from '../db';
 import type { LineItem, LineItemType } from '../types';
@@ -19,6 +20,7 @@ export default function LineItems({
   gst: boolean;
 }) {
   const [picking, setPicking] = useState(false);
+  const stock = useLiveQuery(() => db.stock.orderBy('name').toArray(), []) ?? [];
   const t = totals(items, gst);
 
   async function saveToPriceList() {
@@ -99,6 +101,15 @@ export default function LineItems({
       <div className="row wrap add-lines">
         <button className="btn primary" onClick={() => setPicking(true)}>📋 Price list</button>
         <button className="btn" onClick={() => add('labour')}>+ Labour</button>
+        {stock.length > 0 && (
+          <select className="stock-pick" value="" aria-label="Add a part from stock" onChange={(e) => {
+            const p = stock.find((x) => x.id === e.target.value);
+            if (p) onChange([...items, { id: uid(), type: 'part', description: [p.name, p.partNumber && `(${p.partNumber})`].filter(Boolean).join(' '), qty: 1, unitPrice: p.price, stockId: p.id }]);
+          }}>
+            <option value="">📦 From stock…</option>
+            {stock.map((p) => <option key={p.id} value={p.id}>{p.name} – {p.onHand} on hand – ${p.price.toFixed(2)}</option>)}
+          </select>
+        )}
         <button className="btn" onClick={() => add('part')}>+ Part</button>
         <button className="btn" onClick={() => add('other')}>+ Other</button>
       </div>

@@ -22,6 +22,7 @@ import { quoteOutcome } from '../walkaround/model';
 import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
 import type { Job, JobStatus, PaymentMethod, Vehicle } from '../types';
+import { deductStockIfDone } from '../stock';
 import {
   fillTemplate,
   addMonthsISO,
@@ -81,6 +82,16 @@ export default function JobPage() {
 
   // Saves every change automatically, including when leaving the screen or locking the phone.
   const saved = useAutosave(job, (j) => !deleted.current && db.jobs.put(j), id);
+  // Parts from stock come off the shelf once the job is done.
+  const stockBusy = useRef(false);
+  useEffect(() => {
+    if (!job || job.stockDeducted || stockBusy.current) return;
+    stockBusy.current = true;
+    void deductStockIfDone(job).then((patch) => {
+      stockBusy.current = false;
+      if (patch) setJob((j) => (j ? { ...j, ...patch } : j));
+    });
+  }, [job?.status, job?.stockDeducted]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (job === undefined) return null;
   if (job === null)

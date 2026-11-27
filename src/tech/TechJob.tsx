@@ -13,6 +13,7 @@ import { useAutosave, useSettings } from '../hooks';
 import { finishJobPatch, missingRequired, tasksFromTemplate, templatesFor } from '../jobTemplates';
 import type { Job } from '../types';
 import { firstName, fmtDateTime, mapsUrl, smsUrl, telUrl } from '../utils';
+import { deductStockIfDone } from '../stock';
 
 /** Technician's job screen: what to do, the checklist, photos, and "Mark finished". No prices. */
 export default function TechJob() {
@@ -32,6 +33,16 @@ export default function TechJob() {
     db.jobs.get(id).then((j) => setJob(j ?? null));
   }, [id]);
   const saved = useAutosave(job, (j) => db.jobs.put(j), id);
+  // Parts from stock come off the shelf once the job is done.
+  const stockBusy = useRef(false);
+  useEffect(() => {
+    if (!job || job.stockDeducted || stockBusy.current) return;
+    stockBusy.current = true;
+    void deductStockIfDone(job).then((patch) => {
+      stockBusy.current = false;
+      if (patch) setJob((j) => (j ? { ...j, ...patch } : j));
+    });
+  }, [job?.status, job?.stockDeducted]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (job === undefined) return null;
   if (job === null) return (<><PageHeader back title="Job not found" /><Link className="btn" to="/">Back to my jobs</Link></>);

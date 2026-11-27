@@ -714,3 +714,20 @@ input[type="datetime-local"], input[type="date"], input[type="time"] { min-width
 .report-table td { padding: 6px 0; border-bottom: 1px solid var(--border); }
 .report-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .report-table tr.total td { font-weight: 800; border-bottom: 0; }
+
+/* Stock */
+.stock-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.stock-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.stock-row.low { border-color: #dc2626; }
+.stock-name { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.stock-name small, .stock-qty small { color: var(--muted); font-size: .75rem; }
+.stock-row.low .stock-qty small { color: #dc2626; font-weight: 700; }
+.stock-qty { display: flex; flex-direction: column; align-items: center; min-width: 52px; }
+.stock-qty strong { font-size: 1.1rem; }
+.stock-price { font-weight: 600; min-width: 64px; text-align: right; }
+.stock-pick { width: auto; flex: 1 1 140px; }
+.po-pill { font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--border); }
+.po-pill.ordered { background: rgba(14, 165, 233, .15); color: #0369a1; }
+.po-pill.received { background: rgba(22, 163, 74, .14); color: #15803d; }
+.po-pill.cancelled { background: rgba(220, 38, 38, .12); color: #b91c1c; }
+button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; }
