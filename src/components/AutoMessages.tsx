@@ -5,10 +5,9 @@ import { Field } from './ui';
 import TextUsage from './TextUsage';
 import { textsFor } from '../smsParts';
 
-export const DEFAULT_CONFIRM =
-  "Hi {name}, you're booked in with {business} {day} at {time}{where}. Reply or call {phone} if you need to change it.";
-export const DEFAULT_REMINDER =
-  'Hi {name}, a reminder from {business}: your booking is {day} at {time}{where}. Reply or call {phone} if you need to change it.';
+// Kept short so a text fits in one part (160 characters) – customers can reply Y/C or text back.
+export const DEFAULT_CONFIRM = "Hi {name}, you're booked with {business} {day} {time}{where}.";
+export const DEFAULT_REMINDER = "Hi {name}, reminder: you're booked with {business} {day} {time}{where}.";
 
 export function notifyDefaults(n?: NotifySettings): NotifySettings {
   return {
@@ -115,7 +114,7 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
             with your card pay link if you've sent one, otherwise your bank details. Only invoices from now on are chased.
           </p>
           <p className="wide small preview" style={{ margin: 0 }}>
-            Preview: Hi Sam, a friendly reminder from {s.businessName || 'your business'} that invoice #1042 for $385.00 is now due. Pay by card here: https://… Thanks!
+            Preview (text): Hi Sam, invoice #1042 ($385.00) from {s.businessName || 'your business'} is now due. Pay here: https://spannr.au/r/…
           </p>
         </>
       )}
@@ -163,7 +162,7 @@ export default function AutoMessages({ s, onChange }: { s: Settings; onChange: (
           </Field>
           <p className="wide small preview">Preview: {preview(n.reminderTemplate, s)}{n.sms && <span className="muted"> · ≈ {textsFor(s.businessName, 'reminder', preview(n.reminderTemplate, s))} text{textsFor(s.businessName, 'reminder', preview(n.reminderTemplate, s)) > 1 ? 's' : ''} each</span>}</p>
           <p className="wide small muted" style={{ margin: 0 }}>
-            Texts automatically end with <em>"Reply Y to confirm or C to cancel."</em> and <em>"Powered by Spannr"</em>. When a customer replies Y,
+            Booking texts automatically end with <em>"Reply Y to confirm, C to cancel."</em> Keep messages short – 160 characters is one text. When a customer replies Y,
             the job shows ✓ Customer confirmed and they get a thank-you text; if they reply C, you'll get an alert to rebook them.
           </p>
           <p className="wide muted small" style={{ margin: 0 }}>

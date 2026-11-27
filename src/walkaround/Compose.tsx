@@ -67,7 +67,7 @@ export default function Compose() {
     );
     const v = data.vehicle ? [data.vehicle.make, data.vehicle.model].filter(Boolean).join(' ') || data.vehicle.rego : 'car';
     setMessage(
-      `Hi ${firstName(data.customer?.name ?? '')}, here's a quick video of your ${v} with what I found. Tap Yes or No for each item, then sign at the bottom.`,
+      `Hi ${firstName(data.customer?.name ?? '')}, here's a video of your ${v}. Tap Yes/No for each item, then sign:`,
     );
   }, [data, items]);
 
