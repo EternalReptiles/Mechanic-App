@@ -20,3 +20,4 @@ begin
   return coalesce(n, -1);
 end $$;
 revoke all on function public.ai_use(uuid, int) from public, anon, authenticated;
+grant execute on function public.ai_use(uuid, int) to service_role;

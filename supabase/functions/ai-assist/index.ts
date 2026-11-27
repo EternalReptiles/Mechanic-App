@@ -43,12 +43,14 @@ Deno.serve(async (req) => {
   } catch (e) {
     console.error(e);
     if (e instanceof Anthropic.RateLimitError || e instanceof Anthropic.InternalServerError) return json({ error: 'The AI is busy right now – try again in a minute.' }, 503);
-    if (e instanceof Anthropic.APIError) return json({ error: 'The AI assistant had a problem. Try again.' }, 502);
+    if (e instanceof Anthropic.APIError) return json({ error: 'The AI assistant had a problem. Try again.', debug: `${e.status} ${e.message}`.slice(0, 400) }, 502);
     return json({ error: (e as Error).message || 'Something went wrong' }, 400);
   }
 });
 
-const client = new Anthropic();
+// Keys made at the organisation level (not inside a workspace) need the workspace named on each request.
+const workspace = Deno.env.get('ANTHROPIC_WORKSPACE_ID');
+const client = new Anthropic(workspace ? { defaultHeaders: { 'anthropic-workspace-id': workspace } } : {});
 
 /** One request with a JSON-schema answer. */
 async function ask<T>(system: string, user: string, schema: Schema, maxTokens = 4000): Promise<T> {
