@@ -671,3 +671,33 @@ html, body { overflow-x: clip; max-width: 100%; }
   .side-install .btn { width: 100%; background: rgba(245, 158, 11, .14); color: #fbbf24; border-color: transparent; }
   .side-install p { color: #94a3b8; }
 }
+
+/* Settings menu */
+.set-account { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 4px 2px 12px; }
+.set-group { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 14px; }
+.set-group h3 { margin: 0; padding: 10px 14px 4px; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.set-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; color: var(--text); text-decoration: none; background: none; border: 0; border-top: 1px solid var(--border); font: inherit; text-align: left; cursor: pointer; min-height: 52px; }
+.set-group h3 + .set-row { border-top: 0; }
+.set-row:active { background: var(--border); }
+.set-ico { width: 26px; text-align: center; font-size: 1.1rem; }
+.set-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.set-text small { color: var(--muted); font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.set-chev { color: var(--muted); font-size: 1.3rem; }
+
+/* Tidier, denser layout */
+@media (max-width: 520px) {
+  .grid.two-up { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card { padding: 12px; }
+  .content { padding-left: 12px; padding-right: 12px; }
+}
+.tab-body > .card, .content > .card { margin-bottom: 10px; }
+.thread-closed { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; text-align: left; color: var(--text); font: inherit; cursor: pointer; }
+.thread-last { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.delete-job { display: block; margin: 8px auto 4px; }
+.qty-col { flex: 0 0 72px; }
+.icon-btn.on { background: rgba(245, 158, 11, .18); }
+.add-lines .btn { flex: 1 1 auto; }
+.line-item .row { gap: 8px; align-items: flex-end; }
+.line-total { padding-bottom: 12px; min-width: 70px; }
+.grid > * { min-width: 0; }
+input[type="datetime-local"], input[type="date"], input[type="time"] { min-width: 0; max-width: 100%; }

@@ -21,6 +21,7 @@ export default function TextThread({ customer, jobId = '' }: { customer?: Custom
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [open, setOpen] = useState(false);
   const end = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
@@ -28,6 +29,7 @@ export default function TextThread({ customer, jobId = '' }: { customer?: Custom
     const { data } = await supabase.rpc('customer_thread', { bid: businessId, p_customer: customer.id });
     const list = (data as Item[]) ?? [];
     setItems(list);
+    if (list.some((i) => i.dir === 'in' && !i.read_at)) setOpen(true);
     if (list.some((i) => i.dir === 'in' && !i.read_at)) {
       void supabase.rpc('mark_customer_replies_read', { bid: businessId, p_customer: customer.id }).then(() => undefined);
     }
@@ -38,7 +40,7 @@ export default function TextThread({ customer, jobId = '' }: { customer?: Custom
     const t = window.setInterval(() => document.visibilityState === 'visible' && void load(), 20000);
     return () => window.clearInterval(t);
   }, [load]);
-  useEffect(() => end.current?.scrollIntoView({ block: 'nearest' }), [items?.length]);
+  useEffect(() => { if (open) end.current?.scrollIntoView({ block: 'nearest' }); }, [items?.length, open]);
 
   if (!customer?.phone) return null;
 
@@ -57,9 +59,19 @@ export default function TextThread({ customer, jobId = '' }: { customer?: Custom
     }
   }
 
+  const first = customer.name?.split(' ')[0] || 'customer';
+  const last = items?.[items.length - 1];
+  if (!open)
+    return (
+      <button className="card thread-closed" onClick={() => setOpen(true)}>
+        <span>💬 <strong>Texts with {first}</strong>{items?.length ? <span className="muted"> · {items.length}</span> : null}</span>
+        <span className="small muted thread-last">{last ? last.body : 'Send a text from Spannr'}</span>
+      </button>
+    );
+
   return (
     <section className="card text-thread">
-      <h2>💬 Texts with {customer.name?.split(' ')[0] || 'customer'}</h2>
+      <div className="row between"><h2 style={{ margin: 0 }}>💬 Texts with {first}</h2><button className="link small" onClick={() => setOpen(false)}>Hide</button></div>
       <div className="thread">
         {items === null ? <p className="muted small">Loading…</p> : !items.length ? (
           <p className="muted small">No texts yet. Messages you send from Spannr – and their replies – show here.</p>

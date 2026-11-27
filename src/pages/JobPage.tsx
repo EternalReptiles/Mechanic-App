@@ -237,8 +237,8 @@ export default function JobPage() {
               }
             />
             {vehicle && (
-              <div className="grid vehicle-extra">
-                <Field label="Odometer today (km)">
+              <div className="grid two-up vehicle-extra">
+                <Field label="Odometer (km)">
                   <input inputMode="numeric" value={job.odometer} placeholder={vehicle.odometer ? `Last: ${vehicle.odometer}` : ''}
                     onChange={(e) => {
                       update({ odometer: e.target.value });
@@ -276,7 +276,7 @@ export default function JobPage() {
             </section>
           )}
 
-          <section className="card grid">
+          <section className="card grid two-up">
             <h2 className="wide">Job</h2>
             {(settings.businessType === 'both' || (settings.businessType === 'mobile') === inWorkshop) && (
               <div className="seg wide two">
@@ -295,37 +295,37 @@ export default function JobPage() {
             <Field label="What's the job?" wide>
               <input value={job.title} placeholder="e.g. Logbook service, brake pads" onChange={(e) => update({ title: e.target.value })} />
             </Field>
-            <Field label="Booking time">
+            <Field label="Booking time" wide>
               <input type="datetime-local" value={toLocalInput(job.scheduledStart)}
                 onChange={(e) => update({
                   scheduledStart: fromLocalInput(e.target.value),
                   status: job.status === 'quote' && e.target.value ? 'scheduled' : job.status,
                 })} />
             </Field>
-            <JobMessages jobId={job.id} />
             <Field label="Duration">
               <select value={job.durationMins} onChange={(e) => update({ durationMins: Number(e.target.value) })}>
                 {[30, 60, 90, 120, 180, 240, 360, 480].map((m) => <option key={m} value={m}>{m < 60 ? `${m} min` : `${m / 60} hr`}</option>)}
               </select>
-            </Field>
-            {!inWorkshop && (
-              <Field label="Where's the car?" wide>
-                <input value={job.siteAddress} placeholder={customer?.address || 'Address'} onChange={(e) => update({ siteAddress: e.target.value })} />
-              </Field>
-            )}
-            <Field label="Customer says…" wide>
-              <textarea rows={3} value={job.description} placeholder="Noise from front left when braking…" onChange={(e) => update({ description: e.target.value })} />
-            </Field>
-            <Field label="Work done & recommendations (shown on invoice)" wide>
-              <textarea rows={4} value={job.workNotes} onChange={(e) => update({ workNotes: e.target.value })} />
             </Field>
             <Field label="Status">
               <select value={job.status} onChange={(e) => setStatus(e.target.value as JobStatus)}>
                 {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS[s].label}</option>)}
               </select>
             </Field>
+            <JobMessages jobId={job.id} />
+            {!inWorkshop && (
+              <Field label="Where's the car?" wide>
+                <input value={job.siteAddress} placeholder={customer?.address || 'Address'} onChange={(e) => update({ siteAddress: e.target.value })} />
+              </Field>
+            )}
+            <Field label="Customer says…" wide>
+              <textarea rows={2} value={job.description} placeholder="Noise from front left when braking…" onChange={(e) => update({ description: e.target.value })} />
+            </Field>
+            <Field label="Work done & recommendations (on invoice)" wide>
+              <textarea rows={3} value={job.workNotes} onChange={(e) => update({ workNotes: e.target.value })} />
+            </Field>
           </section>
-          <button className="btn danger block" onClick={remove}>Delete job</button>
+          <button className="btn ghost danger small delete-job" onClick={remove}>Delete job</button>
         </div>
       )}
 

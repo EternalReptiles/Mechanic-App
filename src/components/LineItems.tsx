@@ -64,26 +64,28 @@ export default function LineItems({
             />
           </div>
           <div className="row">
-            <label className="mini">
+            <label className="mini qty-col">
               {i.type === 'labour' ? 'Hours' : 'Qty'}
               <NumberInput value={i.qty} onChange={(n) => set(i.id, { qty: n })} />
             </label>
             <label className="mini">
-              Unit price (ex GST)
+              Price ex GST
               <NumberInput value={i.unitPrice} onChange={(n) => set(i.id, { unitPrice: n })} />
             </label>
             <span className="line-total">{money(i.qty * i.unitPrice)}</span>
+            <button className={`icon-btn${i.repair !== undefined ? ' on' : ''}`} aria-label="Group as a repair" title="Group as a repair (for customer approval)"
+              onClick={() => set(i.id, { repair: i.repair === undefined ? '' : undefined })}>🔧</button>
             <button className="icon-btn danger" aria-label="Remove line"
               onClick={() => onChange(items.filter((x) => x.id !== i.id))}>✕</button>
           </div>
-          <label className="repair-tag">
+          {i.repair !== undefined && <label className="repair-tag">
             <span>🔧 Repair</span>
             <input list="repair-names" placeholder="e.g. Front brakes (groups lines for customer approval)" value={i.repair ?? ''}
               onChange={(e) => set(i.id, { repair: e.target.value })} />
-          </label>
+          </label>}
         </div>
       ))}
-      <button className="btn primary" onClick={() => setPicking(true)}>📋 Add from price list</button>
+
       {picking && (
         <CatalogPicker
           onClose={() => setPicking(false)}
@@ -94,7 +96,8 @@ export default function LineItems({
           }}
         />
       )}
-      <div className="row wrap">
+      <div className="row wrap add-lines">
+        <button className="btn primary" onClick={() => setPicking(true)}>📋 Price list</button>
         <button className="btn" onClick={() => add('labour')}>+ Labour</button>
         <button className="btn" onClick={() => add('part')}>+ Part</button>
         <button className="btn" onClick={() => add('other')}>+ Other</button>
