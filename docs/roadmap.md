@@ -3,7 +3,7 @@
 ## Now (using it at LNC)
 - [ ] Use Spannr for real jobs at LNC and note anything slow, missing or annoying
 - [ ] Rename the new Stripe account "LNC – Spannr payments" so it's clear which is which
-- [ ] Request Apple's **distribution** Tap to Pay entitlement (needed for TestFlight and the App Store); a screen recording of a real payment helps
+- [ ] Request Apple's **distribution** Tap to Pay entitlement – app changes done; record the 3 videos (new user, existing user, checkout) + fill in Apple's checklist, upload, reply to Apple's email (needed for TestFlight and the App Store); a screen recording of a real payment helps
 - [ ] Re-run the iPhone app from Xcode every ~7 days (development builds expire) until TestFlight is set up
 
 ## Before selling to other mechanics
@@ -21,6 +21,11 @@
 - [ ] Cloud builds (e.g. Codemagic) once the Mac's Xcode is too old for App Store submissions
 - [ ] App Store listing: screenshots, description, privacy answers; set iPhone-only
 - [ ] Marketing: Instagram, mechanic Facebook groups, Google, word of mouth
+
+## Integrations (need partner/developer accounts first)
+- [ ] **Xero**: sign up at developer.xero.com → create an app → send the Client ID; then build connect + sync of invoices, payments and customers (Xero certification needed past 25 connected businesses)
+- [ ] **MYOB**: register at developer.myob.com (AccountRight / MYOB Business API) → API key; then the same sync
+- [ ] **Parts suppliers**: Burson **EzyParts** (and the "Navigator Pro" system – confirm which supplier it belongs to) – apply for their workshop-software integration programme; then a "Look up parts" button that brings chosen parts and prices back onto the job
 
 ## Later
 - [ ] Android app (project is ready in `android/`)
