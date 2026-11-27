@@ -25,7 +25,7 @@
 ## Integrations (need partner/developer accounts first)
 - [ ] **Xero**: sign up at developer.xero.com → create an app → send the Client ID; then build connect + sync of invoices, payments and customers (Xero certification needed past 25 connected businesses)
 - [ ] **MYOB**: register at developer.myob.com (AccountRight / MYOB Business API) → API key; then the same sync
-- [ ] **Parts suppliers**: Burson **EzyParts** (and the "Navigator Pro" system – confirm which supplier it belongs to) – apply for their workshop-software integration programme; then a "Look up parts" button that brings chosen parts and prices back onto the job
+- [ ] **Parts suppliers**: Burson **EzyParts** and Repco **Navigator Pro** – apply for their workshop-software integration programme; then a "Look up parts" button that brings chosen parts and prices back onto the job
 
 ## Later
 - [ ] Android app (project is ready in `android/`)
