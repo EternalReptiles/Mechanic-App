@@ -17,9 +17,23 @@ const b64url = (buf: ArrayBuffer | Uint8Array | string) => {
 let cached: { jwt: string; at: number } | null = null;
 async function apnsJwt(): Promise<string> {
   if (cached && Date.now() - cached.at < 40 * 60 * 1000) return cached.jwt; // Apple wants a refresh every 20–60 min
-  const pem = (Deno.env.get('APNS_KEY') ?? '').replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
-  const der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
-  const key = await crypto.subtle.importKey('pkcs8', der, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  // Forgiving: tolerate pasted quotes, literal "\n", spaces and the BEGIN/END lines.
+  const pem = (Deno.env.get('APNS_KEY') ?? '')
+    .replace(/\\n/g, '\n')
+    .replace(/-----(BEGIN|END)[^-]*-----/g, '')
+    .replace(/[^A-Za-z0-9+/=]/g, '');
+  let der: Uint8Array;
+  try {
+    der = Uint8Array.from(atob(pem), (c) => c.charCodeAt(0));
+  } catch {
+    throw new Error(`key text isn't valid base64 (${pem.length} characters after cleaning)`);
+  }
+  let key: CryptoKey;
+  try {
+    key = await crypto.subtle.importKey('pkcs8', der, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  } catch (e) {
+    throw new Error(`${(e as Error).message} – the key is ${der.length} bytes (an Apple .p8 key is about 138 bytes)`);
+  }
   const head = b64url(JSON.stringify({ alg: 'ES256', kid: KEY_ID }));
   const claims = b64url(JSON.stringify({ iss: TEAM, iat: Math.floor(Date.now() / 1000) }));
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(`${head}.${claims}`));
@@ -41,13 +55,20 @@ async function sendOne(token: string, env: 'production' | 'sandbox', payload: un
     body: JSON.stringify(payload),
   });
   const text = res.status === 200 ? '' : await res.text();
-  return { status: res.status, reason: text ? (JSON.parse(text).reason as string) : '' };
+  let reason = '';
+  try { reason = text ? (JSON.parse(text).reason as string) : ''; } catch { reason = text.slice(0, 80); }
+  return { status: res.status, reason };
 }
 
 Deno.serve(async (req) => {
   const token = Deno.env.get('PUSH_TOKEN');
   if (!token || req.headers.get('x-push-token') !== token) return new Response('forbidden', { status: 403 });
   if (!KEY_ID || !Deno.env.get('APNS_KEY')) return Response.json({ ok: false, error: 'APNs key not configured' }, { status: 503 });
+  try {
+    await apnsJwt();
+  } catch (e) {
+    return Response.json({ ok: false, error: `APNs key couldn't be read: ${(e as Error).message}` }, { status: 500 });
+  }
   const { business_id, title, body, url, admins_only } = await req.json();
 
   let users: string[] | null = null;
@@ -64,7 +85,13 @@ Deno.serve(async (req) => {
   for (const d of devices ?? []) {
     // Builds installed from Xcode use Apple's sandbox; App Store / TestFlight builds use production.
     const order: ('production' | 'sandbox')[] = d.apns_env === 'sandbox' ? ['sandbox', 'production'] : ['production', 'sandbox'];
-    let r = await sendOne(d.token, order[0], payload);
+    let r: { status: number; reason: string };
+    try {
+      r = await sendOne(d.token, order[0], payload);
+    } catch (e) {
+      results[`error: ${(e as Error).message}`.slice(0, 120)] = 1;
+      continue;
+    }
     if (r.status === 400 && r.reason === 'BadDeviceToken') {
       r = await sendOne(d.token, order[1], payload);
       if (r.status === 200) await admin.from('push_devices').update({ apns_env: order[1] }).eq('token', d.token);
