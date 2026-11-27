@@ -5,6 +5,8 @@ export const STRIPE_PUBLISHABLE_KEY = (import.meta.env.VITE_STRIPE_PUBLISHABLE_K
 export interface PaymentsStatus {
   connected: boolean;
   accountId?: string;
+  /** Card payments go to the business's own existing Stripe account */
+  linked?: boolean;
   /** v2 card_payments capability: active | pending | restricted | unsupported */
   cardPayments?: string;
 }

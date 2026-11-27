@@ -11,10 +11,10 @@
 - [ ] Move Spannr's Stripe account and Apple developer account to the company (convert the Apple account, don't open a new one)
 - [ ] Lawyer review of spannr.au/terms and spannr.au/privacy → fill in the legal name/ABN/state → remove the "Draft" notes
 - [ ] Proper mailbox for @spannr.au (replace Cloudflare forwarding)
-- [ ] **"Connect your existing Stripe account"** option on Card payments (OAuth), alongside "Set up new"
+- [x] **"Connect your existing Stripe account"** option on Card payments (OAuth) – needs STRIPE_CONNECT_CLIENT_ID + redirect URI in Stripe
 - [x] Automatic deletion of closed business accounts after 90 days (promised in the Terms/Privacy)
 - [x] Show the fee breakdown on paid jobs (Stripe fee, Spannr fee, you receive)
-- [ ] Each business's own text allowance tracked against ClickSend costs
+- [x] Text allowance counted per 160-character part, real ClickSend cost per business on the admin page, 80%/100% alerts
 
 ## Launch
 - [ ] App Store Connect app (au.spannr.app), TestFlight for LNC techs and the first workshops

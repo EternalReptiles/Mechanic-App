@@ -36,6 +36,15 @@ Deno.serve(async (req) => {
         return json(await terminalPayment(ctx, String(body.jobId ?? '')));
       case 'terminal_complete':
         return json(await terminalComplete(ctx, String(body.paymentIntentId ?? '')));
+      case 'link_start':
+        if (!ctx.isAdmin) return json({ error: 'Only the owner or an admin can connect a Stripe account.' }, 403);
+        return json(await linkStart(ctx, user.id));
+      case 'link_finish':
+        if (!ctx.isAdmin) return json({ error: 'Only the owner or an admin can connect a Stripe account.' }, 403);
+        return json(await linkFinish(ctx, String(body.code ?? ''), String(body.state ?? '')));
+      case 'unlink':
+        if (!ctx.isAdmin) return json({ error: 'Only the owner or an admin can disconnect Stripe.' }, 403);
+        return json(await unlink(ctx));
       case 'payment_fees':
         return json(await paymentFees(ctx, String(body.jobId ?? '')));
       case 'subscribe':
@@ -56,7 +65,12 @@ Deno.serve(async (req) => {
 
 async function getRow(businessId: string) {
   const { data } = await admin.from('stripe_accounts').select('*').eq('business_id', businessId).maybeSingle();
-  return data as { account_id: string; card_payments_status: string; gst_tax_rate_id: string | null; branding_hash: string | null } | null;
+  if (!data) return null;
+  // Card payments go to the business's own linked Stripe account when they connected one.
+  return { ...data, pay_id: (data.linked_account_id || data.account_id) as string, linked: !!data.linked_account_id } as {
+    account_id: string | null; linked_account_id: string | null; pay_id: string; linked: boolean; card_payments_status: string;
+    gst_tax_rate_id: string | null; branding_hash: string | null; terminal_location_id?: string | null;
+  };
 }
 
 async function settingsFor(businessId: string) {
@@ -67,27 +81,27 @@ async function settingsFor(businessId: string) {
 /** Is card payments set up? Refreshes the capability status from Stripe. */
 async function status(ctx: Ctx) {
   const row = await getRow(ctx.businessId);
-  if (!row) return { connected: false };
-  const cardPayments = await cardPaymentsStatus(row.account_id);
+  if (!row || !row.pay_id) return { connected: false };
+  const cardPayments = await cardPaymentsStatus(row.pay_id);
   if (cardPayments !== row.card_payments_status) {
     await admin.from('stripe_accounts')
       .update({ card_payments_status: cardPayments, updated_at: new Date().toISOString() })
       .eq('business_id', ctx.businessId);
   }
-  if (cardPayments === 'active') {
+  if (cardPayments === 'active' && !row.linked) {
     try {
-      await syncBranding(ctx.businessId, row.account_id, row.branding_hash);
+      await syncBranding(ctx.businessId, row.pay_id, row.branding_hash);
     } catch (e) {
       console.error('branding sync failed', e);
     }
   }
-  return { connected: true, accountId: row.account_id, cardPayments };
+  return { connected: true, accountId: row.pay_id, linked: row.linked, cardPayments };
 }
 
 /** The business's Stripe account (created once): takes card payments and pays Spannr's subscription. */
 async function ensureAccount(ctx: Ctx) {
   const existing = await getRow(ctx.businessId);
-  if (existing) return existing;
+  if (existing?.account_id) return existing as typeof existing & { account_id: string };
   const s = await settingsFor(ctx.businessId);
   const name = String(s.businessName || 'My business');
   const account = await stripe.v2.core.accounts.create({
@@ -107,12 +121,13 @@ async function ensureAccount(ctx: Ctx) {
     },
     metadata: { spannr_business_id: ctx.businessId },
   } as any, { idempotencyKey: `spannr-account-${ctx.businessId}` });
-  await admin.from('stripe_accounts').insert({ business_id: ctx.businessId, account_id: account.id });
-  return { account_id: account.id, card_payments_status: 'pending', gst_tax_rate_id: null, branding_hash: null };
+  await admin.from('stripe_accounts').upsert({ business_id: ctx.businessId, account_id: account.id }, { onConflict: 'business_id' });
+  return (await getRow(ctx.businessId))! as NonNullable<Awaited<ReturnType<typeof getRow>>> & { account_id: string };
 }
 
 /** Creates the business's connected account (once) and an Account Session for embedded components. */
 async function onboard(ctx: Ctx) {
+  if ((await getRow(ctx.businessId))?.linked) throw new Error('Card payments use your own Stripe account – manage it in your Stripe Dashboard.');
   const row = await ensureAccount(ctx);
   const session = await stripe.accountSessions.create({
     account: row.account_id,
@@ -133,11 +148,11 @@ const cents = (n: number) => Math.round(n * 100);
 async function createInvoice(ctx: Ctx, jobId: string) {
   const row = await getRow(ctx.businessId);
   if (!row) throw new Error('Set up card payments in Settings first.');
-  const cardPayments = await cardPaymentsStatus(row.account_id);
+  const cardPayments = await cardPaymentsStatus(row.pay_id);
   if (cardPayments !== 'active') throw new Error('Card payments are not active yet – finish setting up in Settings → Card payments.');
-  const opt = { stripeAccount: row.account_id };
+  const opt = { stripeAccount: row.pay_id };
   try {
-    await syncBranding(ctx.businessId, row.account_id, row.branding_hash); // logo + colour on the Stripe invoice
+    if (!row.linked) await syncBranding(ctx.businessId, row.pay_id, row.branding_hash); // logo + colour on the Stripe invoice
   } catch (e) {
     console.error('branding sync failed', e);
   }
@@ -224,7 +239,7 @@ async function createInvoice(ctx: Ctx, jobId: string) {
   if (cust.email) await stripe.invoices.sendInvoice(fin.id, {}, opt);
 
   await admin.from('stripe_invoices').insert({
-    id: fin.id, business_id: ctx.businessId, job_id: jobId, account_id: row.account_id,
+    id: fin.id, business_id: ctx.businessId, job_id: jobId, account_id: row.pay_id,
     number: fin.number, status: fin.status, total: fin.total, hosted_invoice_url: fin.hosted_invoice_url,
     application_fee: appFee, last_event: 'created',
   });
@@ -274,7 +289,7 @@ async function subscribe(ctx: Ctx, plan: string, interval: string, promo = '') {
 /** Stripe's billing portal: switch plan, update card, cancel, see invoices. */
 async function portal(ctx: Ctx) {
   const row = await getRow(ctx.businessId);
-  if (!row) throw new Error('No subscription yet.');
+  if (!row?.account_id) throw new Error('No subscription yet.');
   const cfg = (await stripe.billingPortal.configurations.list({ limit: 100 })).data.find((c) => c.metadata?.spannr === 'portal');
   const session = await stripe.billingPortal.sessions.create({
     customer_account: row.account_id,
@@ -294,9 +309,9 @@ async function requireTapToPayPlan(ctx: Ctx) {
 async function activeAccount(ctx: Ctx) {
   const row = await getRow(ctx.businessId);
   if (!row) throw new Error('Set up card payments in Settings first.');
-  if ((await cardPaymentsStatus(row.account_id)) !== 'active')
+  if ((await cardPaymentsStatus(row.pay_id)) !== 'active')
     throw new Error('Card payments are not active yet – finish setting up in Settings → Card payments.');
-  return row as typeof row & { terminal_location_id?: string | null };
+  return row;
 }
 
 const STATES = 'NSW|VIC|QLD|SA|WA|TAS|NT|ACT';
@@ -319,9 +334,9 @@ async function terminalLocation(ctx: Ctx) {
   const s = await settingsFor(ctx.businessId);
   const loc = await stripe.terminal.locations.create({
     display_name: String(s.businessName || 'My business').slice(0, 100),
-    address: await locationAddress(ctx, row.account_id),
+    address: await locationAddress(ctx, row.pay_id),
     metadata: { spannr_business_id: ctx.businessId },
-  } as any, { stripeAccount: row.account_id });
+  } as any, { stripeAccount: row.pay_id });
   await admin.from('stripe_accounts').update({ terminal_location_id: loc.id }).eq('business_id', ctx.businessId);
   return loc.id;
 }
@@ -330,7 +345,7 @@ async function terminalLocation(ctx: Ctx) {
 async function terminalToken(ctx: Ctx) {
   const locationId = await terminalLocation(ctx);
   const row = await getRow(ctx.businessId);
-  const token = await stripe.terminal.connectionTokens.create({ location: locationId }, { stripeAccount: row!.account_id });
+  const token = await stripe.terminal.connectionTokens.create({ location: locationId }, { stripeAccount: row!.pay_id });
   return { secret: token.secret, locationId };
 }
 
@@ -353,7 +368,7 @@ async function jobForPayment(ctx: Ctx, jobId: string) {
 async function terminalPayment(ctx: Ctx, jobId: string) {
   await requireTapToPayPlan(ctx);
   const row = await activeAccount(ctx);
-  const opt = { stripeAccount: row.account_id };
+  const opt = { stripeAccount: row.pay_id };
   const { job, total, businessName } = await jobForPayment(ctx, jobId);
   const appFee = Math.round(total * APP_FEE_RATE);
   const pi = await stripe.paymentIntents.create({
@@ -367,7 +382,7 @@ async function terminalPayment(ctx: Ctx, jobId: string) {
     metadata: { spannr_job_id: jobId, spannr_business_id: ctx.businessId, spannr_job_number: String(job.number ?? '') },
   }, opt);
   await admin.from('stripe_terminal_payments').insert({
-    id: pi.id, business_id: ctx.businessId, job_id: jobId, account_id: row.account_id,
+    id: pi.id, business_id: ctx.businessId, job_id: jobId, account_id: row.pay_id,
     amount: total, application_fee: appFee, status: pi.status,
   });
   return { clientSecret: pi.client_secret, id: pi.id, amount: total };
@@ -423,4 +438,55 @@ async function paymentFees(ctx: Ctx, jobId: string) {
     out.push({ kind: `Invoice ${i.number ?? ''}`.trim(), amount: i.total, stripe_fee: f?.stripe_fee ?? null, application_fee: f?.application_fee ?? i.application_fee, net: f?.net ?? null, paid_at: i.paid_at });
   }
   return { payments: out };
+}
+
+// ---------- Connect an existing Stripe account (Stripe Connect OAuth) ----------
+
+const OAUTH_CLIENT_ID = Deno.env.get('STRIPE_CONNECT_CLIENT_ID') ?? '';
+const oauthRedirect = () => `${Deno.env.get('SPANNR_APP_URL') ?? 'https://app.spannr.au'}/settings/payments`;
+
+/** Anything cached against the old payments account no longer applies to the new one. */
+async function resetPaymentsCache(businessId: string) {
+  await admin.from('stripe_accounts').update({ gst_tax_rate_id: null, terminal_location_id: null, branding_hash: null, card_payments_status: 'pending' }).eq('business_id', businessId);
+  await admin.from('stripe_customers').delete().eq('business_id', businessId);
+}
+
+async function linkStart(ctx: Ctx, userId: string) {
+  if (!OAUTH_CLIENT_ID) throw new Error('Connecting an existing Stripe account isn\'t switched on yet.');
+  const row = await getRow(ctx.businessId);
+  if (row && !row.linked && row.account_id && (await cardPaymentsStatus(row.account_id)) === 'active')
+    throw new Error('Card payments are already set up through Spannr.');
+  const state = crypto.randomUUID() + crypto.randomUUID().replaceAll('-', '');
+  await admin.from('stripe_oauth_states').delete().lt('created_at', new Date(Date.now() - 3600_000).toISOString());
+  await admin.from('stripe_oauth_states').insert({ state, business_id: ctx.businessId, user_id: userId });
+  const q = new URLSearchParams({ response_type: 'code', client_id: OAUTH_CLIENT_ID, scope: 'read_write', state, redirect_uri: oauthRedirect() });
+  return { url: `https://connect.stripe.com/oauth/authorize?${q}` };
+}
+
+async function linkFinish(ctx: Ctx, code: string, state: string) {
+  const { data: st } = await admin.from('stripe_oauth_states').select('*').eq('state', state).maybeSingle();
+  await admin.from('stripe_oauth_states').delete().eq('state', state); // one use only
+  if (!st || st.business_id !== ctx.businessId || Date.now() - new Date(st.created_at).getTime() > 3600_000)
+    throw new Error('That Stripe link has expired – please try connecting again.');
+  const token = await stripe.oauth.token({ grant_type: 'authorization_code', code });
+  const acct = token.stripe_user_id;
+  if (!acct) throw new Error('Stripe didn\'t return an account.');
+  const { data: other } = await admin.from('stripe_accounts').select('business_id').or(`linked_account_id.eq.${acct},account_id.eq.${acct}`).neq('business_id', ctx.businessId).maybeSingle();
+  if (other) throw new Error('That Stripe account is already connected to another business on Spannr.');
+  await admin.from('stripe_accounts').upsert({ business_id: ctx.businessId, linked_account_id: acct, linked_at: new Date().toISOString() }, { onConflict: 'business_id' });
+  await resetPaymentsCache(ctx.businessId);
+  return status(ctx);
+}
+
+async function unlink(ctx: Ctx) {
+  const row = await getRow(ctx.businessId);
+  if (!row?.linked) return status(ctx);
+  try {
+    await stripe.oauth.deauthorize({ client_id: OAUTH_CLIENT_ID, stripe_user_id: row.linked_account_id! });
+  } catch (e) {
+    console.error('deauthorize failed (already disconnected?)', e);
+  }
+  await admin.from('stripe_accounts').update({ linked_account_id: null, linked_at: null }).eq('business_id', ctx.businessId);
+  await resetPaymentsCache(ctx.businessId);
+  return status(ctx);
 }

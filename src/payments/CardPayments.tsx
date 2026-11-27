@@ -19,6 +19,8 @@ export default function CardPayments() {
   const [err, setErr] = useState('');
   const [onboarding, setOnboarding] = useState(false);
 
+  const [linking, setLinking] = useState(false);
+
   async function refresh() {
     setErr('');
     try {
@@ -28,12 +30,43 @@ export default function CardPayments() {
     }
   }
   useEffect(() => {
+    // Back from Stripe after "Connect my existing Stripe account".
+    const q = new URLSearchParams(location.search);
+    const code = q.get('code'), state = q.get('state'), denied = q.get('error');
+    if (code || denied) history.replaceState(null, '', location.pathname);
+    if (denied) setErr(q.get('error_description') || 'Stripe connection was cancelled.');
+    if (code && state) {
+      setLinking(true);
+      void stripeApi<PaymentsStatus>('link_finish', businessId, { code, state })
+        .then(setStatus, (e) => setErr((e as Error).message)).finally(() => setLinking(false));
+      return;
+    }
     void refresh();
   }, [businessId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function linkExisting() {
+    setErr('');
+    setLinking(true);
+    try {
+      location.href = (await stripeApi<{ url: string }>('link_start', businessId)).url;
+    } catch (e) {
+      setErr((e as Error).message);
+      setLinking(false);
+    }
+  }
+  async function unlink() {
+    if (!confirm('Disconnect your Stripe account from Spannr? Customers won\'t be able to pay by card until you connect again.')) return;
+    setErr('');
+    try {
+      setStatus(await stripeApi<PaymentsStatus>('unlink', businessId));
+    } catch (e) {
+      setErr((e as Error).message);
+    }
+  }
+
   const connect: StripeConnectInstance | null = useMemo(() => {
     // Embedded Stripe components are for owners/admins (account sessions are created server-side for them only).
-    if (!STRIPE_PUBLISHABLE_KEY || !isAdmin || (!status?.connected && !onboarding)) return null;
+    if (!STRIPE_PUBLISHABLE_KEY || !isAdmin || status?.linked || (!status?.connected && !onboarding)) return null;
     return loadConnectAndInitialize({
       publishableKey: STRIPE_PUBLISHABLE_KEY,
       fetchClientSecret: async () => {
@@ -48,7 +81,7 @@ export default function CardPayments() {
       },
       appearance: { variables: { colorPrimary: '#f59e0b', borderRadius: '10px', fontFamily: 'system-ui, sans-serif' } },
     });
-  }, [businessId, isAdmin, status?.connected, onboarding]);
+  }, [businessId, isAdmin, status?.connected, status?.linked, onboarding]);
 
   const active = status?.cardPayments === 'active';
 
@@ -57,7 +90,7 @@ export default function CardPayments() {
       <PageHeader back title="Card payments" />
       {!STRIPE_PUBLISHABLE_KEY && <p className="error">Card payments aren't configured for this app yet.</p>}
       {err && <p className="error">{err}</p>}
-      {!status && !err && <p className="muted">Checking…</p>}
+      {(!status || linking) && !err && <p className="muted">{linking ? 'Connecting your Stripe account…' : 'Checking…'}</p>}
 
       {status && (
         <section className="card">
@@ -72,14 +105,23 @@ export default function CardPayments() {
             Stripe's card fees apply, plus a 0.5% Spannr fee per payment.
           </p>
           {!isAdmin && !active && <p className="small">Ask the owner or an admin to set up card payments.</p>}
-          {isAdmin && !active && !onboarding && (
-            <button className="btn primary block" onClick={() => setOnboarding(true)}>
-              {status.connected ? 'Continue setting up card payments' : 'Set up card payments'}
-            </button>
+          {status.linked && (
+            <p className="small">🔗 Using your own Stripe account{status.accountId ? ` (${status.accountId})` : ''}.{!active && ' Finish any outstanding steps in your Stripe Dashboard.'}</p>
           )}
-          {active && (
+          {isAdmin && !active && !onboarding && !status.linked && (
+            <>
+              <button className="btn primary block" onClick={() => setOnboarding(true)}>
+                {status.connected ? 'Continue setting up card payments' : 'Set up card payments'}
+              </button>
+              <button className="btn block" disabled={linking} onClick={() => void linkExisting()}>
+                Already use Stripe? Connect your existing account
+              </button>
+            </>
+          )}
+          {(active || status.linked) && (
             <a className="btn block" href="https://dashboard.stripe.com" target="_blank" rel="noreferrer">Open Stripe Dashboard</a>
           )}
+          {isAdmin && status.linked && <button className="btn ghost small" onClick={() => void unlink()}>Disconnect Stripe account</button>}
           {active && tapToPayAvailable && (
             <div className="next-step">
               <strong>Next: take payments on your iPhone</strong>

@@ -26,8 +26,16 @@ export const json = (body: unknown, status = 200) =>
 
 /** v2 capability status for taking card payments on direct charges. */
 export async function cardPaymentsStatus(accountId: string): Promise<string> {
-  const acct = await stripe.v2.core.accounts.retrieve(accountId, { include: ['configuration.merchant'] });
-  return acct.configuration?.merchant?.capabilities?.card_payments?.status ?? 'unknown';
+  try {
+    const acct = await stripe.v2.core.accounts.retrieve(accountId, { include: ['configuration.merchant'] });
+    const st = acct.configuration?.merchant?.capabilities?.card_payments?.status;
+    if (st) return st;
+  } catch (e) {
+    console.log('v2 account read failed, using v1', (e as Error).message);
+  }
+  // Existing Stripe accounts connected with OAuth.
+  const a = await stripe.accounts.retrieve(accountId);
+  return a.charges_enabled && a.capabilities?.card_payments === 'active' ? 'active' : (a.capabilities?.card_payments ?? 'pending');
 }
 
 /** Marks a job paid by card (the change syncs to every device). */

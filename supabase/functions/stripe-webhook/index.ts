@@ -5,7 +5,7 @@ import { admin, applySubscription, cardPaymentsStatus, markJobPaid, queueReceipt
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('ok');
-  let body: { id?: string; account?: string };
+  let body: { id?: string; account?: string; type?: string };
   try {
     body = await req.json();
   } catch {
@@ -17,6 +17,16 @@ Deno.serve(async (req) => {
   try {
     event = await stripe.events.retrieve(body.id, {}, body.account ? { stripeAccount: body.account } : undefined);
   } catch {
+    // After a business disconnects Spannr, its events can't be fetched any more. Confirm the disconnect by
+    // checking Spannr really has lost access to that account, then forget it.
+    if (body.type === 'account.application.deauthorized' && body.account?.startsWith('acct_')) {
+      const lost = await stripe.accounts.retrieve(body.account).then(() => false, () => true);
+      if (lost) {
+        await admin.from('stripe_accounts').update({ linked_account_id: null, linked_at: null, card_payments_status: 'pending', terminal_location_id: null, gst_tax_rate_id: null })
+          .eq('linked_account_id', body.account);
+        return new Response('ok');
+      }
+    }
     return new Response('unknown event', { status: 400 });
   }
 
@@ -61,7 +71,12 @@ Deno.serve(async (req) => {
       }
     } else if (event.type === 'account.updated' && event.account) {
       const status = await cardPaymentsStatus(event.account);
-      await admin.from('stripe_accounts').update({ card_payments_status: status, updated_at: new Date().toISOString() }).eq('account_id', event.account);
+      await admin.from('stripe_accounts').update({ card_payments_status: status, updated_at: new Date().toISOString() })
+        .or(`account_id.eq.${event.account},linked_account_id.eq.${event.account}`);
+    } else if (event.type === 'account.application.deauthorized' && event.account) {
+      // The business disconnected Spannr from their own Stripe account.
+      await admin.from('stripe_accounts').update({ linked_account_id: null, linked_at: null, card_payments_status: 'pending', terminal_location_id: null, gst_tax_rate_id: null })
+        .eq('linked_account_id', event.account);
     }
   } catch (e) {
     console.error(e);
