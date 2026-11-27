@@ -15,3 +15,7 @@ verify_jwt = false
 # ClickSend inbound SMS (customer replies); protected by ?token=SMS_INBOUND_TOKEN.
 [functions.sms-inbound]
 verify_jwt = false
+
+# Push notifications via APNs (called by the database with PUSH_TOKEN).
+[functions.push-send]
+verify_jwt = false

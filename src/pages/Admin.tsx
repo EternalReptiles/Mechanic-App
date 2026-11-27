@@ -68,6 +68,21 @@ export default function Admin() {
         {stats.map((s) => <div key={s.l} className="stat"><span className="stat-value">{s.v}</span><span className="stat-label">{s.l}</span></div>)}
       </div>
 
+      <section className="card">
+        <h2 style={{ marginTop: 0 }}>Push notifications</h2>
+        <div className="row wrap">
+          <button className="btn" onClick={async () => {
+            const { data, error } = await supabase.rpc('admin_test_push');
+            alert(error ? error.message : data ? `Test sent to your ${data} device(s).` : 'No devices yet – open the iPhone app and allow notifications first.');
+          }}>Send me a test push</button>
+          <button className="btn" onClick={async () => {
+            if (!confirm('Send the "Tap to Pay on iPhone is here" push to every eligible business?')) return;
+            const { data, error } = await supabase.rpc('admin_push_tap_to_pay_launch');
+            alert(error ? error.message : `Sent to ${data} business(es).`);
+          }}>Send Tap to Pay launch push</button>
+        </div>
+      </section>
+
       <div className="row wrap" style={{ margin: '12px 0' }}>
         <input className="grow" placeholder="Search business or email" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="chips wrap">

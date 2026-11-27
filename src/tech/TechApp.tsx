@@ -5,6 +5,7 @@ import Compose from '../walkaround/Compose';
 import TechAccount from './TechAccount';
 import TechJob from './TechJob';
 import TechMyJobs from './TechMyJobs';
+import PushSetup from '../PushSetup';
 import { exitTechPreview, isTechPreview } from './preview';
 
 /** The technician's app: their jobs and what they need to do them – no prices, invoices or takings. */
@@ -29,6 +30,7 @@ export default function TechApp() {
                 <Route path="*" element={<TechMyJobs />} />
               </Routes>
             </main>
+            <PushSetup />
             <nav className="bottom-nav">
               <div className="side-brand"><SpannrSymbol size={22} color="#f59e0b" /> <span>Spannr</span></div>
               <NavLink to="/" end><span className="nav-icon"><ClipboardList size={22} /></span><span>My jobs</span></NavLink>
