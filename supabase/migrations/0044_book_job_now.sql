@@ -1,4 +1,5 @@
 -- "Book job" button: the booking confirmation goes out on the next run (within a minute).
+-- A short-notice booking gets one text, not a reminder and then a confirmation.
 
 CREATE OR REPLACE FUNCTION public.queue_notifications()
  RETURNS integer
@@ -62,7 +63,7 @@ begin
        and (r.updated_at < (extract(epoch from now()) * 1000)::bigint - 120000 or r.jd ? 'bookedAt')
        and not exists (
          select 1 from public.notifications x
-         where x.business_id = r.business_id and x.job_id = r.job_id and x.kind = 'confirmation'
+         where x.business_id = r.business_id and x.job_id = r.job_id and x.kind in ('confirmation', 'reminder')
            and x.booking_at = r.start_at) then
       kinds := array_append(kinds, 'confirmation');
     end if;
@@ -71,6 +72,8 @@ begin
     -- (Also not in the same pass as a confirmation for a booking already inside the window.)
     if r.rem_on and not ('confirmation' = any(kinds)) and now() >= r.start_at - make_interval(hours => r.rem_hours)
        and r.start_at > now() + interval '15 minutes'
+       -- Not while the booking is still being typed in (it gets a confirmation instead).
+       and (r.updated_at < (extract(epoch from now()) * 1000)::bigint - 120000 or r.jd ? 'bookedAt')
        and not exists (
          select 1 from public.notifications x
          where x.business_id = r.business_id and x.job_id = r.job_id and x.kind = 'confirmation'

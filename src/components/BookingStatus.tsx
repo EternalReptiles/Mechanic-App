@@ -27,7 +27,7 @@ export default function BookingStatus({ job, customer, settings, onBook }: {
     let n = 0;
     let stop = false;
     const look = () => void supabase.from('notifications').select('status, error, channel, sent_at, created_at, booking_at')
-      .eq('business_id', businessId).eq('job_id', job.id).eq('kind', 'confirmation')
+      .eq('business_id', businessId).eq('job_id', job.id).in('kind', ['confirmation', 'reminder'])
       .then(({ data }) => {
         if (stop) return;
         const mine = ((data ?? []) as Note[]).filter((x) => new Date(x.booking_at).getTime() === new Date(start).getTime());
