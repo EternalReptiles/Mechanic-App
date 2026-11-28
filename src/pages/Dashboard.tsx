@@ -40,7 +40,8 @@ export default function Dashboard() {
   const vehicles = useLiveQuery(() => db.vehicles.toArray(), []) ?? [];
   const lowStock = (useLiveQuery(() => db.stock.toArray(), []) ?? []).filter((s) => s.reorderAt > 0 && s.onHand <= s.reorderAt).length;
   const remindersDue = vehicles.filter(
-    (v) => (v.nextServiceDate && daysUntil(v.nextServiceDate) <= 30) || (v.regoExpiry && daysUntil(v.regoExpiry) <= 30),
+    (v) => (v.nextServiceDate && daysUntil(v.nextServiceDate) <= 30 && v.reminders?.service?.for !== v.nextServiceDate)
+      || (v.regoExpiry && daysUntil(v.regoExpiry) <= 30 && v.reminders?.rego?.for !== v.regoExpiry),
   ).length;
   const needsSetup = isAdmin && !settings.abn || settings.businessName === 'My Mobile Mechanics';
 
@@ -157,7 +158,7 @@ export default function Dashboard() {
       )}
 
       <Link to="/reminders" className={`banner${remindersDue ? ' attention' : ''}`}>
-        <span>🔔 <strong>{remindersDue}</strong> service / rego reminder{remindersDue === 1 ? '' : 's'} due in the next 30 days</span>
+        <span>🔔 <strong>{remindersDue}</strong> service / rego reminder{remindersDue === 1 ? '' : 's'} to send (next 30 days)</span>
         <span>›</span>
       </Link>
 

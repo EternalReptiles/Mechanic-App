@@ -35,6 +35,15 @@ export interface Vehicle {
   nextServiceKm?: string;
   /** ISO date (YYYY-MM-DD) */
   regoExpiry?: string;
+  /** Reminders already sent (by hand or automatically): `for` is the due date it was about, so a new due date starts fresh */
+  reminders?: Partial<Record<'service' | 'rego', ReminderSent>>;
+}
+
+export interface ReminderSent {
+  for: string;
+  sentAt: string;
+  /** Job booked from the reminder */
+  jobId?: string;
 }
 
 export type LineItemType = 'labour' | 'part' | 'other';

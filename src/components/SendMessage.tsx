@@ -101,8 +101,8 @@ export default function SendMessage({ customer, jobId, text, subject, intro }: {
 }
 
 /** One-tap text from Spannr (e.g. "On my way", "Car's ready"). Falls back to the phone's Messages app if it can't send. */
-export function QuickText({ customer, jobId, text, label, className = 'btn' }: {
-  customer: Customer; jobId: string; text: string; label: string; className?: string;
+export function QuickText({ customer, jobId, text, label, className = 'btn', onSent }: {
+  customer: Customer; jobId: string; text: string; label: string; className?: string; onSent?: () => void;
 }) {
   const { businessId } = useCloud();
   const [state, setState] = useState<'idle' | 'busy' | 'sent'>('idle');
@@ -111,6 +111,7 @@ export function QuickText({ customer, jobId, text, label, className = 'btn' }: {
     try {
       await sendFromSpannr(businessId, customer.id, jobId, 'sms', '', text);
       setState('sent');
+      onSent?.();
     } catch (e) {
       setState('idle');
       if (confirm(`${(e as Error).message}\n\nSend it from your own phone instead?`)) location.href = smsUrl(customer.phone, text);
