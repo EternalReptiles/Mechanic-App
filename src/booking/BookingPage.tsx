@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../cloud/supabase';
+import AddressInput from '../components/AddressInput';
 
 type Service = { id: string; name: string; durationMins: number; description?: string; price?: number | null };
 type Page = {
@@ -189,7 +190,7 @@ export default function BookingPage() {
               {askAddress && (
                 <label className="field">
                   <span>{mobile ? 'Where will the car be? *' : 'Your address (if you\'d like us to come to you)'}</span>
-                  <input required={mobile} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} autoComplete="street-address" />
+                  <AddressInput required={mobile} value={form.address} onChange={(address) => setForm({ ...form, address })} />
                 </label>
               )}
               {!mobile && page.workshopAddress && <p className="small muted">Workshop: {page.workshopAddress}</p>}

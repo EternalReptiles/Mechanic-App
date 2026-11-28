@@ -11,6 +11,7 @@ import { useSettings } from '../hooks';
 import type { Customer, Vehicle } from '../types';
 import { fmtDay, mapsUrl, telUrl, vehicleLabel } from '../utils';
 import TextThread from '../messages/TextThread';
+import AddressInput from '../components/AddressInput';
 
 function VehicleEditor({ vehicle, onDone }: { vehicle: Vehicle; onDone: () => void }) {
   const [v, setV] = useState(vehicle);
@@ -91,7 +92,7 @@ export default function CustomerPage() {
         <Field label="Name" wide><input value={c.name} onChange={set('name')} /></Field>
         <Field label="Mobile"><input type="tel" value={c.phone} onChange={set('phone')} /></Field>
         <Field label="Email"><input type="email" value={c.email} onChange={set('email')} /></Field>
-        <Field label="Address" wide><input value={c.address} onChange={set('address')} /></Field>
+        <Field label="Address" wide><AddressInput value={c.address} onChange={(address) => setC({ ...c, address })} /></Field>
         <Field label="Notes" wide><textarea rows={2} value={c.notes} onChange={set('notes')} /></Field>
         <label className="field checkbox wide">
           <input type="checkbox" checked={!!c.noAutoMessages} onChange={(e) => setC({ ...c, noAutoMessages: e.target.checked })} />

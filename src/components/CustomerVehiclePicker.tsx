@@ -6,6 +6,7 @@ import { db, newCustomer, newVehicle } from '../db';
 import type { Customer, Vehicle } from '../types';
 import { vehicleLabel } from '../utils';
 import { Field } from './ui';
+import AddressInput from './AddressInput';
 
 /**
  * One search box for the whole "who and what car" question:
@@ -97,7 +98,7 @@ export default function CustomerVehiclePicker({
         <Field label="Customer name"><input autoFocus value={nc.name} onChange={(e) => setNc({ ...nc, name: e.target.value })} /></Field>
         <Field label="Mobile"><input type="tel" value={nc.phone} onChange={(e) => setNc({ ...nc, phone: e.target.value })} /></Field>
         <Field label="Email"><input type="email" value={nc.email} onChange={(e) => setNc({ ...nc, email: e.target.value })} /></Field>
-        <Field label="Customer address"><input value={nc.address} onChange={(e) => setNc({ ...nc, address: e.target.value })} /></Field>
+        <Field label="Customer address"><AddressInput value={nc.address} onChange={(address) => setNc({ ...nc, address })} /></Field>
         <h3 className="wide">Their vehicle (optional)</h3>
         {vehicleFields}
         <div className="row wide">

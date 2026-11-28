@@ -1,3 +1,4 @@
+import AddressInput from '../components/AddressInput';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -364,7 +365,7 @@ export default function JobPage() {
             <JobMessages jobId={job.id} />
             {!inWorkshop && (
               <Field label="Where's the car?" wide>
-                <input value={job.siteAddress} placeholder={customer?.address || 'Address'} onChange={(e) => update({ siteAddress: e.target.value })} />
+                <AddressInput value={job.siteAddress} placeholder={customer?.address || 'Address'} onChange={(siteAddress) => update({ siteAddress })} />
               </Field>
             )}
             <Field label="Customer says…" wide>

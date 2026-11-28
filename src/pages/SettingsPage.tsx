@@ -16,6 +16,7 @@ import NumberInput from '../components/NumberInput';
 import CloseAccount from './CloseAccount';
 import { supabase } from '../cloud/supabase';
 import { TAP_TO_PAY_NAME, tapToPayAvailable } from '../payments/terminal';
+import AddressInput from '../components/AddressInput';
 
 export default function SettingsPage() {
   const [s, setS] = useState<Settings | null>(null);
@@ -164,7 +165,7 @@ export default function SettingsPage() {
         <Field label="Phone"><input type="tel" value={s.phone} onChange={text('phone')} /></Field>
         <Field label="Email"><input type="email" value={s.email} onChange={text('email')} /></Field>
         <Field label="Website"><input value={s.website} onChange={text('website')} /></Field>
-        <Field label="Address" wide><input value={s.address} onChange={text('address')} /></Field>
+        <Field label="Address" wide><AddressInput value={s.address} onChange={(address) => setS({ ...s, address })} /></Field>
         <Field label="How you work" wide>
           <select value={s.businessType} onChange={(e) => setS({ ...s, businessType: e.target.value as Settings['businessType'] })}>
             <option value="mobile">🚐 Mobile – I go to the customer</option>
