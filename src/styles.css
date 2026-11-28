@@ -866,3 +866,9 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 .refer-points { padding-left: 18px; margin: 8px 0 12px; }
 .refer-points li { margin: 4px 0; }
 .refer-link { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bg); border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; margin: 0 0 10px; word-break: break-all; }
+
+/* Book job */
+.booking-box { display: flex; flex-direction: column; gap: 6px; }
+.booking-box.booked { background: var(--bg); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 10px; padding: 10px 12px; }
+.booking-box.booked.ok { border-left-color: #16a34a; }
+.booking-box.booked.warn { border-left-color: #dc2626; }

@@ -154,6 +154,8 @@ export interface Job {
   keyTag?: string;
   droppedOffAt?: string;
   promisedAt?: string;
+  /** When "Book job" was pressed – the confirmation text goes straight away. Cleared if the time changes. */
+  bookedAt?: string;
   collectedAt?: string;
   /** Time clocked on this job (technician timesheets) */
   timeEntries?: TimeEntry[];

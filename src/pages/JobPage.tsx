@@ -11,6 +11,8 @@ import { useCloud } from '../cloud/CloudProvider';
 import ApprovalList, { WalkaroundSection } from '../walkaround/WalkaroundList';
 import SendSignoff from '../walkaround/SendSignoff';
 import JobMessages from '../components/JobMessages';
+import BookingStatus from '../components/BookingStatus';
+import { syncNow } from '../cloud/sync';
 import Upgrade from '../components/Upgrade';
 import TaskChecklist from '../components/TaskChecklist';
 import { finishJobPatch, missingRequired, odometerFromTasks, tasksFromTemplate, tasksWithOdometer, templatesFor } from '../jobTemplates';
@@ -330,6 +332,7 @@ export default function JobPage() {
                 onChange={(e) => update({
                   scheduledStart: fromLocalInput(e.target.value),
                   status: job.status === 'quote' && e.target.value ? 'scheduled' : job.status,
+                  bookedAt: undefined,
                 })} />
             </Field>
             <Field label="Duration">
@@ -342,6 +345,11 @@ export default function JobPage() {
                 {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS[s].label}</option>)}
               </select>
             </Field>
+            <BookingStatus job={job} customer={customer ?? undefined} settings={settings} onBook={() => {
+              const booked: Job = { ...job, status: 'scheduled', bookedAt: new Date().toISOString() };
+              setJob(booked);
+              void db.jobs.put(booked).then(() => syncNow()).catch(() => undefined);
+            }} />
             <JobMessages jobId={job.id} />
             {!inWorkshop && (
               <Field label="Where's the car?" wide>
