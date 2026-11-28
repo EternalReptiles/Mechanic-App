@@ -1,3 +1,4 @@
+import RegoLookup from './RegoLookup';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -80,7 +81,9 @@ export default function CustomerVehiclePicker({
 
   const vehicleFields = (
     <>
-      <Field label="Rego"><input value={nv.rego} onChange={(e) => setNv({ ...nv, rego: e.target.value })} autoCapitalize="characters" /></Field>
+      <RegoLookup rego={nv.rego} onRego={(rego) => setNv((x) => ({ ...x, rego }))}
+        onFound={(r) => setNv((x) => ({ ...x, make: r.make || x.make, model: r.model || x.model, year: r.year || x.year,
+          notes: x.notes || [r.description, r.body].filter(Boolean).join(' · ') }))} />
       <Field label="Year"><input inputMode="numeric" value={nv.year} onChange={(e) => setNv({ ...nv, year: e.target.value })} /></Field>
       <Field label="Make"><input value={nv.make} onChange={(e) => setNv({ ...nv, make: e.target.value })} /></Field>
       <Field label="Model"><input value={nv.model} onChange={(e) => setNv({ ...nv, model: e.target.value })} /></Field>

@@ -846,3 +846,10 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
   .day.empty h3 { margin: 0; font-size: .95rem; }
   .day.empty p { margin: 0; }
 }
+
+/* Rego lookup */
+.rego-row { gap: 6px; flex-wrap: nowrap; }
+.rego-row select { width: auto; flex: 0 0 auto; }
+.rego-row .btn { flex: 0 0 auto; white-space: nowrap; }
+.rego-options .btn { margin-top: 4px; text-align: left; justify-content: flex-start; }
+.rego-row input { text-transform: uppercase; }

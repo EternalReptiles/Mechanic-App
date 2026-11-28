@@ -1,3 +1,4 @@
+import RegoLookup from '../components/RegoLookup';
 import PortalShare from '../portal/PortalShare';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState } from 'react';
@@ -17,7 +18,9 @@ function VehicleEditor({ vehicle, onDone }: { vehicle: Vehicle; onDone: () => vo
     setV({ ...v, [k]: e.target.value });
   return (
     <div className="card grid">
-      <Field label="Rego"><input value={v.rego} onChange={set('rego')} /></Field>
+      <RegoLookup rego={v.rego} onRego={(rego) => setV((x) => ({ ...x, rego }))}
+        onFound={(r) => setV((x) => ({ ...x, make: r.make || x.make, model: r.model || x.model, year: r.year || x.year,
+          notes: x.notes || [r.description, r.body].filter(Boolean).join(' · ') }))} />
       <Field label="Year"><input inputMode="numeric" value={v.year} onChange={set('year')} /></Field>
       <Field label="Make"><input value={v.make} onChange={set('make')} /></Field>
       <Field label="Model"><input value={v.model} onChange={set('model')} /></Field>
