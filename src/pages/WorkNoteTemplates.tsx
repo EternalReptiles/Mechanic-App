@@ -47,7 +47,7 @@ export default function WorkNoteTemplates() {
               </Field>
               <Field label="Work done" wide>
                 <textarea rows={6} value={t.text} onChange={(e) => set(t.id, { text: e.target.value })} />
-                <small className="muted">Fills in by itself: {'{odometer}'} {'{nextServiceDate}'} {'{nextServiceKm}'} {'{rego}'} {'{vehicle}'}</small>
+                <small className="muted">Fills in by itself: {'{makeModel}'} {'{rego}'} {'{odometer}'} {'{serviceKm}'} {'{frontBrakes}'} {'{rearBrakes}'} {'{nextServiceDate}'} {'{nextServiceKm}'} {'{vehicle}'}</small>
               </Field>
               <div className="wide row">
                 <span className="grow" />

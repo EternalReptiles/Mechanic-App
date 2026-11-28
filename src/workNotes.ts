@@ -40,7 +40,17 @@ export function bestWorkNote(job: Job, list: WorkNoteTemplate[]): WorkNoteTempla
   return best;
 }
 
-/** Fills {odometer} {nextServiceDate} {nextServiceKm} {rego} {vehicle} for this job. */
+/** Smallest reading (mm) of an inspection item whose name starts with `label`, e.g. front pads "6" – or blank. */
+function pads(job: Job, label: RegExp): string {
+  const it = (job.checklist ?? []).find((c) => label.test(c.label));
+  const vals = Object.values(it?.readings ?? {}).filter((v): v is number => typeof v === 'number');
+  return vals.length ? String(Math.min(...vals)) : '__';
+}
+
+/**
+ * Fills {odometer} {serviceKm} {nextServiceDate} {nextServiceKm} {rego} {vehicle} {makeModel}
+ * {frontBrakes} {rearBrakes} (from the vehicle inspection) for this job.
+ */
 export function fillWorkNote(t: WorkNoteTemplate, job: Job, vehicle: Vehicle | undefined, s: Settings): string {
   const km = Number(String(job.odometer || vehicle?.odometer || '').replace(/\D/g, ''));
   const nextDate = vehicle?.nextServiceDate && vehicle.nextServiceDate > new Date().toISOString().slice(0, 10)
@@ -51,6 +61,11 @@ export function fillWorkNote(t: WorkNoteTemplate, job: Job, vehicle: Vehicle | u
     nextServiceDate: fmtDay(nextDate),
     nextServiceKm: nextKm ? nextKm.toLocaleString('en-AU') : '___',
     rego: vehicle?.rego ?? '',
+    makeModel: [vehicle?.make, vehicle?.model].filter(Boolean).join(' ') || 'Vehicle',
+    // The logbook service this is, e.g. 89,620 km on the clock → "90,000".
+    serviceKm: km ? (Math.round(km / (s.serviceIntervalKm || 10000)) * (s.serviceIntervalKm || 10000) || s.serviceIntervalKm || 10000).toLocaleString('en-AU') : '___',
+    frontBrakes: pads(job, /^front brake/i),
+    rearBrakes: pads(job, /^rear brake/i),
     vehicle: [vehicle?.year, vehicle?.make, vehicle?.model].filter(Boolean).join(' ') || 'vehicle',
   });
   return text;
