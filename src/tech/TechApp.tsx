@@ -6,6 +6,7 @@ import TechAccount from './TechAccount';
 import TechJob from './TechJob';
 import TechMyJobs from './TechMyJobs';
 import Timesheets from '../time/Timesheets';
+import Help from '../pages/Help';
 import PushSetup from '../PushSetup';
 import { exitTechPreview, isTechPreview } from './preview';
 
@@ -29,6 +30,7 @@ export default function TechApp() {
                 <Route path="/jobs/:id" element={<TechJob />} />
                 <Route path="/account" element={<TechAccount />} />
                 <Route path="/timesheets" element={<Timesheets />} />
+                <Route path="/settings/help" element={<Help />} />
                 <Route path="*" element={<TechMyJobs />} />
               </Routes>
             </main>

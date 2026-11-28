@@ -321,6 +321,8 @@ export interface Settings {
   booking?: BookingSettings;
   /** Automatic booking confirmations and reminders (sent by the server) */
   notify?: NotifySettings;
+  /** Getting-started checklist on the dashboard */
+  onboarding?: { hidden?: boolean; done?: Record<string, boolean> };
 }
 
 export interface NotifySettings {

@@ -825,3 +825,17 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 .portal-foot { text-align: center; color: #64748b; font-size: .8rem; margin-top: 24px; line-height: 1.6; }
 .portal-powered { margin-top: 8px; opacity: .8; }
 .portal-share { margin: 8px 0; }
+
+/* Getting started checklist + Help */
+.getting-started { border-color: var(--primary); }
+.gs-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 10px 0 4px; }
+.gs-bar span { display: block; height: 100%; background: var(--primary); transition: width .3s; }
+.gs-steps { list-style: none; padding: 0; margin: 8px 0; }
+.gs-steps a { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--border); color: inherit; text-decoration: none; }
+.gs-steps a > span:nth-child(2) { flex: 1; }
+.gs-tick { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); display: inline-flex; align-items: center; justify-content: center; font-size: .8rem; flex: 0 0 auto; }
+.gs-steps li.done .gs-tick { background: #16a34a; border-color: #16a34a; color: #fff; }
+.gs-steps li.done strong { text-decoration: line-through; opacity: .6; }
+.faq { border-top: 1px solid var(--border); padding: 10px 0; }
+.faq summary { cursor: pointer; font-weight: 600; }
+.faq p { margin: 8px 0 0; }

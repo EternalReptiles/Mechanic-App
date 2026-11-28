@@ -11,6 +11,7 @@ import SyncBadge from '../cloud/SyncBadge';
 import { createJob, db } from '../db';
 import { useLookups, useSettings } from '../hooks';
 import SpannrAlerts from '../components/SpannrAlerts';
+import GettingStarted from '../components/GettingStarted';
 import { addDays, dayKey, daysUntil, money, STATUS, totals } from '../utils';
 
 export default function Dashboard() {
@@ -130,12 +131,7 @@ export default function Dashboard() {
       )}
 
       <SpannrAlerts />
-      {needsSetup && (
-        <Link to="/settings" className="banner">
-          <span><strong>Set up your business</strong><br />Add your business name, ABN, logo and bank details so they appear on invoices.</span>
-          <span>›</span>
-        </Link>
-      )}
+      {isAdmin && <GettingStarted />}
 
       {isAdmin && <div className="stats">
         <Link to="/jobs?status=invoiced" className="stat">

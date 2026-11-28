@@ -17,6 +17,7 @@ export default function TechAccount() {
         <SyncBadge detailed />
         <div className="row wrap" style={{ marginTop: 12 }}>
           <Link className="btn" to="/timesheets">⏱ My hours</Link>
+          <Link className="btn" to="/settings/help">❓ Help</Link>
           {isTechPreview() ? (
             <button className="btn primary" onClick={exitTechPreview}>Exit technician preview</button>
           ) : (
