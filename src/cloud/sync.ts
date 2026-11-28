@@ -193,6 +193,17 @@ async function push(bid: string) {
         if (cur && cur.updatedAt === r.updatedAt) await t.put({ ...cur, _dirty: 0, _remote: 1 });
       }
     });
+
+    // The server keeps the newest edit. If another device had already saved a newer one, ours was
+    // turned down – fetch theirs so this device doesn't keep showing its older copy.
+    for (let i = 0; i < dirty.length; i += 200) {
+      const ids = dirty.slice(i, i + 200).map((r) => r.id);
+      const { data, error } = await supabase.from(table).select('id,data,updated_at,deleted,server_ts').eq('business_id', bid).in('id', ids);
+      if (error) throw error;
+      const sent = new Map(dirty.map((r) => [r.id, Math.round(r.updatedAt ?? 0)]));
+      const newer = ((data ?? []) as Row[]).filter((row) => Number(row.updated_at) > (sent.get(row.id) ?? 0));
+      if (newer.length) await apply(table, newer);
+    }
   }
 
   const tombs = await db.tombstones.toArray();
@@ -220,7 +231,14 @@ interface Row {
   server_ts: string;
 }
 
+// Bump to make every device download everything once more (e.g. after a sync bug left stale copies).
+const RESYNC = 2;
+
 async function pull(bid: string) {
+  if ((await getMeta<number>('resync')) !== RESYNC) {
+    for (const table of SYNCED_TABLES) await setMeta(`cursor:${table}`, '1970-01-01T00:00:00Z');
+    await setMeta('resync', RESYNC);
+  }
   for (const table of SYNCED_TABLES) {
     const cursorKey = `cursor:${table}`;
     const start = (await getMeta<string>(cursorKey)) ?? '1970-01-01T00:00:00Z';
