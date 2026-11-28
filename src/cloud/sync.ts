@@ -37,6 +37,7 @@ let running = false;
 let again = false;
 let debounce: ReturnType<typeof setTimeout> | undefined;
 let interval: ReturnType<typeof setInterval> | undefined;
+let live: ReturnType<typeof supabase.channel> | null = null;
 
 const PULL_EVERY_MS = 30_000;
 const PAGE = 500;
@@ -53,7 +54,7 @@ export function startSync(bid: string) {
   businessId = bid;
   changeListener.onLocalChange = () => {
     void refreshPending();
-    schedule(1500);
+    schedule(800);
   };
   jobNumbers.allocateRemote = async () => {
     if (!businessId || !navigator.onLine) return null;
@@ -63,6 +64,16 @@ export function startSync(bid: string) {
   window.addEventListener('online', onOnline);
   document.addEventListener('visibilitychange', onVisible);
   interval = setInterval(() => void syncNow(), PULL_EVERY_MS);
+  // Live: another device saved something for this business → fetch it now.
+  live = supabase.channel(`sync-${bid}`);
+  for (const table of SYNCED_TABLES) {
+    live.on('postgres_changes', { event: '*', schema: 'public', table, filter: `business_id=eq.${bid}` }, () => schedule(400));
+  }
+  // Make sure the live connection uses this login (so it only hears this business's changes).
+  void supabase.auth.getSession().then(async ({ data }) => {
+    if (data.session) await supabase.realtime.setAuth(data.session.access_token);
+    live?.subscribe();
+  });
   void syncNow();
 }
 
@@ -74,6 +85,8 @@ export function stopSync() {
   document.removeEventListener('visibilitychange', onVisible);
   clearInterval(interval);
   clearTimeout(debounce);
+  if (live) void supabase.removeChannel(live);
+  live = null;
 }
 
 export async function pendingCount(): Promise<number> {
