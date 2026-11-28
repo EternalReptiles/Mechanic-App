@@ -126,6 +126,24 @@
 
   /* FAQ */
   .faq { max-width: 760px; margin: 0 auto; }
+  .ref-banner { display: none; background: #fef3c7; color: #78350f; text-align: center; padding: 10px 16px; font-weight: 600; }
+  .ref-banner.on { display: block; }
+  .shot-phone { border-radius: 34px; background: #020617; padding: 9px; box-shadow: 0 24px 50px rgba(2,6,23,.25), 0 0 0 1px rgba(2,6,23,.06); }
+  .shot-phone img { display: block; width: 100%; border-radius: 26px; }
+  .gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-top: 28px; }
+  .gallery figure { margin: 0; }
+  .gallery figcaption { margin-top: 12px; font-size: .95rem; color: var(--muted); }
+  .gallery figcaption strong { display: block; color: var(--ink); font-size: 1rem; margin-bottom: 2px; }
+  .history-card { border-radius: 18px; box-shadow: 0 20px 40px rgba(2,6,23,.12); width: 100%; display: block; }
+  .switch { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .compare-wrap { overflow-x: auto; margin-top: 24px; }
+  table.compare { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; min-width: 620px; }
+  table.compare th, table.compare td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: .95rem; }
+  table.compare th { background: #f8fafc; font-size: .9rem; }
+  table.compare td.us, table.compare th.us { background: #fffbeb; font-weight: 600; }
+  table.compare tr:last-child td { border-bottom: 0; }
+  .yes { color: #15803d; font-weight: 700; }
+  .note { color: var(--muted); font-size: .85rem; margin-top: 10px; }
   details { border-bottom: 1px solid var(--line); padding: 18px 0; }
   summary { cursor: pointer; font-weight: 700; font-size: 1.05rem; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
   summary::-webkit-details-marker { display: none; }
@@ -143,6 +161,8 @@
     .hero .wrap, .spotlight { grid-template-columns: 1fr; }
     .phone { margin-top: 12px; }
     .features, .modes { grid-template-columns: 1fr 1fr; }
+    .gallery { grid-template-columns: 1fr 1fr; }
+    .switch { grid-template-columns: 1fr; }
     .plans { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 600px) {
@@ -170,6 +190,7 @@
   </div>
 </header>
 
+<div class="ref-banner" id="ref-banner"></div>
 <main id="top">
   <div class="hero">
     <div class="wrap">
@@ -183,28 +204,26 @@
         </div>
         <p class="fine">No credit card needed · Set up in 5 minutes · Cancel any time</p>
       </div>
-      <div class="phone" aria-hidden="true">
-        <div class="screen">
-          <div class="s-top">
-            <div class="s-biz"><span class="dot"></span>Your Business Name</div>
-            <div class="s-title">Video walk-around · 2019 Toyota HiLux</div>
-          </div>
-          <div class="s-video"><small>▶ 1:24 · Watch your mechanic's video</small></div>
-          <div class="s-item">
-            <div class="row"><span>Front brake pads</span><span>$289</span></div>
-            <span class="s-tag t-urgent">Urgent · 2.5 mm left</span>
-            <div class="s-choice"><b class="on">✓ Go ahead</b><b>Not now</b></div>
-          </div>
-          <div class="s-item">
-            <div class="row"><span>Battery</span><span>$245</span></div>
-            <span class="s-tag t-soon">Soon · 62% health</span>
-            <div class="s-choice"><b>✓ Go ahead</b><b class="on" style="background:#64748b;border-color:#64748b">Not now</b></div>
-          </div>
-          <div class="s-sign">Sign &amp; approve – $289.00</div>
-        </div>
-      </div>
+      <div class="phone"><img src="/landing/shots/home.jpg" alt="Spannr on a phone: today's jobs, money owing and service reminders" style="display:block;width:100%;border-radius:30px"></div>
     </div>
   </div>
+
+  <section class="soft">
+    <div class="wrap">
+      <h2 class="center">See Spannr in action</h2>
+      <p class="sub center" style="margin-left:auto;margin-right:auto">Real screens from the app – nothing mocked up.</p>
+      <div class="gallery">
+        <figure><div class="shot-phone"><img src="/landing/shots/quote.jpg" alt="A branded quote" loading="lazy"></div>
+          <figcaption><strong>Quotes in seconds</strong>From your price list, with your logo, GST done. Customers approve each repair from their phone.</figcaption></figure>
+        <figure><div class="shot-phone"><img src="/landing/shots/portal.jpg" alt="A customer's own page" loading="lazy"></div>
+          <figcaption><strong>Every customer gets their own page</strong>Their cars, next service, history and invoices with Pay now – in your branding.</figcaption></figure>
+        <figure><div class="shot-phone"><img src="/landing/shots/reminders.jpg" alt="Service reminders" loading="lazy"></div>
+          <figcaption><strong>Service reminders that send themselves</strong>Spannr texts customers before their service is due, then you book them in.</figcaption></figure>
+        <figure><div class="shot-phone"><img src="/landing/shots/home.jpg" alt="Today's jobs" loading="lazy"></div>
+          <figcaption><strong>Your day at a glance</strong>Today's jobs, money owing, overdue invoices and who's due back.</figcaption></figure>
+      </div>
+    </div>
+  </section>
 
   <section>
     <div class="wrap center">
@@ -235,6 +254,21 @@
       <h2>Everything you need, without the clutter</h2>
       <p class="sub">Made by someone who spends their day under cars. Big buttons, few taps, and it works with greasy hands.</p>
       <div class="features">
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.6l-5 3.6 1.9-5.8L4 8.8h6.1z"/></svg></div>
+          <h3>AI that does the typing</h3>
+          <p>Talk into your phone and Spannr turns it into tidy job notes and a plain-English summary for the customer. It drafts quotes from inspections and replies to texts.</p>
+        </div>
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h4M14 12h4"/></svg></div>
+          <h3>Rego lookup</h3>
+          <p>Type the plate and state – make, model and year fill themselves in. No more guessing the engine on the phone.</p>
+        </div>
+        <div class="feature">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></div>
+          <h3>Fleet &amp; account customers</h3>
+          <p>Payment terms like 30 days end of month, PO numbers on every invoice, and a monthly statement with what's overdue.</p>
+        </div>
         <div class="feature">
           <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
           <h3>Bookings &amp; schedule</h3>
@@ -308,6 +342,47 @@
     </div>
   </section>
 
+  <section class="soft">
+    <div class="wrap switch">
+      <div>
+        <span class="eyebrow">Switching is easy</span>
+        <h2>Bring your customers – and their history – with you</h2>
+        <p class="sub" style="margin-bottom:0">Coming from ServiceM8 or a spreadsheet? Export your client list and job list, drop them into Spannr, and in a couple of minutes you've got your customers, their cars and every past job.</p>
+        <ul class="checks">
+          <li>Customers, phone numbers and emails – even when Excel has mangled the numbers</li>
+          <li>Cars worked out from your job notes, with the last odometer reading</li>
+          <li>Past jobs and payments, so your reports start from day one</li>
+          <li>Next service dates set from each car's last service</li>
+        </ul>
+      </div>
+      <div><img class="history-card" src="/landing/shots/history.jpg" alt="A car's service history in Spannr" loading="lazy"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2 class="center">How Spannr compares</h2>
+      <p class="sub center" style="margin-left:auto;margin-right:auto">One price for your business, built for mechanics – not general trades.</p>
+      <div class="compare-wrap">
+        <table class="compare">
+          <thead><tr><th></th><th class="us">Spannr</th><th>MechanicDesk</th><th>ServiceM8</th></tr></thead>
+          <tbody>
+            <tr><td>Built for</td><td class="us">Mobile mechanics and workshops</td><td>Workshops</td><td>All trades</td></tr>
+            <tr><td>Monthly job limit</td><td class="us"><span class="yes">No limit</span></td><td>Check their plans</td><td>50 – 1,500 jobs, by plan</td></tr>
+            <tr><td>Texts to customers included</td><td class="us"><span class="yes">✓</span> 50 – 800 a month</td><td>Check their plans</td><td><span class="yes">✓</span> 100 – 3,000 a month</td></tr>
+            <tr><td>Customers approve each repair from a video, and sign</td><td class="us"><span class="yes">✓</span></td><td>Check</td><td>Check</td></tr>
+            <tr><td>Automatic service reminders by text</td><td class="us"><span class="yes">✓</span></td><td>Check</td><td>Check</td></tr>
+            <tr><td>A page for each customer with their car's history</td><td class="us"><span class="yes">✓</span></td><td>Check</td><td>Check</td></tr>
+            <tr><td>Rego lookup</td><td class="us"><span class="yes">✓</span></td><td>Check</td><td>Check</td></tr>
+            <tr><td>Works offline, syncs when you're back in signal</td><td class="us"><span class="yes">✓</span></td><td>Check</td><td>Check</td></tr>
+            <tr><td>Price for a 3-person business</td><td class="us">$79/month + GST</td><td>From about $60/month</td><td>From $29/month (50 jobs) – unlimited staff</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Competitor details are from their public pricing pages and listings (November 2026) and can change – check with them for the latest. "Check" means we couldn't confirm it from their public information.</p>
+    </div>
+  </section>
+
   <section class="soft" id="pricing">
     <div class="wrap center">
       <h2>One price for your business, not per user</h2>
@@ -360,6 +435,8 @@
         <details><summary>Do my customers need to download anything?</summary><p>No. Quotes, video walk-arounds, sign-offs and invoices open from a link in a text or email, on any phone.</p></details>
         <details><summary>Is it per user?</summary><p>No. You pay one price for your business. Each plan includes a set number of users (unlimited on Business), so adding a technician doesn't add to your bill.</p></details>
         <details><summary>How do card payments work?</summary><p>You connect your own Stripe account in a few minutes, and payments go straight to your bank. Stripe charges its standard card fees and Spannr adds 0.5%. There are no monthly terminal fees.</p></details>
+        <details><summary>Can I bring my data from ServiceM8?</summary><p>Yes. Export the Client List and Job List from ServiceM8's reports, then use Settings → Import from ServiceM8. Your customers, cars and job history come across in a couple of minutes.</p></details>
+        <details><summary>Is there a referral offer?</summary><p>Yes – give a month, get a month. If another mechanic signs up with your link, their first paid month is free, and you get a free month once they start paying.</p></details>
         <details><summary>Can I cancel any time?</summary><p>Yes. There's no lock-in contract. Cancel from your billing settings and you keep access until the end of the period you've paid for.</p></details>
       </div>
     </div>
@@ -383,6 +460,22 @@
 
 <script>
   document.getElementById('yr').textContent = new Date().getFullYear();
+  (function () {
+    var ref = new URLSearchParams(location.search).get('ref');
+    try { if (ref && /^[A-Za-z0-9-]{4,16}$/.test(ref)) localStorage.setItem('spannr-ref', ref.toUpperCase()); ref = localStorage.getItem('spannr-ref'); } catch (e) {}
+    if (!ref) return;
+    document.querySelectorAll('a[href^="https://app.spannr.au"]').forEach(function (a) {
+      var u = new URL(a.href); u.searchParams.set('ref', ref); a.href = u.toString();
+    });
+    fetch('https://lmtmsnkjowgeturblzzj.supabase.co/rest/v1/rpc/referral_name', {
+      method: 'POST', headers: { apikey: 'sb_publishable_t4j0d740o15eYkSnsjqtVQ_0VrVMrWm', 'Content-Type': 'application/json' }, body: JSON.stringify({ p_code: ref })
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (name) {
+      if (typeof name !== 'string' || !name) return;
+      var b = document.getElementById('ref-banner');
+      b.textContent = '🎁 ' + name + ' sent you – your first paid month of Spannr is free.';
+      b.classList.add('on');
+    }).catch(function () {});
+  })();
   const buttons = document.querySelectorAll('.toggle button');
   buttons.forEach((b) => b.addEventListener('click', () => {
     buttons.forEach((x) => x.classList.toggle('on', x === b));

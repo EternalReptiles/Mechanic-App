@@ -101,7 +101,7 @@ export default function CustomerPortal() {
           <h2>Booked in</h2>
           {upcoming.map((j) => (
             <div key={j.number} className="portal-row">
-              <span><strong>{j.title || `Job #${j.number}`}</strong><br /><small className="muted">{car(j.vehicleId)?.rego ?? ''} {STATUS[j.status]}</small></span>
+              <span><strong>{j.title || `Job #${j.number}`}</strong><br /><small className="muted">{[car(j.vehicleId)?.rego, STATUS[j.status]].filter(Boolean).join(' · ')}</small></span>
             </div>
           ))}
         </section>
