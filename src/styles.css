@@ -875,3 +875,9 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 
 /* Work done templates */
 .work-note-picker { align-items: center; margin-top: 6px; }
+
+/* Inspection results on the customer's quote */
+.insp-row { border-top: 1px solid var(--border, #e2e8f0); padding: 10px 0; }
+.insp-fine summary { cursor: pointer; padding: 10px 0; }
+.quote-extras { display: flex; flex-direction: column; gap: 6px; margin: 0 0 12px; }
+.quote-extras .check-row { display: flex; gap: 8px; align-items: center; font-size: .95rem; }

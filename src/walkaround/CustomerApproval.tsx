@@ -155,6 +155,8 @@ export default function CustomerApproval() {
         <video className="wa-video" src={videoUrl(w.video_path)} controls playsInline preload="metadata" />
       )}
 
+      {(c.inspection?.length ?? 0) > 0 && <InspectionResults items={c.inspection!} />}
+
       {!isWalk && (
         <section>
           <h2>{kind === 'quote' ? 'Quote' : 'Work completed'}{c.jobNumber ? ` · #${c.jobNumber}` : ''}</h2>
@@ -369,5 +371,40 @@ function Terms({ text }: { text: string }) {
         ))}
       </ol>
     </details>
+  );
+}
+
+const RESULT: Record<string, { label: string; color: string; rank: number }> = {
+  urgent: { label: 'Urgent', color: '#dc2626', rank: 0 },
+  attention: { label: 'Needs attention soon', color: '#d97706', rank: 1 },
+  ok: { label: 'OK', color: '#16a34a', rank: 2 },
+  na: { label: 'N/A', color: '#94a3b8', rank: 3 },
+};
+
+/** The vehicle inspection, sent with the quote: what needs doing first, everything that's fine underneath. */
+function InspectionResults({ items }: { items: NonNullable<WalkContent['inspection']> }) {
+  const sorted = [...items].sort((a, b) => (RESULT[a.result]?.rank ?? 9) - (RESULT[b.result]?.rank ?? 9));
+  const flagged = sorted.filter((i) => i.result === 'urgent' || i.result === 'attention');
+  const fine = sorted.filter((i) => !(i.result === 'urgent' || i.result === 'attention'));
+  const row = (i: (typeof items)[number]) => (
+    <div key={i.label} className="insp-row">
+      <div className="row between">
+        <strong>{i.label}</strong>
+        <span className="prio" style={{ background: RESULT[i.result]?.color ?? '#94a3b8' }}>{RESULT[i.result]?.label ?? i.result}</span>
+      </div>
+      {(i.detail || i.note) && <p className="small" style={{ margin: '4px 0 0' }}>{[i.detail, i.note].filter(Boolean).join(' – ')}</p>}
+    </div>
+  );
+  return (
+    <section>
+      <h2>Inspection results</h2>
+      {flagged.length ? flagged.map(row) : <p className="small">✓ Everything we checked is in good condition.</p>}
+      {fine.length > 0 && (
+        <details className="insp-fine">
+          <summary className="small">✓ {fine.length} other item{fine.length === 1 ? '' : 's'} checked – OK</summary>
+          {fine.map(row)}
+        </details>
+      )}
+    </section>
   );
 }

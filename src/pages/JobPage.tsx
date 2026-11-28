@@ -424,6 +424,9 @@ export default function JobPage() {
           {(job.checklist?.length ?? 0) > 0 && (
             <Link className="btn block" to={`/jobs/${job.id}/report`}>📋 View inspection report</Link>
           )}
+          {(job.checklist?.length ?? 0) > 0 && job.status === 'quote' || job.status === 'scheduled' ? (
+            <p className="small muted" style={{ marginBottom: 0 }}>Tip: the inspection results and your video can go with the quote in one text – Billing tab → Send quote to approve.</p>
+          ) : null}
         </section>
         <AiQuote job={job} vehicle={vehicle} labourRate={settings.labourRate} update={update} />
         {!can('walkarounds') ? <Upgrade feature="walkarounds" what="Video walk-arounds" /> : <WalkaroundSection

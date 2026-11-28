@@ -71,6 +71,8 @@ export interface WalkContent {
   total?: number;
   /** YYYY-MM-DD, job sign-off only */
   dueDate?: string;
+  /** Quotes: the vehicle inspection results, so it all goes in one link */
+  inspection?: { label: string; result: string; detail?: string; note?: string }[];
 }
 
 export interface WalkRecord {
