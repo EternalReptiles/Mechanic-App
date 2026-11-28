@@ -23,12 +23,14 @@ type Allowance = { sms_allowance: number; sms_used: number; sms_ready: boolean; 
  * "Send by text / Send by email" buttons. Messages go out from Spannr (texts via the business's plan allowance,
  * emails from bookings@spannr.au in the business's branding). Sending from the mechanic's own phone stays available.
  */
-export default function SendMessage({ customer, jobId, text, subject, intro }: {
+export default function SendMessage({ customer, jobId, text, subject, intro, onSent }: {
   customer?: Customer;
   jobId: string;
   text: string;
   subject: string;
   intro?: string;
+  /** Called once it's gone (from Spannr, or handed to the phone's own Messages / email app). */
+  onSent?: () => void;
 }) {
   const { businessId, businessName } = useCloud();
   const parts = textsFor(businessName, 'message', text);
@@ -54,6 +56,7 @@ export default function SendMessage({ customer, jobId, text, subject, intro }: {
     try {
       const r = await sendFromSpannr(businessId, customer!.id, jobId, channel, subject, text);
       setSent((s) => ({ ...s, [channel]: r.to }));
+      onSent?.();
     } catch (e) {
       setErr((e as Error).message);
       setOwn(true);
@@ -92,8 +95,8 @@ export default function SendMessage({ customer, jobId, text, subject, intro }: {
       </button>
       {own && (
         <div className="row wrap" style={{ marginTop: 6 }}>
-          {customer.phone && <a className="btn small" href={smsUrl(customer.phone, text)}>💬 My Messages app</a>}
-          {customer.email && <a className="btn small" href={`mailto:${customer.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`}>✉ My email app</a>}
+          {customer.phone && <a className="btn small" href={smsUrl(customer.phone, text)} onClick={() => onSent?.()}>💬 My Messages app</a>}
+          {customer.email && <a className="btn small" onClick={() => onSent?.()} href={`mailto:${customer.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`}>✉ My email app</a>}
         </div>
       )}
     </div>

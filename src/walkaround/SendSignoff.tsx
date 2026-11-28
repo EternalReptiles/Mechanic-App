@@ -102,7 +102,7 @@ export default function SendSignoff({ job, customer, vehicle, onSent }: { job: J
     onSent();
   }
 
-  if (sent) return <ShareSent token={sent.token} jobId={job.id} customer={customer} message={sent.message} subject={sent.subject} onDone={() => setSent(null)} />;
+  if (sent) return <ShareSent token={sent.token} jobId={job.id} customer={customer} message={sent.message} subject={sent.subject} onDone={() => setSent(null)} onDelivered={onSent} />;
 
   const before = ['quote', 'scheduled'].includes(job.status);
   return (

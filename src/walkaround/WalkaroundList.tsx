@@ -63,7 +63,7 @@ export default function ApprovalList({
         return (
           <div key={w.id} className={`wa-row${w.responded_at ? (qo?.outcome === 'declined' ? ' declined' : ' responded') : ''}`}>
             <div className="small muted">
-              {KIND_LABEL[w.kind]} · sent {fmtDateTime(w.created_at)}
+              {KIND_LABEL[w.kind]} · {w.delivered_at || w.viewed_at ? `sent ${fmtDateTime(w.delivered_at || w.created_at)}` : `made ${fmtDateTime(w.created_at)}`}
               {w.kind !== 'walkaround' && w.content.total != null && ` · ${money(w.content.total)}`}
             </div>
             {w.responded_at ? (
@@ -102,12 +102,15 @@ export default function ApprovalList({
                 </div>
               )
             ) : (
-              <div>{w.viewed_at ? `👀 Opened ${fmtDateTime(w.viewed_at)} – waiting for signature` : '📨 Sent – not opened yet'}</div>
+              <div>{w.viewed_at ? `👀 Opened ${fmtDateTime(w.viewed_at)} – waiting for signature` : w.delivered_at ? '📨 Sent – not opened yet' : '📝 Link made – not sent to the customer yet'}</div>
             )}
             <div className="row wrap">
               <Link className="btn small" to={`/walkaround/${w.id}`}>📄 Record</Link>
               {!w.responded_at && (
-                <button className="btn small" onClick={() => navigator.clipboard?.writeText(shareLink(w.token)).then(() => alert('Link copied'))}>📋 Copy link</button>
+                <button className="btn small" onClick={() => navigator.clipboard?.writeText(shareLink(w.token)).then(async () => {
+                  if (!w.delivered_at) { await supabase.from('walkarounds').update({ delivered_at: new Date().toISOString() }).eq('id', w.id); void load(); }
+                  alert('Link copied');
+                })}>📋 Copy link</button>
               )}
               {onAddLines && w.responded_at && approved.length > 0 && !applied && (
                 <button className="btn primary small" onClick={() => onAddLines(approved.flatMap((i) => i.lines.map((l) => ({ ...l, id: uid() }))), w.id)}>

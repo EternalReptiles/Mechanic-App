@@ -87,6 +87,8 @@ export interface WalkRecord {
   content: WalkContent;
   content_hash: string;
   viewed_at: string | null;
+  /** When the link was sent to the customer (null = made but not sent yet) */
+  delivered_at?: string | null;
   responded_at: string | null;
   /** Walk-around: item id -> approved/declined. Quote: {outcome, reason}. */
   decisions: Record<string, string> | null;

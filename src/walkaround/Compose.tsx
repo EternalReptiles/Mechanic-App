@@ -137,15 +137,16 @@ export default function Compose() {
   if (sent) {
     const link = shareLink(sent.token);
     const text = `${message.trim()}\n\n${link}`;
+    const delivered = () => void supabase.from('walkarounds').update({ delivered_at: new Date().toISOString() }).eq('token', sent.token).is('delivered_at', null);
     return (
       <div className="content">
         <PageHeader title="Ready to send" />
         <div className="card">
           <p>Your walk-around is saved. Send this link to {customer?.name || 'the customer'}:</p>
           <p className="link-box">{link}</p>
-          <SendMessage customer={customer} jobId={job.id} text={text}
+          <SendMessage customer={customer} jobId={job.id} text={text} onSent={delivered}
             subject={`Your ${vehicleLabel(vehicle) || 'vehicle'} – video & quote from ${settings.businessName}`} />
-          <button className="btn ghost small" style={{ marginTop: 8 }} onClick={() => navigator.clipboard?.writeText(link).then(() => alert('Link copied'))}>📋 Copy link</button>
+          <button className="btn ghost small" style={{ marginTop: 8 }} onClick={() => navigator.clipboard?.writeText(link).then(() => { delivered(); alert('Link copied'); })}>📋 Copy link</button>
           <p className="muted small">You'll see when they open it and when they sign, on the job's Inspection tab.</p>
         </div>
         <Link className="btn block" to={`/jobs/${job.id}?tab=inspection`}>Back to job</Link>
