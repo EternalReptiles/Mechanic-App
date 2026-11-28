@@ -29,6 +29,12 @@ export default function Reports() {
   const settings = useSettings();
   const { memberName, isAdmin } = useCloud();
   const [period, setPeriod] = useState<Period>('month');
+  // Count money by when it was paid (cash in) or when it was invoiced (like MYOB's sales report).
+  const [basis, setBasisState] = useState<'paid' | 'invoiced'>(() => {
+    try { return localStorage.getItem('spannr-report-basis') === 'invoiced' ? 'invoiced' : 'paid'; } catch { return 'paid'; }
+  });
+  const setBasis = (b: 'paid' | 'invoiced') => { setBasisState(b); try { localStorage.setItem('spannr-report-basis', b); } catch { /* ignore */ } };
+  const vehicles = useLiveQuery(() => db.vehicles.toArray(), []) ?? [];
   const jobs = useLiveQuery(() => db.jobs.toArray(), []) ?? [];
   const customers = useLiveQuery(() => db.customers.toArray(), []) ?? [];
 
@@ -36,7 +42,10 @@ export default function Reports() {
     const rg = range(period);
     const total = (j: Job) => totals(j.lineItems, settings.gstRegistered);
     const live = jobs.filter((j) => j.status !== 'cancelled');
-    const paid = live.filter((j) => j.status === 'paid' && inRange(j.paidAt, rg));
+    const dateOf = (j: Job) => (basis === 'paid'
+      ? (j.status === 'paid' ? j.paidAt : undefined)
+      : (j.status === 'invoiced' || j.status === 'paid' ? j.invoicedAt || j.paidAt : undefined));
+    const paid = live.filter((j) => inRange(dateOf(j), rg));
     const paidTotal = paid.reduce((s, j) => s + total(j).total, 0);
     const gst = paid.reduce((s, j) => s + total(j).gst, 0);
     const labour = paid.reduce((s, j) => s + j.lineItems.filter((l) => l.type === 'labour').reduce((t, l) => t + l.qty * l.unitPrice, 0), 0);
@@ -52,7 +61,8 @@ export default function Reports() {
     const online = quotes.filter((j) => j.bookedOnline).length;
 
     const byMethod = new Map<string, number>();
-    paid.forEach((j) => byMethod.set(j.paymentMethod || 'other', (byMethod.get(j.paymentMethod || 'other') ?? 0) + total(j).total));
+    const methodOf = (j: Job) => (j.status === 'paid' ? j.paymentMethod || 'other' : 'unpaid');
+    paid.forEach((j) => byMethod.set(methodOf(j), (byMethod.get(methodOf(j)) ?? 0) + total(j).total));
     const byCustomer = new Map<string, number>();
     paid.forEach((j) => j.customerId && byCustomer.set(j.customerId, (byCustomer.get(j.customerId) ?? 0) + total(j).total));
     const byTech = new Map<string, number>();
@@ -67,7 +77,7 @@ export default function Reports() {
       const a = new Date(now.getFullYear(), now.getMonth() - i, 1), b = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
       months.push({
         label: a.toLocaleDateString('en-AU', { month: 'short' }),
-        total: live.filter((j) => j.status === 'paid' && inRange(j.paidAt, [a, b])).reduce((s, j) => s + total(j).total, 0),
+        total: live.filter((j) => inRange(dateOf(j), [a, b])).reduce((s, j) => s + total(j).total, 0),
       });
     }
     return {
@@ -78,11 +88,42 @@ export default function Reports() {
       byTech: [...byTech].sort((a, b) => b[1] - a[1]),
       byWork: [...byWork].sort((a, b) => b[1] - a[1]).slice(0, 6),
     };
-  }, [jobs, period, settings.gstRegistered, settings.paymentTermsDays]);
+  }, [jobs, period, basis, settings.gstRegistered, settings.paymentTermsDays]);
 
   if (!isAdmin) return (<><PageHeader back title="Reports" /><p className="muted">Reports are for the owner and admins.</p></>);
   const max = Math.max(1, ...r.months.map((m) => m.total));
   const name = (id: string) => customers.find((c) => c.id === id)?.name || 'Customer';
+
+  /** The period's sales as a spreadsheet (opens in Excel/Numbers) – for the bookkeeper, BAS or matching MYOB's bank feed. */
+  function download() {
+    const day = (iso?: string) => (iso ? new Date(iso).toLocaleDateString('en-AU') : '');
+    const cell = (v: string | number) => {
+      const t = typeof v === 'number' ? v.toFixed(2) : v;
+      return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+    };
+    const head = ['Invoice date', 'Paid date', 'Job #', 'Customer', 'Rego', 'Work', 'Ex GST', 'GST', 'Total', 'Status', 'Paid by', 'Source'];
+    const rows = [...r.paid]
+      .sort((a, b) => (a.invoicedAt || a.paidAt).localeCompare(b.invoicedAt || b.paidAt))
+      .map((j) => {
+        const t = totals(j.lineItems, settings.gstRegistered);
+        return [
+          day(j.invoicedAt || j.paidAt), day(j.status === 'paid' ? j.paidAt : ''), String(j.number), name(j.customerId),
+          vehicles.find((v) => v.id === j.vehicleId)?.rego ?? '', j.title, t.subtotal, t.gst, t.total,
+          j.status === 'paid' ? 'Paid' : 'Owing', j.status === 'paid' ? PAYMENT_LABEL[j.paymentMethod || 'other'] ?? 'Other' : '',
+          j.imported ?? 'Spannr',
+        ];
+      });
+    const sum = (i: number) => rows.reduce((t, row) => t + (row[i] as number), 0);
+    const lines = [head, ...rows, ['Total', '', '', '', '', `${rows.length} jobs`, sum(6), sum(7), sum(8), '', '', '']]
+      .map((row) => row.map(cell).join(','));
+    const csv = '\uFEFF' + lines.join('\r\n'); // BOM so Excel reads it as UTF-8
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const [from] = range(period);
+    a.download = `${settings.businessName || 'Spannr'} sales ${LABEL[period].toLowerCase()} ${from.toISOString().slice(0, 7)} (by ${basis === 'paid' ? 'payment' : 'invoice'} date).csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
 
   return (
     <>
@@ -93,8 +134,17 @@ export default function Reports() {
         ))}
       </div>
 
+      <div className="row wrap report-basis">
+        <span className="small muted">Count by</span>
+        <div className="seg">
+          <button className={basis === 'paid' ? 'on' : ''} onClick={() => setBasis('paid')}>Payment date</button>
+          <button className={basis === 'invoiced' ? 'on' : ''} onClick={() => setBasis('invoiced')}>Invoice date</button>
+        </div>
+        <button className="btn small" style={{ marginLeft: 'auto' }} onClick={download}>⬇ Download ({LABEL[period].toLowerCase()})</button>
+      </div>
+
       <div className="stats report-stats">
-        <div className="stat"><span className="stat-value">{money(r.paidTotal)}</span><span className="stat-label">Paid ({r.paid.length} jobs)</span></div>
+        <div className="stat"><span className="stat-value">{money(r.paidTotal)}</span><span className="stat-label">{basis === 'paid' ? 'Paid' : 'Invoiced'} ({r.paid.length} jobs)</span></div>
         <div className="stat"><span className="stat-value">{money(r.avg)}</span><span className="stat-label">Average job</span></div>
         <Link to="/jobs?status=invoiced" className={`stat${r.overdue.length ? ' warn' : ''}`}>
           <span className="stat-value">{money(r.owingTotal)}</span><span className="stat-label">Owing now ({r.owing.length}){r.overdue.length ? ` · ${r.overdue.length} overdue` : ''}</span>
@@ -103,7 +153,7 @@ export default function Reports() {
       </div>
 
       <section className="card">
-        <h2>Takings – last 12 months</h2>
+        <h2>{basis === 'paid' ? 'Takings' : 'Invoiced'} – last 12 months</h2>
         <div className="bars" role="img" aria-label="Paid each month for the last 12 months">
           {r.months.map((m, i) => (
             <div key={i} className="bar-col" title={`${m.label}: ${money(m.total)}`}>
@@ -123,11 +173,11 @@ export default function Reports() {
             <tr><td>Parts (ex GST)</td><td>{money(r.parts)}</td></tr>
             {r.other >= 0.01 && <tr><td>Other &amp; imported jobs (ex GST)</td><td>{money(r.other)}</td></tr>}
             <tr><td>GST collected</td><td>{money(r.gst)}</td></tr>
-            <tr className="total"><td>Total paid</td><td>{money(r.paidTotal)}</td></tr>
+            <tr className="total"><td>{basis === 'paid' ? 'Total paid' : 'Total invoiced'}</td><td>{money(r.paidTotal)}</td></tr>
           </tbody></table>
           {r.byMethod.length > 0 && (
             <table className="report-table"><tbody>
-              {r.byMethod.map(([m, v]) => <tr key={m}><td>{PAYMENT_LABEL[m] ?? 'Other'}</td><td>{money(v)}</td></tr>)}
+              {r.byMethod.map(([m, v]) => <tr key={m}><td>{m === 'unpaid' ? 'Not paid yet' : PAYMENT_LABEL[m] ?? 'Other'}</td><td>{money(v)}</td></tr>)}
             </tbody></table>
           )}
         </section>
@@ -157,7 +207,12 @@ export default function Reports() {
           )}
         </section>
       </div>
-      <p className="muted small">Based on jobs marked paid, using each job's paid date. Financial year runs 1 July – 30 June.</p>
+      <p className="muted small">
+        {basis === 'paid'
+          ? "By payment date: money counted in the month it was paid (cash in)."
+          : "By invoice date: jobs counted in the month they were invoiced, paid or not – the same as MYOB's sales report."}{' '}
+        Financial year runs 1 July – 30 June.
+      </p>
     </>
   );
 }
