@@ -10,6 +10,7 @@ import { supabase } from '../cloud/supabase';
 import SyncBadge from '../cloud/SyncBadge';
 import { createJob, db } from '../db';
 import { useLookups, useSettings } from '../hooks';
+import SpannrAlerts from '../components/SpannrAlerts';
 import { addDays, dayKey, daysUntil, money, STATUS, totals } from '../utils';
 
 export default function Dashboard() {
@@ -128,6 +129,7 @@ export default function Dashboard() {
         </Link>
       )}
 
+      <SpannrAlerts />
       {needsSetup && (
         <Link to="/settings" className="banner">
           <span><strong>Set up your business</strong><br />Add your business name, ABN, logo and bank details so they appear on invoices.</span>

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../cloud/supabase';
 import { PageHeader } from '../components/ui';
 import { PLANS, type PlanKey } from '../plans';
+import { useSpannrAlerts } from '../components/SpannrAlerts';
 
 type Row = {
   id: string; name: string; created_at: string; trial_ends_at: string | null; plan: PlanKey | null; plan_status: string | null;
@@ -27,6 +28,7 @@ export default function Admin() {
   const [err, setErr] = useState('');
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<'all' | 'trial' | 'paying' | 'expired' | 'closed'>('all');
+  const cs = useSpannrAlerts()?.clicksend;
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc('admin_overview');
@@ -54,6 +56,7 @@ export default function Admin() {
   const all = rows.filter((r) => !r.closed_at);
   const mrr = rows.reduce((s, r) => s + monthly(r), 0);
   const stats = [
+    ...(cs?.balance != null ? [{ v: money(cs.balance), l: `ClickSend credit${cs.low ? ' – LOW, top up' : ''}` }] : []),
     { v: all.length, l: 'Businesses' },
     { v: all.filter((r) => r.effective === 'trial').length, l: 'On trial' },
     { v: rows.filter(paying).length, l: 'Paying' },
