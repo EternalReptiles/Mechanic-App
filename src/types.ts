@@ -18,6 +18,8 @@ export interface Customer {
   createdAt: string;
   /** Opt out of automatic booking confirmations and reminders */
   noAutoMessages?: boolean;
+  /** Private link to their customer page (app.spannr.au/my/<token>) */
+  portalToken?: string;
 }
 
 export interface Vehicle {

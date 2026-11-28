@@ -1,3 +1,4 @@
+import PortalShare from '../portal/PortalShare';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -78,6 +79,7 @@ export default function CustomerPage() {
         {c.phone && <a className="btn" href={telUrl(c.phone)}>📞 Call</a>}
         {c.email && <a className="btn" href={`mailto:${c.email}`}>✉ Email</a>}
         {c.address && <a className="btn" href={mapsUrl(c.address)} target="_blank" rel="noreferrer">🧭 Navigate</a>}
+        <PortalShare customer={c} onChange={setC} />
       </div>
 
       <TextThread customer={c} />

@@ -1,3 +1,4 @@
+import CustomerPortal from './portal/CustomerPortal';
 import InstallApp from './components/InstallApp';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { useSettings } from './hooks';
@@ -153,6 +154,7 @@ export default function App() {
       {/* Customer-facing page: no login */}
       <Route path="/v/:token" element={<CustomerApproval />} />
       <Route path="/book/:slug" element={<BookingPage />} />
+      <Route path="/my/:token" element={<CustomerPortal />} />
       <Route path="*" element={<StaffApp />} />
     </Routes>
   );
