@@ -140,7 +140,8 @@ export default function JobPage() {
   }
 
   const next = NEXT_STEP[job.status];
-  const inWorkshop = job.location === 'workshop';
+  // Jobs with no location set (e.g. imported ones) follow how the business works.
+  const inWorkshop = (job.location ?? (settings.businessType === 'workshop' ? 'workshop' : 'onsite')) === 'workshop';
   const vehicleName = vehicle ? [vehicle.make, vehicle.model].filter(Boolean).join(' ') || vehicle.rego : 'car';
   const readyText = customer
     ? fillTemplate(settings.readyMessage, {

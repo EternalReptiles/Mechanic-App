@@ -58,7 +58,8 @@ export default function TechJob() {
   const tasks = job.tasks ?? [];
   const missing = missingRequired(tasks);
   const address = job.siteAddress || customer?.address || '';
-  const inWorkshop = job.location === 'workshop';
+  // Jobs with no location set (e.g. imported ones) follow how the business works.
+  const inWorkshop = (job.location ?? (settings.businessType === 'workshop' ? 'workshop' : 'onsite')) === 'workshop';
 
   function finish() {
     setErr('');

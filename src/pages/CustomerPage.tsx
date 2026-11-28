@@ -81,7 +81,7 @@ export default function CustomerPage() {
       <div className="row wrap quick-actions">
         {c.phone && <a className="btn" href={telUrl(c.phone)}>📞 Call</a>}
         {c.email && <a className="btn" href={`mailto:${c.email}`}>✉ Email</a>}
-        {c.address && <a className="btn" href={mapsUrl(c.address)} target="_blank" rel="noreferrer">🧭 Navigate</a>}
+        {c.address && settings.businessType !== 'workshop' && <a className="btn" href={mapsUrl(c.address)} target="_blank" rel="noreferrer">🧭 Navigate</a>}
         <PortalShare customer={c} onChange={setC} />
       </div>
 
