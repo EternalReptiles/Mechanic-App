@@ -13,7 +13,7 @@ import SendSignoff from '../walkaround/SendSignoff';
 import JobMessages from '../components/JobMessages';
 import Upgrade from '../components/Upgrade';
 import TaskChecklist from '../components/TaskChecklist';
-import { finishJobPatch, missingRequired, tasksFromTemplate, templatesFor } from '../jobTemplates';
+import { finishJobPatch, missingRequired, odometerFromTasks, tasksFromTemplate, tasksWithOdometer, templatesFor } from '../jobTemplates';
 import JobCardPayment from '../payments/JobCardPayment';
 import { QuickText } from '../components/SendMessage';
 import TextThread from '../messages/TextThread';
@@ -22,7 +22,7 @@ import { quoteOutcome } from '../walkaround/model';
 import { db, deleteJob } from '../db';
 import { useAutosave, useSettings } from '../hooks';
 import type { Job, JobStatus, PaymentMethod, Vehicle } from '../types';
-import { whenJobDone } from '../stock';
+import { fillServiceDueFromHistory, isServiceJob, whenJobDone } from '../stock';
 import JobTimer from '../time/JobTimer';
 import JobHistory from '../components/JobHistory';
 import AiNotes from '../ai/AiNotes';
@@ -78,6 +78,7 @@ export default function JobPage() {
 
   const customer = useLiveQuery(() => (job?.customerId ? db.customers.get(job.customerId) : undefined), [job?.customerId]);
   const vehicle = useLiveQuery(() => (job?.vehicleId ? db.vehicles.get(job.vehicleId) : undefined), [job?.vehicleId]);
+  useEffect(() => { if (vehicle && !vehicle.nextServiceDate) void fillServiceDueFromHistory(vehicle.id); }, [vehicle?.id, vehicle?.nextServiceDate]); // eslint-disable-line react-hooks/exhaustive-deps
   const photoCount = useLiveQuery(() => db.photos.where('jobId').equals(id).count(), [id]) ?? 0;
 
   useEffect(() => {
@@ -262,12 +263,13 @@ export default function JobPage() {
                 <Field label="Odometer (km)">
                   <input inputMode="numeric" value={job.odometer} placeholder={vehicle.odometer ? `Last: ${vehicle.odometer}` : ''}
                     onChange={(e) => {
-                      update({ odometer: e.target.value });
+                      update({ odometer: e.target.value, tasks: tasksWithOdometer(job.tasks, e.target.value) });
                       updateVehicle({ odometer: e.target.value });
                     }} />
                 </Field>
                 <Field label="Next service due">
                   <input type="date" value={vehicle.nextServiceDate ?? ''} onChange={(e) => updateVehicle({ nextServiceDate: e.target.value })} />
+                  {!vehicle.nextServiceDate && <small className="muted">{isServiceJob(job) ? 'Fills in when this service is finished' : 'Fills in after its next service'}</small>}
                 </Field>
               </div>
             )}
@@ -368,7 +370,12 @@ export default function JobPage() {
                 {job.tasksTemplate}
                 {job.finishedAt && ` · finished ${fmtDateTime(job.finishedAt)}${job.finishedBy ? ` by ${memberName(job.finishedBy)}` : ''}`}
               </p>
-              <TaskChecklist tasks={job.tasks} onChange={(tasks) => update({ tasks })} />
+              <TaskChecklist tasks={job.tasks} onChange={(tasks) => {
+                const km = odometerFromTasks(job.tasks, tasks);
+                update(km === null ? { tasks } : { tasks, odometer: km });
+                if (km) void updateVehicle({ odometer: km });
+              }} />
+              {job.tasks.some((t) => t.mapsTo === 'odometer') && <p className="small muted">Fluids, brakes and tyres go in the vehicle inspection below – no need to enter them twice.</p>}
               {!job.finishedAt && (
                 <button className="btn primary block" onClick={() => {
                   const miss = missingRequired(job.tasks);
@@ -385,7 +392,7 @@ export default function JobPage() {
               <p className="small muted" style={{ marginTop: 0 }}>Give the technician a checklist to fill in (with measurements like oil litres).</p>
               <div className="row wrap">
                 {templatesFor(settings.jobTemplates).map((t) => (
-                  <button key={t.id} className="btn" onClick={() => update({ tasks: tasksFromTemplate(t), tasksTemplate: t.name })}>{t.name}</button>
+                  <button key={t.id} className="btn" onClick={() => update({ tasks: tasksFromTemplate(t, job.odometer || ''), tasksTemplate: t.name })}>{t.name}</button>
                 ))}
               </div>
             </>

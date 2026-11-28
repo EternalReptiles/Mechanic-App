@@ -45,6 +45,25 @@ export async function setNextServiceIfDone(job: Job): Promise<Partial<Job> | nul
   return { serviceDueSet: true };
 }
 
+/**
+ * A car with no next service date: work it out from its last finished service (one service interval later).
+ * Leaves the date empty if the car has never had a service recorded.
+ */
+export async function fillServiceDueFromHistory(vehicleId: string): Promise<void> {
+  const vehicle = await db.vehicles.get(vehicleId);
+  if (!vehicle || vehicle.nextServiceDate) return;
+  const done = (await db.jobs.where('vehicleId').equals(vehicleId).toArray()).filter((j) => DONE.includes(j.status) && isServiceJob(j));
+  const when = (j: Job) => j.finishedAt || j.paidAt || j.invoicedAt || j.scheduledStart || j.createdAt || '';
+  const last = done.sort((a, b) => when(b).localeCompare(when(a)))[0];
+  if (!last || !when(last)) return;
+  const settings = await db.settings.get('settings');
+  const km = Number(String(last.odometer || '').replace(/\D/g, ''));
+  await db.vehicles.update(vehicleId, {
+    nextServiceDate: addMonthsISO(settings?.serviceIntervalMonths || 6, new Date(when(last))),
+    ...(km && !vehicle.nextServiceKm ? { nextServiceKm: String(km + (settings?.serviceIntervalKm || 10000)) } : {}),
+  });
+}
+
 /** Everything that happens once when a job is finished: stock comes off the shelf, the next service is booked in. */
 export async function whenJobDone(job: Job): Promise<Partial<Job> | null> {
   const a = await deductStockIfDone(job);

@@ -20,14 +20,9 @@ export const DEFAULT_TEMPLATES: JobTemplate[] = [
       i('Engine oil used', 'number', { unit: 'L', required: true, invoice: { description: 'Engine oil', unitPrice: 11 } }),
       i('Oil grade', 'choice', { options: ['0W-20', '5W-30', '5W-40', '10W-40', '15W-40'], required: true }),
       i('Oil filter replaced', 'yesno', { required: true }),
-      i('Air filter', 'choice', { options: ['OK', 'Cleaned', 'Replaced'] }),
+      i('Air filter', 'choice', { options: ['Replaced', 'Cleaned', 'Not due'] }),
       i('Cabin filter', 'choice', { options: ['OK', 'Replaced', 'N/A'] }),
       i('Spark plugs', 'choice', { options: ['OK', 'Replaced', 'N/A (diesel)'] }),
-      i('Coolant level checked / topped up', 'check'),
-      i('Brake fluid', 'choice', { options: ['OK', 'Topped up', 'Due for replacement'] }),
-      i('Front brake pads', 'number', { unit: 'mm' }),
-      i('Rear brake pads', 'number', { unit: 'mm' }),
-      i('Tyre pressures set', 'check'),
       i('Service sticker updated', 'check'),
       i('Road test completed', 'check', { required: true }),
     ],
@@ -53,9 +48,23 @@ export function templatesFor(saved?: JobTemplate[]): JobTemplate[] {
   return saved && saved.length ? saved : DEFAULT_TEMPLATES;
 }
 
-/** Copies a template onto a job as a fresh checklist. */
-export function tasksFromTemplate(t: JobTemplate): JobTask[] {
-  return t.items.map((it) => ({ ...it, id: `${it.id}-${uid().slice(0, 6)}`, value: it.type === 'check' ? false : null }));
+/** Copies a template onto a job as a fresh checklist (the odometer comes across if it's already been entered). */
+export function tasksFromTemplate(t: JobTemplate, odometer = ''): JobTask[] {
+  const km = Number(String(odometer).replace(/\D/g, '')) || null;
+  return t.items.map((it) => ({ ...it, id: `${it.id}-${uid().slice(0, 6)}`, value: it.type === 'check' ? false : it.mapsTo === 'odometer' ? km : null }));
+}
+
+/** The odometer is one reading: typing it on Details fills the checklist, and the other way round. */
+export function tasksWithOdometer(tasks: JobTask[] | undefined, odometer: string): JobTask[] | undefined {
+  if (!tasks?.some((t) => t.mapsTo === 'odometer')) return tasks;
+  const km = Number(String(odometer).replace(/\D/g, '')) || null;
+  return tasks.map((t) => (t.mapsTo === 'odometer' ? { ...t, value: km } : t));
+}
+export function odometerFromTasks(before: JobTask[] | undefined, after: JobTask[]): string | null {
+  const a = after.find((t) => t.mapsTo === 'odometer');
+  const b = before?.find((t) => t.mapsTo === 'odometer');
+  if (!a || a.value === b?.value) return null;
+  return a.value === null || a.value === undefined ? '' : String(a.value);
 }
 
 export function isAnswered(t: JobTask): boolean {

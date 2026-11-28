@@ -10,7 +10,7 @@ import { useCloud } from '../cloud/CloudProvider';
 import { WalkaroundSection } from '../walkaround/WalkaroundList';
 import { db } from '../db';
 import { useAutosave, useSettings } from '../hooks';
-import { finishJobPatch, missingRequired, tasksFromTemplate, templatesFor } from '../jobTemplates';
+import { finishJobPatch, missingRequired, odometerFromTasks, tasksFromTemplate, tasksWithOdometer, templatesFor } from '../jobTemplates';
 import type { Job } from '../types';
 import { firstName, fmtDateTime, mapsUrl, smsUrl, telUrl } from '../utils';
 import { whenJobDone } from '../stock';
@@ -110,14 +110,18 @@ export default function TechJob() {
         {tasks.length ? (
           <>
             <p className="small muted" style={{ marginTop: 0 }}>{job.tasksTemplate}</p>
-            <TaskChecklist tasks={tasks} onChange={(t) => update({ tasks: t })} readOnly={!!job.finishedAt} />
+            <TaskChecklist tasks={tasks} onChange={(t) => {
+              const km = odometerFromTasks(job.tasks, t);
+              update(km === null ? { tasks: t } : { tasks: t, odometer: km });
+              if (km && vehicle) void db.vehicles.update(vehicle.id, { odometer: km });
+            }} readOnly={!!job.finishedAt} />
           </>
         ) : (
           <>
             <p className="small muted" style={{ marginTop: 0 }}>Pick the checklist for this job:</p>
             <div className="row wrap">
               {templatesFor(settings.jobTemplates).map((t) => (
-                <button key={t.id} className="btn" onClick={() => update({ tasks: tasksFromTemplate(t), tasksTemplate: t.name })}>{t.name}</button>
+                <button key={t.id} className="btn" onClick={() => update({ tasks: tasksFromTemplate(t, job.odometer || ''), tasksTemplate: t.name })}>{t.name}</button>
               ))}
             </div>
           </>
