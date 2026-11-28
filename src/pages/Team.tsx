@@ -7,7 +7,7 @@ import { APP_URL } from '../native';
 import { personName } from '../utils';
 
 interface Member { user_id: string; email: string; role: Role; name: string | null }
-interface Invite { email: string; role: Role }
+interface Invite { email: string; role: Role; name: string | null }
 
 const ROLE_LABEL: Record<Role, string> = { owner: 'Owner', admin: 'Admin', tech: 'Technician' };
 const ROLE_HELP: Record<Role, string> = {
@@ -22,6 +22,7 @@ export default function Team() {
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [role, setRole] = useState<Role>('tech');
   const [err, setErr] = useState('');
   const [justInvited, setJustInvited] = useState('');
@@ -29,7 +30,7 @@ export default function Team() {
   const load = useCallback(async () => {
     const [m, i] = await Promise.all([
       supabase.from('members').select('user_id, email, role, name').eq('business_id', businessId).order('created_at'),
-      isAdmin ? supabase.from('invites').select('email, role').eq('business_id', businessId).order('created_at') : Promise.resolve({ data: [], error: null }),
+      isAdmin ? supabase.from('invites').select('email, role, name').eq('business_id', businessId).order('created_at') : Promise.resolve({ data: [], error: null }),
     ]);
     if (m.error || i.error) setErr((m.error ?? i.error)!.message);
     setMembers((m.data ?? []) as Member[]);
@@ -44,13 +45,14 @@ export default function Team() {
     e.preventDefault();
     setErr('');
     const clean = email.trim().toLowerCase();
-    const { error } = await supabase.from('invites').upsert({ business_id: businessId, email: clean, role });
+    const { error } = await supabase.from('invites').upsert({ business_id: businessId, email: clean, role, name: name.trim() || null });
     if (error)
       return setErr(/row-level security/i.test(error.message)
         ? `Your plan includes ${limit ?? 'a limited number of'} user${limit === 1 ? '' : 's'}. Upgrade in Settings → Plan & billing to add more.`
         : error.message);
     setJustInvited(clean);
     setEmail('');
+    setName('');
     void load();
   }
 
@@ -106,8 +108,8 @@ export default function Team() {
           {invites.length ? invites.map((i) => (
             <div key={i.email} className="card row between">
               <div>
-                <strong>{i.email}</strong>
-                <div className="muted small">{ROLE_LABEL[i.role]}</div>
+                <strong>{i.name || i.email}</strong>
+                <div className="muted small">{i.name ? `${i.email} · ` : ''}{ROLE_LABEL[i.role]}</div>
               </div>
               <div className="row">
                 <a className="btn" href={`sms:?&body=${encodeURIComponent(shareText(i.email))}`}>💬 Text</a>
@@ -121,6 +123,7 @@ export default function Team() {
 
           <form className="card grid" onSubmit={invite}>
             <h2 className="wide">Add a team member</h2>
+            <Field label="Their name"><input required autoComplete="off" value={name} placeholder="e.g. Lachie Bancroft" onChange={(e) => setName(e.target.value)} /></Field>
             <Field label="Their email"><input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
             <Field label="Role">
               <select value={role} onChange={(e) => setRole(e.target.value as Role)}>

@@ -175,6 +175,7 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
     refreshTeam();
     return () => stopSync();
   }, [ready?.businessId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [askName, setAskName] = useState(false);
   const refreshTeam = useCallback(() => {
     if (!ready) return;
     void supabase
@@ -186,6 +187,11 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
         if (!data) return;
         const t = data.map((r) => ({ userId: r.user_id, email: r.email, name: personName(r.email, r.name), role: r.role as Role }));
         setTeam(t);
+        // Joined without a name (e.g. invited before names were asked for): ask them once.
+        const me = data.find((r) => r.user_id === ready.userId);
+        let skipped = false;
+        try { skipped = localStorage.getItem('spannr-skip-name') === ready.userId; } catch { /* private mode */ }
+        setAskName(!!me && !me.name?.trim() && !skipped);
         void setMeta('team', t);
       });
   }, [ready?.businessId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -228,7 +234,7 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider
       value={{ ...m, isAdmin: m.role === 'owner' || m.role === 'admin', signOut, team, memberName, refreshTeam, plan, refreshPlan, can: (f) => planAllows(plan.effective, f) }}
     >
-      {children}
+      {askName ? <AskName m={m} onDone={() => { setAskName(false); refreshTeam(); }} /> : children}
     </Ctx.Provider>
   );
 }
@@ -459,6 +465,33 @@ function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error
         <button className="btn block" onClick={onRetry}>I've been added – check again</button>
       </div>
       <button className="link" onClick={() => supabase.auth.signOut({ scope: 'local' })}>Sign out</button>
+    </div>
+  );
+}
+
+/** First sign-in for a team member with no name on file: "What's your name?" (shown on jobs and texts). */
+function AskName({ m, onDone }: { m: Membership; onDone: () => void }) {
+  const [name, setName] = useState('');
+  const [err, setErr] = useState('');
+  return (
+    <div className="auth-wrap">
+      <Brand />
+      <form className="card auth-card" onSubmit={async (e) => {
+        e.preventDefault();
+        const { error } = await supabase.rpc('set_member_name', { bid: m.businessId, uid: m.userId, p_name: name });
+        if (error) setErr(friendly(error.message));
+        else onDone();
+      }}>
+        <h2>Welcome to {m.businessName || 'the team'}</h2>
+        <p className="muted small">What's your name? It shows on your jobs, timesheets and the texts you send customers.</p>
+        <label className="field">
+          <span>Your name</span>
+          <input required autoFocus autoComplete="name" value={name} placeholder="First and last name" onChange={(e) => setName(e.target.value)} />
+        </label>
+        {err && <p className="error">{err}</p>}
+        <button className="btn primary block">Continue</button>
+        <button type="button" className="link" onClick={() => { try { localStorage.setItem('spannr-skip-name', m.userId); } catch { /* ignore */ } onDone(); }}>Skip for now</button>
+      </form>
     </div>
   );
 }
