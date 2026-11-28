@@ -15,6 +15,7 @@ import type { Job } from '../types';
 import { firstName, fmtDateTime, mapsUrl, smsUrl, telUrl } from '../utils';
 import { whenJobDone } from '../stock';
 import JobTimer from '../time/JobTimer';
+import JobHistory from '../components/JobHistory';
 import AiNotes from '../ai/AiNotes';
 import { clockOnPatch, stopAllPatch } from '../time/timer';
 
@@ -97,6 +98,7 @@ export default function TechJob() {
           </div>
         )}
       </section>
+      <JobHistory job={job} compact />
 
       {job.status === 'scheduled' && <button className="btn primary block big" onClick={() => void clockOnPatch(job, userId).then((p) => update({ ...p, status: 'in_progress' }))}>▶ Start job</button>}
       {job.status === 'waiting' && <button className="btn primary block big" onClick={() => void clockOnPatch(job, userId).then((p) => update({ ...p, status: 'in_progress' }))}>▶ Resume job</button>}

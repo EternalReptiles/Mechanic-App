@@ -24,6 +24,7 @@ import { useAutosave, useSettings } from '../hooks';
 import type { Job, JobStatus, PaymentMethod, Vehicle } from '../types';
 import { whenJobDone } from '../stock';
 import JobTimer from '../time/JobTimer';
+import JobHistory from '../components/JobHistory';
 import AiNotes from '../ai/AiNotes';
 import AiQuote from '../ai/AiQuote';
 import { billableHours, clockOnPatch, stopAllPatch } from '../time/timer';
@@ -270,6 +271,7 @@ export default function JobPage() {
               </div>
             )}
           </section>
+          <JobHistory job={job} />
 
           {inWorkshop && (
             <section className="card grid">
