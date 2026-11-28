@@ -13,7 +13,9 @@ import { STATUS, STATUS_ORDER } from '../utils';
 export default function Jobs() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const status = (params.get('status') as JobStatus | null) ?? null;
+  const raw = params.get('status');
+  const all = raw === 'all';
+  const status = all ? null : ((raw as JobStatus | null) ?? null);
   const mine = params.get('mine') === '1';
   const { userId, team, plan } = useCloud();
   const [q, setQ] = useState('');
@@ -24,7 +26,8 @@ export default function Jobs() {
 
   const needle = q.trim().toLowerCase();
   const filtered = jobs.filter((j) => {
-    if (status ? j.status !== status : j.status === 'cancelled' || j.status === 'paid') return false;
+    // "All open" hides paid and cancelled jobs – unless you're searching, then it looks through everything.
+    if (status ? j.status !== status : !all && !needle && (j.status === 'cancelled' || j.status === 'paid')) return false;
     if (mine && j.assignedTo !== userId) return false;
     if (!needle) return true;
     const c = customerMap.get(j.customerId);
@@ -54,8 +57,11 @@ export default function Jobs() {
         onChange={(e) => setQ(e.target.value)}
       />
       <div className="chips">
-        <button className={`chip${!status && !mine ? ' active' : ''}`} onClick={() => setParams({})}>
+        <button className={`chip${!status && !mine && !all ? ' active' : ''}`} onClick={() => setParams({})}>
           All open
+        </button>
+        <button className={`chip${all ? ' active' : ''}`} onClick={() => setParams({ status: 'all' })}>
+          All
         </button>
         {team.length > 1 && (
           <button className={`chip${mine ? ' active' : ''}`} onClick={() => setParams({ mine: '1' })}>
