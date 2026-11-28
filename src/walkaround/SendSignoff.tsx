@@ -23,6 +23,9 @@ export default function SendSignoff({ job, customer, vehicle, onSent }: { job: J
   const [withOldVideo, setWithOldVideo] = useState(true);
   const [video, setVideo] = useState<Blob | null>(null);
   const [recording, setRecording] = useState(false);
+  // A quote for the booked job is approved as a whole; extra work found during the job is itemised.
+  const repairCount = groupRepairs(job.lineItems, settings.gstRegistered).length;
+  const [itemise, setItemise] = useState(!['quote', 'scheduled'].includes(job.status));
   useEffect(() => {
     if (!navigator.onLine) return;
     void supabase.from('walkarounds').select('video_path, created_at').eq('business_id', businessId).eq('job_id', job.id)
@@ -51,7 +54,7 @@ export default function SendSignoff({ job, customer, vehicle, onSent }: { job: J
     const issued = job.invoicedAt ? new Date(job.invoicedAt) : new Date();
     const due = new Date(issued.getTime() + settings.paymentTermsDays * 86400000);
     const v = vehicle ? [vehicle.make, vehicle.model].filter(Boolean).join(' ') || vehicle.rego : 'vehicle';
-    const repairs = kind === 'quote' ? groupRepairs(job.lineItems, settings.gstRegistered) : [];
+    const repairs = kind === 'quote' && itemise ? groupRepairs(job.lineItems, settings.gstRegistered) : [];
     const message =
       kind === 'quote'
         ? repairs.length >= 2
@@ -113,6 +116,12 @@ export default function SendSignoff({ job, customer, vehicle, onSent }: { job: J
         signed record.
       </p>
       {recording && <VideoRecorder onDone={(b) => { setVideo(b); setRecording(false); }} onCancel={() => setRecording(false)} />}
+      {repairCount >= 2 && !recording && (
+        <div className="seg two" style={{ marginBottom: 10 }}>
+          <button className={!itemise ? 'on solid' : ''} onClick={() => setItemise(false)}>One price – approve the lot</button>
+          <button className={itemise ? 'on solid' : ''} onClick={() => setItemise(true)}>Let them pick each repair</button>
+        </div>
+      )}
       {before && !recording && (
         <div className="quote-extras">
           <span className="small muted">Send with the quote:</span>
