@@ -424,7 +424,7 @@ export default function JobPage() {
           {(job.checklist?.length ?? 0) > 0 && (
             <Link className="btn block" to={`/jobs/${job.id}/report`}>📋 View inspection report</Link>
           )}
-          {(job.checklist?.length ?? 0) > 0 && job.status === 'quote' || job.status === 'scheduled' ? (
+          {(job.checklist?.length ?? 0) > 0 && ['quote', 'scheduled'].includes(job.status) ? (
             <p className="small muted" style={{ marginBottom: 0 }}>Tip: the inspection results and your video can go with the quote in one text – Billing tab → Send quote to approve.</p>
           ) : null}
         </section>
