@@ -93,7 +93,11 @@ export default function TechJob() {
           <div className="row wrap" style={{ marginTop: 10 }}>
             <span className="small">👤 {customer.name}</span>
             {customer.phone && <a className="btn small" href={telUrl(customer.phone)}>📞 Call</a>}
-            {customer.phone && !inWorkshop && (
+            {customer.phone && !inWorkshop && job.arrivedAt && job.status === 'in_progress' && Date.now() - new Date(job.arrivedAt).getTime() < 2 * 3600e3 && (
+              <QuickText className="btn small" customer={customer} jobId={job.id} label="💬 I'm here"
+                text={`Hi ${firstName(customer.name)}, it's ${memberName(userId) || 'your mechanic'} from ${settings.businessName}. I've arrived and I'm starting on your car now.`} />
+            )}
+            {customer.phone && !inWorkshop && !job.arrivedAt && (
               <QuickText className="btn small" customer={customer} jobId={job.id} label="💬 On my way"
                 text={`Hi ${firstName(customer.name)}, it's ${memberName(userId) || 'your mechanic'} from ${settings.businessName}. I'm on my way.`} />
             )}
@@ -103,7 +107,10 @@ export default function TechJob() {
       </section>
       <JobHistory job={job} compact />
 
-      {job.status === 'scheduled' && <button className="btn primary block big" onClick={() => void clockOnPatch(job, userId).then((p) => update({ ...p, status: 'in_progress' }))}>▶ Start job</button>}
+      {job.status === 'scheduled' && <button className="btn primary block big" onClick={() => void clockOnPatch(job, userId).then((p) => update({
+        ...p, status: 'in_progress', ...(!inWorkshop && !job.arrivedAt ? { arrivedAt: new Date().toISOString() } : {}),
+      }))}>{inWorkshop ? '▶ Start job' : '📍 Arrived – start job'}</button>}
+      {job.arrivedAt && <p className="small muted" style={{ margin: '0 0 8px' }}>📍 Arrived {fmtDateTime(job.arrivedAt)}</p>}
       {job.status === 'waiting' && <button className="btn primary block big" onClick={() => void clockOnPatch(job, userId).then((p) => update({ ...p, status: 'in_progress' }))}>▶ Resume job</button>}
       {!['scheduled', 'waiting'].includes(job.status) && <JobTimer job={job} update={update} />}
 

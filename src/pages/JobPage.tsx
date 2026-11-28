@@ -176,9 +176,12 @@ export default function JobPage() {
 
       {next && (
         <button className="btn primary block big" onClick={() => next.to === 'in_progress'
-          ? void clockOnPatch(job, userId).then((p) => { setStatus('in_progress'); update(p); })
+          ? void clockOnPatch(job, userId).then((p) => {
+            setStatus('in_progress');
+            update({ ...p, ...(job.status === 'scheduled' && !inWorkshop && !job.arrivedAt ? { arrivedAt: nowISO() } : {}) });
+          })
           : setStatus(next.to)}>
-          {next.label}
+          {job.status === 'scheduled' && !inWorkshop ? '📍 Arrived – start job' : next.label}
         </button>
       )}
       {job.status === 'in_progress' && (
@@ -215,7 +218,12 @@ export default function JobPage() {
 
       <div className="row wrap quick-actions">
         {customer?.phone && <a className="btn" href={telUrl(customer.phone)}>📞 Call</a>}
-        {customer?.phone && !inWorkshop && (
+        {job.arrivedAt && <span className="pill-ok">📍 Arrived {fmtDateTime(job.arrivedAt)}</span>}
+        {customer?.phone && !inWorkshop && job.arrivedAt && job.status === 'in_progress' && Date.now() - new Date(job.arrivedAt).getTime() < 2 * 3600e3 && (
+          <QuickText customer={customer} jobId={job.id} label="💬 I'm here"
+            text={`Hi ${firstName(customer.name)}, it's ${settings.businessName}. I've arrived and I'm starting on your car now.`} />
+        )}
+        {customer?.phone && !inWorkshop && !job.arrivedAt && (
           <QuickText customer={customer} jobId={job.id} label="💬 On my way"
             text={`Hi ${firstName(customer.name)}, it's ${settings.businessName}. I'm on my way and should be with you shortly.`} />
         )}

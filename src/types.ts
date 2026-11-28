@@ -156,6 +156,8 @@ export interface Job {
   promisedAt?: string;
   /** When "Book job" was pressed – the confirmation text goes straight away. Cleared if the time changes. */
   bookedAt?: string;
+  /** When the mechanic pressed "Arrived" at the customer's place */
+  arrivedAt?: string;
   collectedAt?: string;
   /** Time clocked on this job (technician timesheets) */
   timeEntries?: TimeEntry[];
