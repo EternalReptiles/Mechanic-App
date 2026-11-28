@@ -17,7 +17,7 @@ import { autoWorkNotes } from '../workNotes';
 import { syncNow } from '../cloud/sync';
 import Upgrade from '../components/Upgrade';
 import TaskChecklist from '../components/TaskChecklist';
-import { finishJobPatch, missingRequired, odometerFromTasks, tasksFromTemplate, tasksWithOdometer, templatesFor } from '../jobTemplates';
+import { finishJobPatch, missingRequired, odometerFromTasks, previousTasks, tasksFromTemplate, tasksWithOdometer, templatesFor } from '../jobTemplates';
 import JobCardPayment from '../payments/JobCardPayment';
 import { QuickText } from '../components/SendMessage';
 import TextThread from '../messages/TextThread';
@@ -412,7 +412,7 @@ export default function JobPage() {
               <p className="small muted" style={{ marginTop: 0 }}>Give the technician a checklist to fill in (with measurements like oil litres).</p>
               <div className="row wrap">
                 {templatesFor(settings.jobTemplates).map((t) => (
-                  <button key={t.id} className="btn" onClick={() => update({ tasks: tasksFromTemplate(t, job.odometer || ''), tasksTemplate: t.name })}>{t.name}</button>
+                  <button key={t.id} className="btn" onClick={() => void previousTasks(job.vehicleId, job.id).then((prev) => update({ tasks: tasksFromTemplate(t, job.odometer || '', prev), tasksTemplate: t.name }))}>{t.name}</button>
                 ))}
               </div>
             </>

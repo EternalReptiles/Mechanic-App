@@ -9,6 +9,10 @@ const i = (label: string, type: TaskTemplateItem['type'], more: Partial<TaskTemp
   ...more,
 });
 
+/** Engine oil grades for the oil grade picker (anything else can be typed in). */
+export const OIL_GRADES = ['0W-8', '0W-16', '0W-20', '0W-30', '0W-40', '5W-20', '5W-30', '5W-40', '5W-50', '10W-30', '10W-40', '10W-60', '15W-40', '15W-50', '20W-50', '25W-60'];
+export const isOilGrade = (label: string) => /oil grade|oil type|viscosity/i.test(label);
+
 /** Starter checklists – owners can edit these in Settings → Job checklists. */
 export const DEFAULT_TEMPLATES: JobTemplate[] = [
   {
@@ -18,7 +22,7 @@ export const DEFAULT_TEMPLATES: JobTemplate[] = [
       i('Odometer', 'number', { unit: 'km', required: true, mapsTo: 'odometer' }),
       i('Engine oil drained and refilled', 'check', { required: true }),
       i('Engine oil used', 'number', { unit: 'L', required: true, invoice: { description: 'Engine oil', unitPrice: 11 } }),
-      i('Oil grade', 'choice', { options: ['0W-20', '5W-30', '5W-40', '10W-40', '15W-40'], required: true }),
+      i('Oil grade', 'choice', { options: OIL_GRADES, required: true }),
       i('Oil filter replaced', 'yesno', { required: true }),
       i('Air filter', 'choice', { options: ['Replaced', 'Cleaned', 'Not due'] }),
       i('Cabin filter', 'choice', { options: ['OK', 'Replaced', 'N/A'] }),
@@ -49,9 +53,26 @@ export function templatesFor(saved?: JobTemplate[]): JobTemplate[] {
 }
 
 /** Copies a template onto a job as a fresh checklist (the odometer comes across if it's already been entered). */
-export function tasksFromTemplate(t: JobTemplate, odometer = ''): JobTask[] {
+export function tasksFromTemplate(t: JobTemplate, odometer = '', previous: JobTask[] = []): JobTask[] {
   const km = Number(String(odometer).replace(/\D/g, '')) || null;
-  return t.items.map((it) => ({ ...it, id: `${it.id}-${uid().slice(0, 6)}`, value: it.type === 'check' ? false : it.mapsTo === 'odometer' ? km : null }));
+  return t.items.map((it) => {
+    const base: JobTask = { ...it, id: `${it.id}-${uid().slice(0, 6)}`, value: it.type === 'check' ? false : it.mapsTo === 'odometer' ? km : null };
+    // The same car last time: its oil grade is filled in (check it), litres etc. are shown as a hint.
+    const prev = previous.find((p) => p.label === it.label && p.value !== null && p.value !== '' && p.value !== undefined);
+    if (!prev || it.mapsTo || it.type === 'check' || it.type === 'yesno') return base;
+    if (it.type === 'choice' && isOilGrade(it.label)) return { ...base, value: prev.value, last: String(prev.value) };
+    return { ...base, last: String(prev.value) };
+  });
+}
+
+/** The checklist from this car's most recent other job, so its oil grade and litres can be reused. */
+export async function previousTasks(vehicleId: string, notJobId: string): Promise<JobTask[]> {
+  if (!vehicleId) return [];
+  const { db } = await import('./db');
+  const jobs = (await db.jobs.where('vehicleId').equals(vehicleId).toArray())
+    .filter((j) => j.id !== notJobId && j.tasks?.length)
+    .sort((a, b) => (b.finishedAt || b.createdAt || '').localeCompare(a.finishedAt || a.createdAt || ''));
+  return jobs[0]?.tasks ?? [];
 }
 
 /** The odometer is one reading: typing it on Details fills the checklist, and the other way round. */
@@ -69,7 +90,8 @@ export function odometerFromTasks(before: JobTask[] | undefined, after: JobTask[
 
 export function isAnswered(t: JobTask): boolean {
   if (t.type === 'check') return t.value === true;
-  return t.value !== null && t.value !== '' && t.value !== undefined;
+  if (typeof t.value === 'string') return t.value.trim() !== '';
+  return t.value !== null && t.value !== undefined;
 }
 
 export function missingRequired(tasks: JobTask[] = []): JobTask[] {

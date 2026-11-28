@@ -1,4 +1,4 @@
-import { isAnswered } from '../jobTemplates';
+import { isAnswered, isOilGrade, OIL_GRADES } from '../jobTemplates';
 import type { JobTask } from '../types';
 
 /** A job checklist: tick boxes, yes/no, numbers with units, text and choices. */
@@ -59,6 +59,7 @@ export default function TaskChecklist({
                   disabled={readOnly}
                   aria-label={t.label}
                   value={t.value === null || t.value === undefined ? '' : String(t.value)}
+                  placeholder={t.last ? `Last time ${t.last}` : undefined}
                   onChange={(e) => set(t.id, { value: e.target.value === '' ? null : e.target.valueAsNumber })}
                 />
                 {t.unit && <span className="unit">{t.unit}</span>}
@@ -69,7 +70,11 @@ export default function TaskChecklist({
               <input disabled={readOnly} aria-label={t.label} value={(t.value as string) ?? ''} onChange={(e) => set(t.id, { value: e.target.value })} />
             )}
 
-            {t.type === 'choice' && (
+            {t.type === 'choice' && (isOilGrade(t.label) || (t.options?.length ?? 0) > 6) && (
+              <OilGrade task={t} readOnly={readOnly} onChange={(value) => set(t.id, { value })} />
+            )}
+
+            {t.type === 'choice' && !(isOilGrade(t.label) || (t.options?.length ?? 0) > 6) && (
               <div className="chips wrap">
                 {(t.options ?? []).map((o) => (
                   <button key={o} disabled={readOnly} className={`chip ${t.value === o ? 'active' : ''}`} onClick={() => set(t.id, { value: t.value === o ? null : o })}>
@@ -92,6 +97,28 @@ export default function TaskChecklist({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/** A long list (e.g. oil grades): pick from the list, or type one that isn't there. */
+function OilGrade({ task, readOnly, onChange }: { task: JobTask; readOnly: boolean; onChange: (v: string | null) => void }) {
+  const list = Array.from(new Set([...(isOilGrade(task.label) ? OIL_GRADES : []), ...(task.options ?? [])]));
+  const value = (task.value as string) ?? '';
+  const other = !!value && !list.includes(value);
+  return (
+    <div className="row wrap" style={{ gap: 8 }}>
+      <select disabled={readOnly} aria-label={task.label} value={other ? '__other' : value}
+        onChange={(e) => onChange(e.target.value === '__other' ? ' ' : e.target.value || null)}>
+        <option value="">Choose…</option>
+        {list.map((o) => <option key={o} value={o}>{o}</option>)}
+        <option value="__other">Other – type it</option>
+      </select>
+      {other && (
+        <input className="grow" disabled={readOnly} autoFocus aria-label={`${task.label} (other)`} placeholder="e.g. 0W-12, 75W-90"
+          value={value.trim()} onChange={(e) => onChange(e.target.value.toUpperCase() || ' ')} />
+      )}
+      {task.last && task.last === value && <span className="small muted">Same as last time</span>}
     </div>
   );
 }

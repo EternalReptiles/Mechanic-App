@@ -216,6 +216,8 @@ export interface JobTemplate {
 export interface JobTask extends TaskTemplateItem {
   value: string | number | boolean | null;
   note?: string;
+  /** What this car had last time, e.g. "4.5" (shown as a hint) */
+  last?: string;
 }
 export type BusinessType = 'mobile' | 'workshop' | 'both';
 

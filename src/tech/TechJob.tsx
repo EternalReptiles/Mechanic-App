@@ -10,7 +10,7 @@ import { useCloud } from '../cloud/CloudProvider';
 import { WalkaroundSection } from '../walkaround/WalkaroundList';
 import { db } from '../db';
 import { useAutosave, useSettings } from '../hooks';
-import { finishJobPatch, missingRequired, odometerFromTasks, tasksFromTemplate, tasksWithOdometer, templatesFor } from '../jobTemplates';
+import { finishJobPatch, missingRequired, odometerFromTasks, previousTasks, tasksFromTemplate, tasksWithOdometer, templatesFor } from '../jobTemplates';
 import type { Job } from '../types';
 import { firstName, fmtDateTime, mapsUrl, smsUrl, telUrl } from '../utils';
 import { whenJobDone } from '../stock';
@@ -130,7 +130,7 @@ export default function TechJob() {
             <p className="small muted" style={{ marginTop: 0 }}>Pick the checklist for this job:</p>
             <div className="row wrap">
               {templatesFor(settings.jobTemplates).map((t) => (
-                <button key={t.id} className="btn" onClick={() => update({ tasks: tasksFromTemplate(t, job.odometer || ''), tasksTemplate: t.name })}>{t.name}</button>
+                <button key={t.id} className="btn" onClick={() => void previousTasks(job.vehicleId, job.id).then((prev) => update({ tasks: tasksFromTemplate(t, job.odometer || '', prev), tasksTemplate: t.name }))}>{t.name}</button>
               ))}
             </div>
           </>
