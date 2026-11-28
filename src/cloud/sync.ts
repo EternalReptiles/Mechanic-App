@@ -179,7 +179,7 @@ async function push(bid: string) {
         business_id: bid,
         id: r.id,
         data: payload(r),
-        updated_at: r.updatedAt ?? serverNow(),
+        updated_at: Math.round(r.updatedAt ?? serverNow()),
         deleted: false,
       }));
       const { error } = await supabase.from(table).upsert(rows, { onConflict: 'business_id,id' });
@@ -201,7 +201,7 @@ async function push(bid: string) {
     const mine = tombs.filter((x) => x.table === table);
     if (!mine.length) continue;
     const { error } = await supabase.from(table).upsert(
-      mine.map((x) => ({ business_id: bid, id: x.id, data: {}, updated_at: x.at, deleted: true })),
+      mine.map((x) => ({ business_id: bid, id: x.id, data: {}, updated_at: Math.round(x.at), deleted: true })),
       { onConflict: 'business_id,id' },
     );
     if (error && !isPermissionError(error)) throw error;

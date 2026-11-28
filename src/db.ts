@@ -68,11 +68,11 @@ export const clock = {
     try { return Number(localStorage.getItem('spannr-clock-offset')) || 0; } catch { return 0; }
   })(),
   set(ms: number) {
-    this.offset = ms;
+    this.offset = Math.round(ms);
     try { localStorage.setItem('spannr-clock-offset', String(Math.round(ms))); } catch { /* private mode */ }
   },
 };
-export const serverNow = () => Date.now() + clock.offset;
+export const serverNow = () => Math.round(Date.now() + clock.offset);
 
 /**
  * Stamps every record the app writes with `updatedAt` and marks it `_dirty` so it gets pushed.
