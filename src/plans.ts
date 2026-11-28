@@ -3,22 +3,22 @@ export type PlanKey = 'solo' | 'pro' | 'team' | 'business';
 export type EffectivePlan = PlanKey | 'trial' | 'expired';
 export type Feature = 'signoffs' | 'walkarounds' | 'autoMessages' | 'workshop' | 'tapToPay';
 
-export const PLANS: Record<PlanKey, { name: string; monthly: number; users: number | null; sms: number; blurb: string; features: string[] }> = {
+export const PLANS: Record<PlanKey, { name: string; monthly: number; users: number | null; sms: number; rego: number; blurb: string; features: string[] }> = {
   solo: {
-    name: 'Solo', monthly: 39, users: 1, sms: 0, blurb: 'For the one-person mobile mechanic.',
-    features: ['1 user', 'Jobs, quotes & invoices', 'Customers, vehicles & schedule', 'Inspections, photos & signatures', 'Service reminders', 'Card payments (Stripe)'],
+    name: 'Solo', monthly: 49, users: 1, sms: 50, rego: 30, blurb: 'For the one-person mobile mechanic.',
+    features: ['1 user', 'Jobs, quotes & invoices', 'Customers, vehicles & schedule', 'Inspections, photos & signatures', 'Service reminders & customer pages', 'Card payments (Stripe)', 'AI notes & quotes', '50 texts & 30 rego lookups / month'],
   },
   pro: {
-    name: 'Pro', monthly: 65, users: 3, sms: 100, blurb: 'Win more work with customer approvals.',
-    features: ['Up to 3 users', 'Everything in Solo', 'Remote quote approval & sign-off', 'Video walk-arounds', 'Automatic booking messages', '100 texts / month (160 characters each)'],
+    name: 'Pro', monthly: 79, users: 3, sms: 150, rego: 100, blurb: 'Win more work with customer approvals.',
+    features: ['Up to 3 users', 'Everything in Solo', 'Remote quote approval & sign-off', 'Video walk-arounds', 'Automatic texts: bookings, reminders, unpaid invoices, reviews', '150 texts & 100 rego lookups / month'],
   },
   team: {
-    name: 'Team', monthly: 95, users: 8, sms: 300, blurb: 'For workshops with a few technicians.',
-    features: ['Up to 8 users', 'Everything in Pro', 'Workshop board', 'Assign jobs to technicians', 'Tap to Pay on iPhone (coming soon)', '300 texts / month (160 characters each)'],
+    name: 'Team', monthly: 119, users: 8, sms: 400, rego: 200, blurb: 'For workshops with a few technicians.',
+    features: ['Up to 8 users', 'Everything in Pro', 'Workshop board & timesheets', 'Assign jobs to technicians', 'Tap to Pay on iPhone (coming soon)', '400 texts & 200 rego lookups / month'],
   },
   business: {
-    name: 'Business', monthly: 149, users: null, sms: 1000, blurb: 'Unlimited team, priority support.',
-    features: ['Unlimited users', 'Everything in Team', '1,000 texts / month (160 characters each)', 'Priority support'],
+    name: 'Business', monthly: 189, users: null, sms: 800, rego: 400, blurb: 'Unlimited team, priority support.',
+    features: ['Unlimited users', 'Everything in Team', 'Fleet & account customers with statements', '800 texts & 400 rego lookups / month', 'Priority support'],
   },
 };
 

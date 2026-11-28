@@ -83,7 +83,7 @@ export default function SendMessage({ customer, jobId, text, subject, intro }: {
       </div>
       {!customer.phone && !customer.email && <p className="small muted">Add a mobile number or email to the customer to send this.</p>}
       {customer.phone && textsLeft !== null && textsLeft < parts && (
-        <p className="small muted">{allow?.sms_allowance ? "You've used this month's texts for your plan." : 'Texts from Spannr are on the Pro plan and up.'} You can still send it from your own phone.</p>
+        <p className="small muted">{allow?.sms_allowance ? "You've used this month's texts for your plan." : 'Choose a plan to send texts from Spannr.'} You can still send it from your own phone.</p>
       )}
       {customer.phone && textsLeft !== null && textsLeft > 0 && textsLeft <= 20 && <p className="small muted">{textsLeft} texts left this month.</p>}
       {err && <p className="error">{err}</p>}

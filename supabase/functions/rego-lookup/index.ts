@@ -9,7 +9,8 @@ const cors = {
 };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 const STATES = ['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA'];
-const MONTHLY_LIMIT = 200;
+// Lookups per month by plan (each one costs Spannr about 10c).
+const LIMITS: Record<string, number> = { solo: 30, pro: 100, team: 200, business: 400, trial: 30 };
 
 type PlateVehicle = {
   year_range?: string; lowest_year?: number; highest_year?: number | null; make?: string; model?: string;
@@ -47,9 +48,12 @@ Deno.serve(async (req) => {
     const key = (Deno.env.get('REGO_API_KEY') ?? '').trim();
     if (!key) return json({ error: "Rego lookup isn't switched on yet." }, 503);
 
-    const { data: used, error: limitErr } = await admin.rpc('rego_use', { bid: businessId, lim: MONTHLY_LIMIT });
+    const { data: plan } = await admin.rpc('business_plan', { bid: businessId });
+    const limit = LIMITS[String(plan)] ?? 0;
+    if (!limit) return json({ error: 'Choose a plan in Settings → Plan & billing to use rego lookup.' }, 403);
+    const { data: used, error: limitErr } = await admin.rpc('rego_use', { bid: businessId, lim: limit });
     if (limitErr) throw limitErr;
-    if (used === -1) return json({ error: `You've used this month's ${MONTHLY_LIMIT} rego lookups. Type the details in for now.` }, 429);
+    if (used === -1) return json({ error: `You've used this month's ${limit} rego lookups on your plan. Type the details in for now, or upgrade for more.` }, 429);
 
     const res = await fetch(`https://api.plateapi.com.au/api/v1/lookup?plate=${encodeURIComponent(plate)}&state=${state}`, {
       headers: { 'X-API-Key': key, 'User-Agent': 'Spannr/1.0 (rego lookup)' },
