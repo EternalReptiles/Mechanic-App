@@ -221,7 +221,7 @@ export default function JobPage() {
         {job.arrivedAt && <span className="pill-ok">📍 Arrived {fmtDateTime(job.arrivedAt)}</span>}
         {customer?.phone && !inWorkshop && job.arrivedAt && job.status === 'in_progress' && Date.now() - new Date(job.arrivedAt).getTime() < 2 * 3600e3 && (
           <QuickText customer={customer} jobId={job.id} label="💬 I'm here"
-            text={`Hi ${firstName(customer.name)}, it's ${settings.businessName}. I've arrived and I'm starting on your car now.`} />
+            text={`Hi ${firstName(customer.name)}, it's ${settings.businessName}. I'm here.`} />
         )}
         {customer?.phone && !inWorkshop && !job.arrivedAt && (
           <QuickText customer={customer} jobId={job.id} label="💬 On my way"

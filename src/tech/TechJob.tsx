@@ -95,7 +95,7 @@ export default function TechJob() {
             {customer.phone && <a className="btn small" href={telUrl(customer.phone)}>📞 Call</a>}
             {customer.phone && !inWorkshop && job.arrivedAt && job.status === 'in_progress' && Date.now() - new Date(job.arrivedAt).getTime() < 2 * 3600e3 && (
               <QuickText className="btn small" customer={customer} jobId={job.id} label="💬 I'm here"
-                text={`Hi ${firstName(customer.name)}, it's ${memberName(userId) || 'your mechanic'} from ${settings.businessName}. I've arrived and I'm starting on your car now.`} />
+                text={`Hi ${firstName(customer.name)}, it's ${memberName(userId) || 'your mechanic'} from ${settings.businessName}. I'm here.`} />
             )}
             {customer.phone && !inWorkshop && !job.arrivedAt && (
               <QuickText className="btn small" customer={customer} jobId={job.id} label="💬 On my way"
