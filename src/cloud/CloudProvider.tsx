@@ -1,3 +1,4 @@
+import { clearReferral, pendingReferral, ReferralBanner } from '../pages/Refer';
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { clearLocalData, db, getMeta, getSettings, markAllDirty, setMeta, WORKSHOP_REMINDER, WORKSHOP_TERMS_EXTRA } from '../db';
@@ -294,6 +295,7 @@ function SignIn() {
   return (
     <div className="auth-wrap">
       <Brand />
+      <ReferralBanner />
       <form className="card auth-card" onSubmit={submit}>
         <h2>{mode === 'in' ? 'Sign in' : mode === 'up' ? 'Create your account' : 'Reset password'}</h2>
         <label className="field">
@@ -374,12 +376,14 @@ function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error
     e.preventDefault();
     setBusy(true);
     setErr('');
-    const { error } = await supabase.rpc('create_business', { p_name: name });
+    const { data: newId, error } = await supabase.rpc('create_business', { p_name: name });
     if (error) {
       setErr(friendly(error.message));
       setBusy(false);
       return;
     }
+    const ref = pendingReferral();
+    if (ref && newId) await supabase.rpc('claim_referral', { bid: newId, p_code: ref }).then(() => clearReferral(), () => undefined);
     // Set the account up for how they work, so quotes and invoices are right from the first job.
     const s = await getSettings();
     await db.settings.put({
@@ -400,6 +404,7 @@ function NoBusiness({ email, error, onCreated, onRetry }: { email: string; error
   return (
     <div className="auth-wrap">
       <Brand />
+      <ReferralBanner />
       <form className="card auth-card" onSubmit={create}>
         <h2>Set up your business</h2>
         <p className="muted small">Signed in as {email}.</p>

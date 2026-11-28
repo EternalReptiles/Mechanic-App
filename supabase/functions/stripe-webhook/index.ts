@@ -1,7 +1,7 @@
 // Stripe Connect webhook: keeps Spannr in step with invoices and accounts.
 // Security: we never trust the request body. Each event is fetched back from Stripe by id
 // (on the connected account it came from), so a forged request can't mark anything paid.
-import { admin, applySubscription, cardPaymentsStatus, markJobPaid, queueReceipt, settleTerminalPayment, stripe } from '../_shared/stripe.ts';
+import { admin, applySubscription, rewardReferral, cardPaymentsStatus, markJobPaid, queueReceipt, settleTerminalPayment, stripe } from '../_shared/stripe.ts';
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('ok');
@@ -44,6 +44,11 @@ Deno.serve(async (req) => {
     } else if (event.type.startsWith('invoice.')) {
       const inv = event.data.object as { id: string; status: string; total: number; hosted_invoice_url?: string; status_transitions?: { paid_at?: number } };
       const { data: row } = await admin.from('stripe_invoices').select('business_id, job_id').eq('id', inv.id).maybeSingle();
+      // Spannr subscription invoice (platform): the first one actually paid rewards whoever referred this business.
+      const subBiz = (inv as any).parent?.subscription_details?.metadata?.spannr_business_id ?? (inv as any).subscription_details?.metadata?.spannr_business_id;
+      if (!row && !event.account && event.type === 'invoice.paid' && subBiz && ((inv as any).amount_paid ?? 0) > 0) {
+        await rewardReferral(subBiz);
+      }
       if (row) {
         const paidAt = inv.status_transitions?.paid_at ? new Date(inv.status_transitions.paid_at * 1000).toISOString() : null;
         await admin.from('stripe_invoices').update({

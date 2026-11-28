@@ -860,3 +860,9 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 @media screen and (max-width: 700px) {
   .statement .doc-table { display: block; overflow-x: auto; white-space: nowrap; }
 }
+
+/* Refer a mechanic */
+.refer-hero { border-color: var(--primary); }
+.refer-points { padding-left: 18px; margin: 8px 0 12px; }
+.refer-points li { margin: 4px 0; }
+.refer-link { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bg); border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; margin: 0 0 10px; word-break: break-all; }

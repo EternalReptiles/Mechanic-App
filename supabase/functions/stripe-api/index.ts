@@ -1,6 +1,6 @@
 // Spannr ⇄ Stripe Connect: set up card payments for a business and create repair invoices.
 // Called from the app with the signed-in user's token: { action, businessId, ... }.
-import { admin, APP_FEE_RATE, cardPaymentsStatus, cors, json, settleTerminalPayment, stripe, syncBranding } from '../_shared/stripe.ts';
+import { admin, APP_FEE_RATE, referralCoupon, cardPaymentsStatus, cors, json, settleTerminalPayment, stripe, syncBranding } from '../_shared/stripe.ts';
 
 type Ctx = { businessId: string; userEmail: string; isAdmin: boolean; origin: string };
 
@@ -269,6 +269,17 @@ async function subscribe(ctx: Ctx, plan: string, interval: string, promo = '') {
     if (!found) throw new Error(`The promo code ${code.toUpperCase()} isn't valid or has expired.`);
     discounts = [{ promotion_code: found.id }];
   }
+  // Referrals: a referred business's first month is free; a referrer with earned months uses one here.
+  let referral = '';
+  if (!discounts) {
+    const { data: rb } = await admin.from('businesses').select('referred_by, referral_discount_used, referral_credits').eq('id', ctx.businessId).maybeSingle();
+    if (rb?.referred_by && !rb.referral_discount_used) referral = 'welcome';
+    else if ((rb?.referral_credits ?? 0) > 0) referral = 'credit';
+    if (referral) {
+      const c = await referralCoupon(plan, referral === 'welcome' ? 'Referred by a mechanic – first month free' : 'Referral reward – 1 month free');
+      discounts = [{ coupon: c.id } as any];
+    }
+  }
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     ...(discounts ? { discounts } : { allow_promotion_codes: true }),
@@ -277,7 +288,7 @@ async function subscribe(ctx: Ctx, plan: string, interval: string, promo = '') {
     line_items: [{ price: price.id, quantity: 1 }],
     subscription_data: {
       default_tax_rates: gst ? [gst.id] : [],
-      metadata: { spannr_business_id: ctx.businessId, spannr_plan: plan },
+      metadata: { spannr_business_id: ctx.businessId, spannr_plan: plan, ...(referral ? { spannr_referral: referral } : {}) },
     },
     metadata: { spannr_business_id: ctx.businessId },
     success_url: `${ctx.origin}/settings/billing?done=1`,

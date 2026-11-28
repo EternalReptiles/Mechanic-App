@@ -130,6 +130,7 @@ export default function SettingsPage() {
           {cloud.isAdmin && <button className="set-row" onClick={startTechPreview}><span className="set-ico">👁</span><span className="set-text"><span>Preview technician app</span></span><span className="set-chev">›</span></button>}
           <Row to="?s=backup" icon="💾" label="Backup" />
           {isAdminOfSpannr && <Row to="/admin" icon="🛠" label="Spannr admin" />}
+          {cloud.isAdmin && <Row to="/settings/refer" icon="🎁" label="Refer a mechanic" hint="Give a month, get a month" />}
           <Row to="/settings/help" icon="❓" label="Help & support" hint="Quick answers, email us" />
           <Row to="?s=account" icon="⚙️" label="Account" hint="Sign out, close account" />
         </div>

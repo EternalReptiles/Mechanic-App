@@ -144,6 +144,45 @@ export async function applySubscription(sub: any) {
     cancel_at_period_end: !!sub.cancel_at_period_end,
     stripe_subscription_id: ended ? null : sub.id,
   }).eq('id', businessId);
+  // A referral discount used at checkout is spent once the subscription is live.
+  const used = sub.metadata?.spannr_referral;
+  if (sub.status === 'active' && used && !sub.metadata?.spannr_referral_done) {
+    if (used === 'welcome') await admin.from('businesses').update({ referral_discount_used: true }).eq('id', businessId);
+    if (used === 'credit') {
+      const { data: b } = await admin.from('businesses').select('referral_credits').eq('id', businessId).maybeSingle();
+      await admin.from('businesses').update({ referral_credits: Math.max(0, (b?.referral_credits ?? 1) - 1) }).eq('id', businessId);
+    }
+    await stripe.subscriptions.update(sub.id, { metadata: { spannr_referral_done: '1' } });
+  }
+}
+
+// ---------- referrals: give a month, get a month ----------
+const PLAN_MONTH_CENTS: Record<string, number> = { solo: 4900, pro: 7900, team: 11900, business: 18900 };
+
+/** A one-off discount worth one month of the plan (so a yearly plan gets a month off, not a free year). */
+export async function referralCoupon(plan: string, name: string) {
+  return stripe.coupons.create({ amount_off: PLAN_MONTH_CENTS[plan] ?? 4900, currency: 'aud', duration: 'once', name, metadata: { spannr: 'referral' } });
+}
+
+/** When a referred business makes its first real payment: the referrer earns a month (off their next bill if subscribed). */
+export async function rewardReferral(businessId: string) {
+  const { data: ref } = await admin.rpc('referral_reward', { p_bid: businessId });
+  if (!ref) return;
+  const { data: r } = await admin.from('businesses').select('plan, plan_status, stripe_subscription_id, referral_credits').eq('id', ref).maybeSingle();
+  if (r?.stripe_subscription_id && r.plan && ['active', 'past_due'].includes(r.plan_status ?? '') && (r.referral_credits ?? 0) > 0) {
+    try {
+      const sub = (await stripe.subscriptions.retrieve(r.stripe_subscription_id)) as any;
+      const keep = (sub.discounts ?? []).map((d: any) => ({ discount: typeof d === 'string' ? d : d.id }));
+      const coupon = await referralCoupon(r.plan, 'Referral reward – 1 month free');
+      await stripe.subscriptions.update(sub.id, { discounts: [...keep, { coupon: coupon.id }] } as any);
+      await admin.from('businesses').update({ referral_credits: r.referral_credits - 1 }).eq('id', ref);
+    } catch (e) {
+      console.error('referral reward on subscription failed – credit kept for later', e);
+    }
+  }
+  await admin.rpc('push_to_business', {
+    bid: ref, p_title: 'You earned a free month 🎉', p_body: 'A mechanic you referred just started paying for Spannr – your next month is on us.', p_url: '/settings/refer', p_admins_only: true,
+  });
 }
 
 /** Checks an in-person (Tap to Pay) payment with Stripe; when it succeeded, marks the job paid and sends the receipt once. */

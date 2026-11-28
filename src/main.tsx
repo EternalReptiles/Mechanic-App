@@ -5,6 +5,9 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import { isNative } from './native';
 import './styles.css';
+import { rememberReferral } from './pages/Refer';
+
+rememberReferral();
 
 // The web app works offline through a service worker; the native app already has its files on the phone.
 if (!isNative) registerSW({ immediate: true });

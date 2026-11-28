@@ -37,6 +37,7 @@ import Reports from './pages/Reports';
 import Timesheets from './time/Timesheets';
 import ImportCustomers from './import/ImportCustomers';
 import Help from './pages/Help';
+import Refer from './pages/Refer';
 import Statement, { Statements } from './pages/Statement';
 import StockPage from './stock/StockPage';
 import { OrderPage, OrdersList } from './stock/Orders';
@@ -117,6 +118,7 @@ function OwnerApp() {
                   <Route path="/timesheets" element={<Timesheets />} />
                   <Route path="/settings/import" element={<ImportCustomers />} />
                   <Route path="/settings/help" element={<Help />} />
+                  <Route path="/settings/refer" element={<Refer />} />
                   <Route path="/customers/:id/statement" element={<Statement />} />
                   <Route path="/statements" element={<Statements />} />
                   <Route path="/stock" element={<StockPage />} />
