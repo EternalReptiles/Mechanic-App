@@ -99,6 +99,36 @@ export default function CustomerPage() {
         </label>
       </section>
 
+      <section className="card grid">
+        <label className="field checkbox wide">
+          <input type="checkbox" checked={!!c.account?.enabled}
+            onChange={(e) => setC({ ...c, account: { terms: 30, ...c.account, enabled: e.target.checked } })} />
+          <span><strong>Account customer</strong> – fleet or business that pays on terms and gets a monthly statement</span>
+        </label>
+        {c.account?.enabled && (
+          <>
+            <Field label="Payment terms">
+              <select value={String(c.account.terms)} onChange={(e) => setC({ ...c, account: { ...c.account!, terms: e.target.value === 'eom' ? 'eom' : Number(e.target.value) } })}>
+                {[7, 14, 30, 60].map((d) => <option key={d} value={d}>{d} days</option>)}
+                <option value="eom">30 days end of month</option>
+              </select>
+            </Field>
+            <Field label="Accounts email (optional)">
+              <input type="email" placeholder={c.email || 'accounts@company.com.au'} value={c.account.billingEmail ?? ''}
+                onChange={(e) => setC({ ...c, account: { ...c.account!, billingEmail: e.target.value } })} />
+            </Field>
+            <label className="field checkbox wide">
+              <input type="checkbox" checked={!!c.account.requirePO} onChange={(e) => setC({ ...c, account: { ...c.account!, requirePO: e.target.checked } })} />
+              <span>Their jobs need a purchase order (PO) number</span>
+            </label>
+            <div className="wide row wrap">
+              <Link className="btn" to={`/customers/${c.id}/statement`}>📄 Statement</Link>
+              <span className="small muted">No automatic payment reminders – they pay on their statement.</span>
+            </div>
+          </>
+        )}
+      </section>
+
       <h2>Vehicles</h2>
       {vehicles.map((v) =>
         editingVehicle?.id === v.id ? (

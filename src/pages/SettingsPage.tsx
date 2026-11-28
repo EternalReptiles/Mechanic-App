@@ -97,6 +97,7 @@ export default function SettingsPage() {
             <Row to="/settings/price-list" icon="📋" label="Price list" />
             <Row to="?s=bank" icon="🏦" label="Bank details" />
             <Row to="/stock" icon="📦" label="Stock & orders" hint="Parts on hand, purchase orders" />
+            <Row to="/statements" icon="🧾" label="Account customers" hint="Fleet & business customers, monthly statements" />
             <Row to="/settings/import" icon="📥" label="Import from ServiceM8" hint="Customers, jobs and vehicles" />
             <Row to="/reports" icon="📊" label="Reports" hint="Takings, money owed, top customers" />
             <Row to="/timesheets" icon="⏱" label="Timesheets" hint="Hours clocked on jobs" />

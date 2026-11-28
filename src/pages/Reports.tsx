@@ -6,7 +6,7 @@ import { PageHeader } from '../components/ui';
 import { db } from '../db';
 import { useSettings } from '../hooks';
 import type { Job } from '../types';
-import { money, PAYMENT_LABEL, totals } from '../utils';
+import { invoiceDue, money, PAYMENT_LABEL, totals } from '../utils';
 
 type Period = 'month' | 'last' | 'quarter' | 'year' | '12m';
 const LABEL: Record<Period, string> = { month: 'This month', last: 'Last month', quarter: 'This quarter', year: 'This financial year', '12m': 'Last 12 months' };
@@ -55,7 +55,7 @@ export default function Reports() {
     const invoiced = live.filter((j) => inRange(j.invoicedAt || j.paidAt, rg));
     const owing = live.filter((j) => j.status === 'invoiced');
     const owingTotal = owing.reduce((s, j) => s + total(j).total, 0);
-    const overdue = owing.filter((j) => j.invoicedAt && Date.now() - new Date(j.invoicedAt).getTime() > settings.paymentTermsDays * 86400000);
+    const overdue = owing.filter((j) => j.invoicedAt && Date.now() > invoiceDue(j.invoicedAt, settings.paymentTermsDays, customers.find((c) => c.id === j.customerId)?.account).getTime());
     const quotes = live.filter((j) => inRange(j.createdAt, rg));
     const booked = quotes.filter((j) => j.status !== 'quote');
     const online = quotes.filter((j) => j.bookedOnline).length;
@@ -88,7 +88,7 @@ export default function Reports() {
       byTech: [...byTech].sort((a, b) => b[1] - a[1]),
       byWork: [...byWork].sort((a, b) => b[1] - a[1]).slice(0, 6),
     };
-  }, [jobs, period, basis, settings.gstRegistered, settings.paymentTermsDays]);
+  }, [jobs, customers, period, basis, settings.gstRegistered, settings.paymentTermsDays]);
 
   if (!isAdmin) return (<><PageHeader back title="Reports" /><p className="muted">Reports are for the owner and admins.</p></>);
   const max = Math.max(1, ...r.months.map((m) => m.total));

@@ -316,6 +316,12 @@ export default function JobPage() {
             <Field label="What's the job?" wide>
               <input value={job.title} placeholder="e.g. Logbook service, brake pads" onChange={(e) => update({ title: e.target.value })} />
             </Field>
+            {(customer?.account?.enabled || job.poNumber) && (
+              <Field label={`PO number${customer?.account?.requirePO ? ' (required)' : ''}`} wide>
+                <input value={job.poNumber ?? ''} placeholder="Customer's purchase order number" onChange={(e) => update({ poNumber: e.target.value })} />
+                {customer?.account?.requirePO && !job.poNumber && <small className="error">{customer.name} needs a PO number on every job.</small>}
+              </Field>
+            )}
             <Field label="Booking time" wide>
               <input type="datetime-local" value={toLocalInput(job.scheduledStart)}
                 onChange={(e) => update({

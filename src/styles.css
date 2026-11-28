@@ -853,3 +853,10 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 .rego-row .btn { flex: 0 0 auto; white-space: nowrap; }
 .rego-options .btn { margin-top: 4px; text-align: left; justify-content: flex-start; }
 .rego-row input { text-transform: uppercase; }
+.statement-aging { margin-top: 12px; }
+.statement-aging th, .statement-aging td { text-align: left; }
+.acct-tag { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 18%, transparent); font-size: .72rem; font-weight: 600; vertical-align: middle; }
+.statement .doc-table td:first-child { white-space: nowrap; }
+@media screen and (max-width: 700px) {
+  .statement .doc-table { display: block; overflow-x: auto; white-space: nowrap; }
+}

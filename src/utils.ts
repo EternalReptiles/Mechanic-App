@@ -31,6 +31,16 @@ export const fmtDate = (iso: string) =>
 export const fmtTime = (iso: string) =>
   iso ? new Date(iso).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' }) : '';
 
+/** When an invoice is due: the customer's account terms (e.g. 30 days end of month) or the business's normal terms. */
+export function invoiceDue(issuedIso: string, termsDays: number, account?: { enabled: boolean; terms: number | 'eom' }): Date {
+  const issued = new Date(issuedIso);
+  if (account?.enabled && account.terms === 'eom') return new Date(issued.getFullYear(), issued.getMonth() + 2, 0, 23, 59);
+  const days = account?.enabled && typeof account.terms === 'number' ? account.terms : termsDays;
+  return new Date(issued.getTime() + days * 86400000);
+}
+export const termsLabel = (a?: { enabled: boolean; terms: number | 'eom' }) =>
+  !a?.enabled ? '' : a.terms === 'eom' ? '30 days end of month' : `${a.terms} days`;
+
 export const fmtDateTime = (iso: string) =>
   iso
     ? new Date(iso).toLocaleString('en-AU', {

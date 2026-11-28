@@ -5,7 +5,7 @@ import { BATTERY_RESULTS, readingsText } from '../inspection';
 import { db } from '../db';
 import { useSettings } from '../hooks';
 import type { CheckItem } from '../types';
-import { CHECK_LABEL, fmtDate, fmtDay, money, PAYMENT_LABEL, totals, vehicleLabel } from '../utils';
+import { CHECK_LABEL, fmtDate, fmtDay, money, PAYMENT_LABEL, totals, vehicleLabel, invoiceDue, termsLabel } from '../utils';
 
 function InspectionTable({ items, onlyFlagged }: { items: CheckItem[]; onlyFlagged?: boolean }) {
   const rows = items.filter((i) => i.result && (!onlyFlagged || i.result === 'attention' || i.result === 'urgent'));
@@ -54,7 +54,7 @@ export default function DocumentView() {
   const checklist = job.checklist ?? [];
   const flagged = checklist.filter((i) => i.result === 'attention' || i.result === 'urgent');
   const issued = (isInvoice ? job.invoicedAt : '') || new Date().toISOString();
-  const due = new Date(new Date(issued).getTime() + s.paymentTermsDays * 86400000).toISOString();
+  const due = invoiceDue(issued, s.paymentTermsDays, customer?.account).toISOString();
   const t = totals(job.lineItems, s.gstRegistered);
   const docName = `${title} ${job.number}${customer ? ` - ${customer.name}` : ''}`;
 
@@ -100,6 +100,8 @@ export default function DocumentView() {
             <h1>{title}</h1>
             <div><span>Number</span> {isReport ? 'JOB' : isInvoice ? 'INV' : 'Q'}-{job.number}</div>
             <div><span>Date</span> {fmtDate(issued)}</div>
+            {job.poNumber && <div><span>PO</span> {job.poNumber}</div>}
+            {isInvoice && customer?.account?.enabled && <div><span>Terms</span> {termsLabel(customer.account)}</div>}
             {isInvoice && job.status !== 'paid' && <div><span>Due</span> {fmtDate(due)}</div>}
           </div>
         </header>

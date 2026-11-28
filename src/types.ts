@@ -20,6 +20,18 @@ export interface Customer {
   noAutoMessages?: boolean;
   /** Private link to their customer page (app.spannr.au/my/<token>) */
   portalToken?: string;
+  /** Fleet / account customer: pays on terms (e.g. 30 days end of month) and gets a monthly statement */
+  account?: CustomerAccount;
+}
+
+export interface CustomerAccount {
+  enabled: boolean;
+  /** Days after the invoice, or 'eom' = end of the month after the invoice */
+  terms: number | 'eom';
+  /** Their jobs need a purchase order number */
+  requirePO?: boolean;
+  /** Where statements and invoices go, if not their normal email */
+  billingEmail?: string;
 }
 
 export interface Vehicle {
@@ -167,6 +179,8 @@ export interface Job {
   imported?: string;
   /** Source system's id, so the same job is never imported twice */
   importKey?: string;
+  /** Customer's purchase order number (fleet / account customers) */
+  poNumber?: string;
 }
 
 export type JobLocation = 'onsite' | 'workshop';

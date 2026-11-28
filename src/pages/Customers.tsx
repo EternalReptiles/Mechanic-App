@@ -37,7 +37,7 @@ export default function Customers() {
             <tbody>
               {list.map((c) => (
                 <tr key={c.id} onClick={() => navigate(`/customers/${c.id}`)} tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && navigate(`/customers/${c.id}`)}>
-                  <td><strong>{c.name}</strong></td>
+                  <td><strong>{c.name}</strong>{c.account?.enabled && <span className="acct-tag">Account</span>}</td>
                   <td className="nowrap">{c.phone || '—'}</td>
                   <td>{c.email || '—'}</td>
                   <td className="ellipsis">{c.address || '—'}</td>
@@ -52,7 +52,7 @@ export default function Customers() {
           const vs = vehicles.filter((v) => v.customerId === c.id);
           return (
             <Link key={c.id} to={`/customers/${c.id}`} className="card">
-              <strong>{c.name}</strong>
+              <strong>{c.name}</strong>{c.account?.enabled && <span className="acct-tag">Account</span>}
               <div className="muted small">{[c.phone, c.address].filter(Boolean).join(' · ')}</div>
               {vs.length > 0 && <div className="small">{vs.map(vehicleLabel).join(', ')}</div>}
             </Link>

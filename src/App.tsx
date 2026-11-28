@@ -37,6 +37,7 @@ import Reports from './pages/Reports';
 import Timesheets from './time/Timesheets';
 import ImportCustomers from './import/ImportCustomers';
 import Help from './pages/Help';
+import Statement, { Statements } from './pages/Statement';
 import StockPage from './stock/StockPage';
 import { OrderPage, OrdersList } from './stock/Orders';
 import BookingPage from './booking/BookingPage';
@@ -116,6 +117,8 @@ function OwnerApp() {
                   <Route path="/timesheets" element={<Timesheets />} />
                   <Route path="/settings/import" element={<ImportCustomers />} />
                   <Route path="/settings/help" element={<Help />} />
+                  <Route path="/customers/:id/statement" element={<Statement />} />
+                  <Route path="/statements" element={<Statements />} />
                   <Route path="/stock" element={<StockPage />} />
                   <Route path="/orders" element={<OrdersList />} />
                   <Route path="/orders/:id" element={<OrderPage />} />

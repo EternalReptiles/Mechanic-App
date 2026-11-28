@@ -12,7 +12,7 @@ import { createJob, db } from '../db';
 import { useLookups, useSettings } from '../hooks';
 import SpannrAlerts from '../components/SpannrAlerts';
 import GettingStarted from '../components/GettingStarted';
-import { addDays, dayKey, daysUntil, money, STATUS, totals } from '../utils';
+import { addDays, dayKey, daysUntil, invoiceDue, money, STATUS, totals } from '../utils';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ export default function Dashboard() {
   const invoiced = jobs.filter((j) => j.status === 'invoiced');
   const owing = invoiced.reduce((s, j) => s + totals(j.lineItems, settings.gstRegistered).total, 0);
   const overdue = invoiced.filter(
-    (j) => j.invoicedAt && Date.now() - new Date(j.invoicedAt).getTime() > settings.paymentTermsDays * 86400000,
+    (j) => j.invoicedAt && Date.now() > invoiceDue(j.invoicedAt, settings.paymentTermsDays, customerMap.get(j.customerId)?.account).getTime(),
   );
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
   const paidThisMonth = jobs
