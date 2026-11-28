@@ -778,3 +778,4 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 .install-app.card { margin-top: 12px; }
 .install-app h2 { font-size: 1rem; }
 .reminder-remove { margin-left: auto; }
+.side-install .install-hide { width: auto; flex: 0 0 auto; background: transparent; color: #94a3b8; }

@@ -23,7 +23,9 @@ function remember() {
 }
 /** Running as the installed app (any app-style window), or already installed from this browser. */
 const installed = () => {
-  const appWindow = ['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay'].some((m) => window.matchMedia?.(`(display-mode: ${m})`).matches)
+  // Opened from the installed app's icon (start_url carries ?app=1).
+  const fromIcon = new URLSearchParams(location.search).has('app');
+  const appWindow = fromIcon || ['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay'].some((m) => window.matchMedia?.(`(display-mode: ${m})`).matches)
     || (navigator as { standalone?: boolean }).standalone === true;
   if (appWindow) remember();
   try { return appWindow || localStorage.getItem(KEY) === '1'; } catch { return appWindow; }
@@ -47,7 +49,8 @@ export default function InstallApp({ compact = false }: { compact?: boolean }) {
   async function install() {
     if (deferred) {
       await deferred.prompt();
-      await deferred.userChoice.catch(() => undefined);
+      const choice = await deferred.userChoice.catch(() => undefined);
+      if (choice?.outcome === 'accepted') remember();
       deferred = null;
       force((n) => n + 1);
     } else setHelp(true);
@@ -71,8 +74,12 @@ export default function InstallApp({ compact = false }: { compact?: boolean }) {
           </p>
         </>
       )}
-      <button className={`btn ${compact ? 'small' : 'primary'}`} onClick={() => void install()}>⬇ Install Spannr</button>
-      {help && <p className="small" style={{ marginBottom: 0 }}>{howTo}</p>}
+      <div className="row" style={{ gap: 6 }}>
+        <button className={`btn grow ${compact ? 'small' : 'primary'}`} onClick={() => void install()}>⬇ Install Spannr</button>
+        <button className="btn ghost small install-hide" title="Already installed – hide this" aria-label="Hide – already installed"
+          onClick={() => { remember(); force((n) => n + 1); }}>✕</button>
+      </div>
+      {help && <p className="small" style={{ marginBottom: 0 }}>{howTo} Already installed? Tap ✕ to hide this.</p>}
     </div>
   );
 }
