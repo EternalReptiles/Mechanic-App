@@ -31,6 +31,8 @@ interface CloudCtx extends Membership {
   isAdmin: boolean;
   team: TeamMember[];
   memberName: (userId?: string) => string;
+  /** Reload the team list (e.g. after a name change). */
+  refreshTeam: () => void;
   plan: PlanInfo;
   can: (feature: Feature) => boolean;
   refreshPlan: () => Promise<void>;
@@ -170,7 +172,12 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
     void refreshPlan();
     // Team list for assigning jobs; cached so it works offline.
     getMeta<TeamMember[]>('team').then((t) => t && setTeam(t));
-    supabase
+    refreshTeam();
+    return () => stopSync();
+  }, [ready?.businessId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const refreshTeam = useCallback(() => {
+    if (!ready) return;
+    void supabase
       .from('members')
       .select('user_id, email, name, role')
       .eq('business_id', ready.businessId)
@@ -181,7 +188,6 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
         setTeam(t);
         void setMeta('team', t);
       });
-    return () => stopSync();
   }, [ready?.businessId]); // eslint-disable-line react-hooks/exhaustive-deps
   const memberName = useCallback(
     (userId?: string) => (userId ? team.find((t) => t.userId === userId)?.name ?? 'Former staff' : ''),
@@ -220,7 +226,7 @@ export default function CloudProvider({ children }: { children: ReactNode }) {
   const m = phase.m;
   return (
     <Ctx.Provider
-      value={{ ...m, isAdmin: m.role === 'owner' || m.role === 'admin', signOut, team, memberName, plan, refreshPlan, can: (f) => planAllows(plan.effective, f) }}
+      value={{ ...m, isAdmin: m.role === 'owner' || m.role === 'admin', signOut, team, memberName, refreshTeam, plan, refreshPlan, can: (f) => planAllows(plan.effective, f) }}
     >
       {children}
     </Ctx.Provider>

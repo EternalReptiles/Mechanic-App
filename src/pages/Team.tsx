@@ -4,8 +4,9 @@ import { supabase } from '../cloud/supabase';
 import { Empty, Field, PageHeader } from '../components/ui';
 import { PLANS } from '../plans';
 import { APP_URL } from '../native';
+import { personName } from '../utils';
 
-interface Member { user_id: string; email: string; role: Role }
+interface Member { user_id: string; email: string; role: Role; name: string | null }
 interface Invite { email: string; role: Role }
 
 const ROLE_LABEL: Record<Role, string> = { owner: 'Owner', admin: 'Admin', tech: 'Technician' };
@@ -16,7 +17,7 @@ const ROLE_HELP: Record<Role, string> = {
 };
 
 export default function Team() {
-  const { businessId, businessName, userId, isAdmin, plan } = useCloud();
+  const { businessId, businessName, userId, isAdmin, plan, refreshTeam } = useCloud();
   const limit = plan.effective === 'trial' || plan.effective === 'expired' ? null : PLANS[plan.effective].users;
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -27,7 +28,7 @@ export default function Team() {
 
   const load = useCallback(async () => {
     const [m, i] = await Promise.all([
-      supabase.from('members').select('user_id, email, role').eq('business_id', businessId).order('created_at'),
+      supabase.from('members').select('user_id, email, role, name').eq('business_id', businessId).order('created_at'),
       isAdmin ? supabase.from('invites').select('email, role').eq('business_id', businessId).order('created_at') : Promise.resolve({ data: [], error: null }),
     ]);
     if (m.error || i.error) setErr((m.error ?? i.error)!.message);
@@ -65,8 +66,18 @@ export default function Team() {
       {members.map((m) => (
         <div key={m.user_id} className="card row between">
           <div>
-            <strong>{m.email}{m.user_id === userId && ' (you)'}</strong>
-            <div className="muted small">{ROLE_LABEL[m.role]}</div>
+            <strong>{personName(m.email, m.name ?? '')}{m.user_id === userId && ' (you)'}</strong>
+            <div className="muted small">{m.email} · {ROLE_LABEL[m.role]}</div>
+            {(isAdmin || m.user_id === userId) && (
+              <button className="link small" style={{ padding: 0 }} onClick={async () => {
+                const name = prompt(`Name for ${m.email} (shown on jobs, timesheets and texts):`, personName(m.email, m.name ?? ''));
+                if (name === null) return;
+                const { error } = await supabase.rpc('set_member_name', { bid: businessId, uid: m.user_id, p_name: name });
+                if (error) setErr(error.message);
+                void load();
+                void refreshTeam();
+              }}>✏️ Change name</button>
+            )}
           </div>
           {isAdmin && m.role !== 'owner' && m.user_id !== userId && (
             <div className="row">
