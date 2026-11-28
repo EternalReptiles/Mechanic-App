@@ -194,8 +194,9 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); o
 .slot-body { display: flex; flex-direction: column; min-width: 0; }
 
 /* ---------- Quote / invoice document ---------- */
-.doc-page { background: #e5e7eb; min-height: 100vh; padding: 12px; color-scheme: light; }
-.doc-toolbar { display: flex; gap: 8px; max-width: 800px; margin: 0 auto 12px; flex-wrap: wrap; }
+.doc-page { background: #e5e7eb; min-height: 100vh; padding: 12px; padding-top: calc(12px + env(safe-area-inset-top)); color-scheme: light; }
+/* Stays on screen (and clear of the iPhone status bar) so you can always get back out. */
+.doc-toolbar { display: flex; gap: 8px; max-width: 800px; margin: 0 auto 12px; flex-wrap: wrap; position: sticky; top: env(safe-area-inset-top); z-index: 5; padding: 6px 0; background: #e5e7eb; }
 .doc-toolbar .btn { background: #fff; color: #0f172a; border-color: #cbd5e1; }
 .doc-toolbar .btn.primary { background: var(--primary); border-color: var(--primary); }
 .doc {

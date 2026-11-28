@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { brandVars } from '../brand';
-import { Empty, PageHeader } from '../components/ui';
+import { Empty, goBack, PageHeader } from '../components/ui';
 import { db } from '../db';
 import { useSettings } from '../hooks';
 import type { Customer, Job } from '../types';
@@ -63,7 +63,7 @@ export default function Statement() {
   return (
     <div className="doc-page">
       <div className="doc-toolbar no-print">
-        <button className="btn" onClick={() => navigate(-1)}>← Back</button>
+        <button className="btn" onClick={() => goBack(navigate, `/customers/${id}`)}>← Back</button>
         <button className="btn" onClick={() => setYm(({ y, m }) => (m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 }))}>‹</button>
         <strong style={{ alignSelf: 'center' }}>{monthName}</strong>
         <button className="btn" onClick={() => setYm(({ y, m }) => (m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 }))}>›</button>

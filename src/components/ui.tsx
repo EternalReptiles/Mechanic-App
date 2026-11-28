@@ -1,3 +1,4 @@
+import type { NavigateFunction } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { JobStatus } from '../types';
@@ -54,4 +55,11 @@ export function Field({
 
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="empty">{children}</p>;
+}
+
+/** Back if there's a page to go back to (in the app there may not be), otherwise to `fallback`. */
+export function goBack(navigate: NavigateFunction, fallback = '/') {
+  const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+  if (idx > 0) navigate(-1);
+  else navigate(fallback);
 }

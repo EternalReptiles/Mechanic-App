@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate, useParams } from 'react-router-dom';
+import { goBack } from '../components/ui';
 import { brandVars } from '../brand';
 import { BATTERY_RESULTS, readingsText } from '../inspection';
 import { db } from '../db';
@@ -79,7 +80,7 @@ export default function DocumentView() {
   return (
     <div className="doc-page">
       <div className="doc-toolbar no-print">
-        <button className="btn" onClick={() => navigate(-1)}>← Back</button>
+        <button className="btn" onClick={() => goBack(navigate, `/jobs/${id}`)}>← Back</button>
         <button className="btn primary" onClick={print}>Print / Save PDF</button>
         <button className="btn" onClick={share}>Share</button>
       </div>
