@@ -17,7 +17,7 @@ export function PageHeader({
   return (
     <header className="page-header">
       {back && (
-        <button className="icon-btn" onClick={() => navigate(-1)} aria-label="Back">
+        <button className="icon-btn" onClick={() => goBack(navigate)} aria-label="Back">
           ←
         </button>
       )}
