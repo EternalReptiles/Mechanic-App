@@ -177,7 +177,7 @@ export default function JobPage() {
       {job.status === 'in_progress' && (
         <button className="btn block" onClick={() => setStatus('waiting')}>⏸ On hold – waiting on parts / approval</button>
       )}
-      {(['scheduled', 'in_progress', 'waiting'].includes(job.status) || (job.timeEntries?.length ?? 0) > 0) && <JobTimer job={job} update={update} />}
+      {(['in_progress', 'waiting'].includes(job.status) || (job.timeEntries?.length ?? 0) > 0) && <JobTimer job={job} update={update} />}
       {job.status === 'invoiced' && (
         <div className="pay-row">
           <span className="small muted">Payment received ({money(t.total)}):</span>

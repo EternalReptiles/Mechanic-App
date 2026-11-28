@@ -46,7 +46,13 @@ export default function JobCard({
           {showTime
             ? job.location === 'workshop' && job.promisedAt && !job.collectedAt
               ? `Ready by ${fmtDateTime(job.promisedAt)}`
-              : fmtDateTime(job.scheduledStart)
+              : !job.scheduledStart && job.status === 'paid' && job.paidAt
+                ? `Paid ${new Date(job.paidAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}`
+                : !job.scheduledStart && job.status === 'invoiced' && job.invoicedAt
+                  ? `Invoiced ${new Date(job.invoicedAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}`
+                  : !job.scheduledStart && job.status === 'completed'
+                    ? `Done ${new Date(job.finishedAt || job.createdAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}`
+                    : !job.scheduledStart ? 'No time set' : fmtDateTime(job.scheduledStart)
             : job.siteAddress}
         </span>
         {t.total > 0 && <span>{money(t.total)}</span>}

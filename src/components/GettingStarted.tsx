@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../db';
 import { useSettings } from '../hooks';
@@ -11,6 +12,7 @@ export default function GettingStarted() {
   const customers = useLiveQuery(() => db.customers.count(), []) ?? 0;
   const jobs = useLiveQuery(() => db.jobs.count(), []) ?? 0;
   const ob = s.onboarding ?? {};
+  const [all, setAll] = useState(false);
   if (ob.hidden) return null;
   const n = s.notify;
 
@@ -40,7 +42,7 @@ export default function GettingStarted() {
       </div>
       <div className="gs-bar"><span style={{ width: `${(done / steps.length) * 100}%` }} /></div>
       <ol className="gs-steps">
-        {steps.map((x) => (
+        {(all ? steps : steps.filter((x) => !x.done).slice(0, 3)).map((x) => (
           <li key={x.key} className={x.done ? 'done' : ''}>
             <Link to={x.to} onClick={() => x.markOnClick && !x.done && void save({ done: { [x.key]: true } })}>
               <span className="gs-tick">{x.done ? '✓' : ''}</span>
@@ -51,8 +53,9 @@ export default function GettingStarted() {
         ))}
       </ol>
       <div className="row between small">
-        <Link to="/settings/help">Need a hand? Help &amp; support</Link>
-        <button className="link small" onClick={() => void save({ hidden: true })}>Hide this</button>
+        {!all ? <button className="link small" onClick={() => setAll(true)}>Show all {steps.length}</button> : <span />}
+        <Link to="/settings/help">Help</Link>
+        <button className="link small" onClick={() => void save({ hidden: true })}>Hide</button>
       </div>
     </section>
   );

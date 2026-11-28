@@ -23,9 +23,9 @@ export default function Messages() {
 
   return (
     <>
-      <PageHeader back title="Messages" />
+      <PageHeader title="Messages" />
       <p className="muted small" style={{ marginTop: 0 }}>Replies to texts sent from Spannr. Open one to see the conversation and reply.</p>
-      {list === null ? <p className="muted">Loading…</p> : !list.length ? <Empty>No replies yet.</Empty> : list.map((c) => {
+      {list === null ? <p className="muted">Loading…</p> : !list.length ? <Empty>No texts from customers yet. When someone replies to a text from Spannr – a booking confirmation, reminder or quote – it lands here and you get a notification.</Empty> : list.map((c) => {
         const inner = (
           <>
             <div className="row between">

@@ -17,7 +17,7 @@ import { addDays, dayKey, daysUntil, money, STATUS, totals } from '../utils';
 export default function Dashboard() {
   const navigate = useNavigate();
   const settings = useSettings();
-  const { isAdmin, businessId, plan } = useCloud();
+  const { isAdmin, businessId, plan, businessName: cloudName } = useCloud();
   // Customers who've answered a video walk-around since we last looked.
   const [responses, setResponses] = useState<{ job_id: string; signed_name: string; kind: string }[]>([]);
   useEffect(() => {
@@ -96,7 +96,7 @@ export default function Dashboard() {
   return (
     <>
       <PageHeader
-        title={settings.businessName || 'Dashboard'}
+        title={settings.businessName && settings.businessName !== 'My Mobile Mechanics' ? settings.businessName : cloudName || settings.businessName || 'Dashboard'}
         actions={<><SyncBadge /><button className="btn primary" onClick={newJob}>+ New job</button></>}
       />
 

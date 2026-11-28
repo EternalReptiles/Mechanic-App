@@ -144,7 +144,7 @@ export default function Reports() {
       </div>
 
       <div className="stats report-stats">
-        <div className="stat"><span className="stat-value">{money(r.paidTotal)}</span><span className="stat-label">{basis === 'paid' ? 'Paid' : 'Invoiced'} ({r.paid.length} jobs)</span></div>
+        <div className="stat"><span className="stat-value">{money(r.paidTotal)}</span><span className="stat-label">{basis === 'paid' ? 'Paid' : 'Invoiced'} ({r.paid.length} job{r.paid.length === 1 ? '' : 's'})</span></div>
         <div className="stat"><span className="stat-value">{money(r.avg)}</span><span className="stat-label">Average job</span></div>
         <Link to="/jobs?status=invoiced" className={`stat${r.overdue.length ? ' warn' : ''}`}>
           <span className="stat-value">{money(r.owingTotal)}</span><span className="stat-label">Owing now ({r.owing.length}){r.overdue.length ? ` · ${r.overdue.length} overdue` : ''}</span>
@@ -169,8 +169,8 @@ export default function Reports() {
         <section className="card">
           <h2>Breakdown ({LABEL[period].toLowerCase()})</h2>
           <table className="report-table"><tbody>
-            <tr><td>Labour (ex GST)</td><td>{money(r.labour)}</td></tr>
-            <tr><td>Parts (ex GST)</td><td>{money(r.parts)}</td></tr>
+            {(r.labour > 0 || r.other < 0.01) && <tr><td>Labour (ex GST)</td><td>{money(r.labour)}</td></tr>}
+            {(r.parts > 0 || r.other < 0.01) && <tr><td>Parts (ex GST)</td><td>{money(r.parts)}</td></tr>}
             {r.other >= 0.01 && <tr><td>Other &amp; imported jobs (ex GST)</td><td>{money(r.other)}</td></tr>}
             <tr><td>GST collected</td><td>{money(r.gst)}</td></tr>
             <tr className="total"><td>{basis === 'paid' ? 'Total paid' : 'Total invoiced'}</td><td>{money(r.paidTotal)}</td></tr>

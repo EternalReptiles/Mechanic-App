@@ -33,6 +33,7 @@ const installed = () => {
 const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 const isIOS = /iPhone|iPad|iPod/.test(ua);
 const isMacSafari = /Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|Edg|Firefox/.test(ua);
+const isPhone = /iPhone|iPod|Android.*Mobile/.test(ua);
 const isFirefox = /Firefox/.test(ua);
 
 /** "Install Spannr" – puts the web app on a computer's desktop/dock (or phone home screen) as its own app. */
@@ -68,9 +69,9 @@ export default function InstallApp({ compact = false }: { compact?: boolean }) {
     <div className={compact ? 'install-app compact' : 'install-app card'}>
       {!compact && (
         <>
-          <h2 style={{ marginTop: 0 }}>💻 Install Spannr on this computer</h2>
+          <h2 style={{ marginTop: 0 }}>{isPhone ? '📱 Add Spannr to your home screen' : '💻 Install Spannr on this computer'}</h2>
           <p className="small muted" style={{ marginTop: 0 }}>
-            Opens in its own window from your desktop, dock or Start menu – no browser tabs. Updates itself automatically.
+            {isPhone ? 'Opens full-screen from an icon, like an app – no browser bar. Updates itself automatically.' : 'Opens in its own window from your desktop, dock or Start menu – no browser tabs. Updates itself automatically.'}
           </p>
         </>
       )}

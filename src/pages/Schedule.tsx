@@ -61,7 +61,7 @@ export default function Schedule() {
           .filter((j) => j.scheduledStart && dayKey(new Date(j.scheduledStart)) === key)
           .sort((a, b) => a.scheduledStart.localeCompare(b.scheduledStart));
         return (
-          <section key={key} className={`day${key === todayKey ? ' today' : ''}`}>
+          <section key={key} className={`day${key === todayKey ? ' today' : ''}${dayJobs.length ? '' : ' empty'}`}>
             <h3>{d.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'short' })}</h3>
             {dayJobs.length ? (
               dayJobs.map((j) => {
@@ -77,7 +77,7 @@ export default function Schedule() {
                 );
               })
             ) : (
-              <p className="muted small">—</p>
+              <p className="muted small">Nothing booked</p>
             )}
           </section>
         );

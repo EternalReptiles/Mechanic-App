@@ -839,3 +839,10 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 .faq { border-top: 1px solid var(--border); padding: 10px 0; }
 .faq summary { cursor: pointer; font-weight: 600; }
 .faq p { margin: 8px 0 0; }
+
+/* Schedule: empty days take one slim line on phones */
+@media (max-width: 1023px) {
+  .day.empty { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .day.empty h3 { margin: 0; font-size: .95rem; }
+  .day.empty p { margin: 0; }
+}
