@@ -12,6 +12,8 @@ import ApprovalList, { WalkaroundSection } from '../walkaround/WalkaroundList';
 import SendSignoff from '../walkaround/SendSignoff';
 import JobMessages from '../components/JobMessages';
 import BookingStatus from '../components/BookingStatus';
+import WorkNotePicker from '../components/WorkNotePicker';
+import { autoWorkNotes } from '../workNotes';
 import { syncNow } from '../cloud/sync';
 import Upgrade from '../components/Upgrade';
 import TaskChecklist from '../components/TaskChecklist';
@@ -123,6 +125,7 @@ export default function JobPage() {
       patch.paidAt = job!.paidAt || now;
       if (paymentMethod) patch.paymentMethod = paymentMethod;
     }
+    if (['completed', 'invoiced', 'paid'].includes(to) && !['completed', 'invoiced', 'paid'].includes(job!.status)) Object.assign(patch, autoWorkNotes(job!, vehicle, settings));
     if (to === 'invoiced') setTab('billing');
     update(patch);
   }
@@ -360,7 +363,8 @@ export default function JobPage() {
               <textarea rows={2} value={job.description} placeholder="Noise from front left when braking…" onChange={(e) => update({ description: e.target.value })} />
             </Field>
             <Field label="Work done & recommendations (on invoice)" wide>
-              <textarea rows={3} value={job.workNotes} onChange={(e) => update({ workNotes: e.target.value })} />
+              <textarea rows={job.workNotes ? 5 : 3} value={job.workNotes} onChange={(e) => update({ workNotes: e.target.value })} />
+              <WorkNotePicker job={job} vehicle={vehicle} settings={settings} update={update} />
               <AiNotes job={job} vehicle={vehicle} customer={customer} update={update} />
             </Field>
           </section>
@@ -389,7 +393,7 @@ export default function JobPage() {
                   const miss = missingRequired(job.tasks);
                   if (miss.length) return alert(`Still to do: ${miss.map((t) => t.label).join(', ')}`);
                   const { patch, odometer } = finishJobPatch(job, userId);
-                  update(patch);
+                  update({ ...patch, ...autoWorkNotes({ ...job, ...patch }, vehicle, settings) });
                   if (odometer && vehicle) void db.vehicles.update(vehicle.id, { odometer });
                 }}>✓ Mark job finished</button>
               )}

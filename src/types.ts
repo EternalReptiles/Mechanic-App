@@ -331,6 +331,8 @@ export interface Settings {
   brandColor?: string;
   /** Job checklist templates for technicians (defaults used when missing) */
   jobTemplates?: JobTemplate[];
+  /** Saved "work done" wording, one per kind of job */
+  workNoteTemplates?: WorkNoteTemplate[];
   /** IANA time zone used for message times and quiet hours, e.g. "Australia/Sydney" */
   timezone?: string;
   /** Online booking page (app.spannr.au/book/<slug>) */
@@ -339,6 +341,14 @@ export interface Settings {
   notify?: NotifySettings;
   /** Getting-started checklist on the dashboard */
   onboarding?: { hidden?: boolean; done?: Record<string, boolean> };
+}
+
+export interface WorkNoteTemplate {
+  id: string;
+  name: string;
+  /** Comma-separated words; a job mentioning one gets this template */
+  keywords?: string;
+  text: string;
 }
 
 export interface NotifySettings {

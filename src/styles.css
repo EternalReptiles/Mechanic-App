@@ -872,3 +872,6 @@ button.stat { font: inherit; color: inherit; text-align: left; cursor: pointer; 
 .booking-box.booked { background: var(--bg); border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 10px; padding: 10px 12px; }
 .booking-box.booked.ok { border-left-color: #16a34a; }
 .booking-box.booked.warn { border-left-color: #dc2626; }
+
+/* Work done templates */
+.work-note-picker { align-items: center; margin-top: 6px; }

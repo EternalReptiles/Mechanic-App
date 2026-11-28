@@ -14,6 +14,8 @@ import { finishJobPatch, missingRequired, odometerFromTasks, tasksFromTemplate, 
 import type { Job } from '../types';
 import { firstName, fmtDateTime, mapsUrl, smsUrl, telUrl } from '../utils';
 import { whenJobDone } from '../stock';
+import WorkNotePicker from '../components/WorkNotePicker';
+import { autoWorkNotes } from '../workNotes';
 import JobTimer from '../time/JobTimer';
 import JobHistory from '../components/JobHistory';
 import AiNotes from '../ai/AiNotes';
@@ -68,7 +70,7 @@ export default function TechJob() {
       return;
     }
     const { patch, odometer } = finishJobPatch(job!, userId);
-    update(patch);
+    update({ ...patch, ...autoWorkNotes({ ...job!, ...patch }, vehicle ?? undefined, settings) });
     if (odometer && vehicle) void db.vehicles.update(vehicle.id, { odometer });
   }
 
@@ -131,6 +133,7 @@ export default function TechJob() {
       <section className="card">
         <Field label="Work done / notes for the office">
           <textarea rows={4} value={job.workNotes} onChange={(e) => update({ workNotes: e.target.value })} placeholder="What you did, parts used, anything the customer should know…" />
+          <WorkNotePicker job={job} vehicle={vehicle ?? undefined} settings={settings} update={update} />
         </Field>
         <AiNotes job={job} vehicle={vehicle ?? undefined} customer={customer ?? undefined} update={update} />
       </section>

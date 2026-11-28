@@ -26,6 +26,7 @@ import CloudProvider, { useCloud } from './cloud/CloudProvider';
 import TechApp from './tech/TechApp';
 import { isTechPreview } from './tech/preview';
 import JobTemplates from './pages/JobTemplates';
+import WorkNoteTemplates from './pages/WorkNoteTemplates';
 import Compose from './walkaround/Compose';
 import CustomerApproval from './walkaround/CustomerApproval';
 import WalkRecord from './walkaround/Record';
@@ -127,6 +128,7 @@ function OwnerApp() {
                   <Route path="/settings/booking" element={<OnlineBookingSettings />} />
                   <Route path="/settings/billing" element={<Billing />} />
                   <Route path="/settings/checklists" element={<JobTemplates />} />
+                  <Route path="/settings/work-notes" element={<WorkNoteTemplates />} />
                 </Routes>
               </main>
               <BottomNav />

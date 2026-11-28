@@ -114,6 +114,7 @@ export default function SettingsPage() {
             <Row to="/settings/booking" icon="📅" label="Online booking" />
             <Row to="?s=inspections" icon="🔧" label="Inspections & service reminders" />
             <Row to="/settings/checklists" icon="☑" label="Job checklists" />
+            <Row to="/settings/work-notes" icon="📝" label="Work done templates" hint="Your usual wording for each kind of job" />
           </div>
         )}
 
