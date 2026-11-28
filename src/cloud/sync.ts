@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { changeListener, db, getMeta, jobNumbers, setMeta, SYNCED_TABLES, type SyncedTable } from '../db';
+import { changeListener, clock, db, getMeta, jobNumbers, serverNow, setMeta, SYNCED_TABLES, type SyncedTable } from '../db';
 import { supabase, withTimeout } from './supabase';
 
 /*
@@ -99,6 +99,7 @@ export async function syncNow(): Promise<void> {
   running = true;
   setStatus({ state: 'syncing' });
   try {
+    await syncClock();
     try {
       await push(businessId);
       await pull(businessId);
@@ -131,6 +132,17 @@ type Rec = Record<string, unknown> & { id: string; updatedAt?: number; _dirty?: 
 function payload(r: Rec) {
   const { _dirty: _d, blob: _b, ...data } = r;
   return data;
+}
+
+/** Learns how far this device's clock is from the server's (once per sync; cheap). */
+async function syncClock() {
+  const t0 = Date.now();
+  const { data, error } = await supabase.rpc('server_now');
+  const t1 = Date.now();
+  if (error || typeof data !== 'number' || t1 - t0 > 5000) return;
+  const offset = data - (t0 + t1) / 2;
+  // Only bother when it's meaningfully off (network jitter is a few hundred ms).
+  clock.set(Math.abs(offset) > 2000 ? offset : 0);
 }
 
 const isAuthError = (e: unknown) => {
@@ -167,7 +179,7 @@ async function push(bid: string) {
         business_id: bid,
         id: r.id,
         data: payload(r),
-        updated_at: r.updatedAt ?? Date.now(),
+        updated_at: r.updatedAt ?? serverNow(),
         deleted: false,
       }));
       const { error } = await supabase.from(table).upsert(rows, { onConflict: 'business_id,id' });

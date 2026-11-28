@@ -60,6 +60,21 @@ export interface Tombstone {
 export const changeListener = { onLocalChange: () => {} };
 
 /**
+ * Difference between this device's clock and the server's (ms). Changes are stamped in server time, so a
+ * computer or phone with the wrong date can't lose edits ("last change wins" needs everyone on the same clock).
+ */
+export const clock = {
+  offset: (() => {
+    try { return Number(localStorage.getItem('spannr-clock-offset')) || 0; } catch { return 0; }
+  })(),
+  set(ms: number) {
+    this.offset = ms;
+    try { localStorage.setItem('spannr-clock-offset', String(Math.round(ms))); } catch { /* private mode */ }
+  },
+};
+export const serverNow = () => Date.now() + clock.offset;
+
+/**
  * Stamps every record the app writes with `updatedAt` and marks it `_dirty` so it gets pushed.
  * Records written by the sync engine carry `_remote: 1` and are stored as-is.
  */
@@ -73,7 +88,7 @@ function trackingMiddleware(down: DBCore): DBCore {
         ...table,
         mutate(req: DBCoreMutateRequest) {
           if (req.type !== 'add' && req.type !== 'put') return table.mutate(req);
-          const now = Date.now();
+          const now = serverNow();
           let local = false;
           const values = req.values.map((v) => {
             if (v && v._remote) {
@@ -125,7 +140,7 @@ export async function removeRecords(table: SyncedTable, ids: string[]) {
   if (!ids.length) return;
   await db.transaction('rw', db.table(table), db.tombstones, async () => {
     await db.table(table).bulkDelete(ids);
-    await db.tombstones.bulkPut(ids.map((id) => ({ key: `${table}:${id}`, table, id, at: Date.now() })));
+    await db.tombstones.bulkPut(ids.map((id) => ({ key: `${table}:${id}`, table, id, at: serverNow() })));
   });
   changeListener.onLocalChange();
 }
